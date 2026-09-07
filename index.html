@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Izvēlieties valodu / Выберите язык / Choose language</title>
+<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/language.css">
+</head>
+<body>
+<div class="app">
+  <main class="lang-screen">
+    <section class="lang-top">
+      <div class="lang-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 12L10 18L20 6" stroke="#16213A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1 class="lang-title" id="lang-heading">Izvēlieties valodu</h1>
+      <p class="lang-sub" id="lang-subtext">Jūs varēsiet to mainīt vēlāk iestatījumos</p>
+    </section>
+
+    <section class="lang-options" aria-labelledby="lang-heading">
+      <p class="lang-options-label" data-i18n-label>Pieejamās valodas</p>
+
+      <button type="button" class="lang-btn is-primary is-selected" data-lang="lv" aria-pressed="true">
+        <span>
+          <span class="lang-btn-native">Latviešu</span>
+          <span class="lang-btn-sub">Latvian</span>
+        </span>
+        <span class="lang-btn-check" aria-hidden="true"></span>
+      </button>
+
+      <button type="button" class="lang-btn" data-lang="ru" aria-pressed="false">
+        <span>
+          <span class="lang-btn-native">Русский</span>
+          <span class="lang-btn-sub">Russian</span>
+        </span>
+        <span class="lang-btn-check" aria-hidden="true"></span>
+      </button>
+
+      <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">
+        <span>
+          <span class="lang-btn-native">English</span>
+          <span class="lang-btn-sub">English</span>
+        </span>
+        <span class="lang-btn-check" aria-hidden="true"></span>
+      </button>
+
+      <button type="button" class="lang-continue" id="lang-continue" data-i18n-continue>Turpināt</button>
+      <p class="lang-footnote" data-i18n-footnote>Izvēle tiks saglabāta šajā ierīcē</p>
+    </section>
+  </main>
+</div>
+
+<script src="js/language.js"></script>
+</body>
+</html>
