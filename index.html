@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Izvēlieties valodu / Выберите язык / Choose language</title>
+<style>
+/* =========================================================
+   Base theme tokens — "Dzintars" marketplace (Latvia)
+   Not-Avito palette: deep ink blue + amber (Baltic amber),
+   warm neutral background, no neon.
+   ========================================================= */
+
+:root {
+  /* Core palette */
+  --ink-900: #16213A;   /* deep navy — header, primary text on light */
+  --ink-800: #1E2C4C;
+  --ink-700: #2B3F66;
+  --ink-500: #56698F;   /* secondary ink, muted labels */
+  --amber-600: #C68A2E; /* primary accent (buttons, active states) */
+  --amber-500: #D9A441; /* lighter amber for gradients/highlights */
+  --amber-100: #FBEFD9; /* pale amber wash, chips */
+  --paper-50:  #F7F5F0; /* app background */
+  --paper-0:   #FFFFFF; /* cards */
+  --line-100:  #E7E3D9; /* hairline borders */
+  --line-200:  #D8D3C6;
+  --text-900:  #1C1C1E;
+  --text-600:  #55565B;
+  --text-400:  #8A8B8F;
+  --text-inverse: #FFFFFF;
+  --success-600: #3E7C5C;
+  --danger-600: #B84C42;
+
+  /* Elevation */
+  --shadow-card: 0 1px 2px rgba(22,33,58,0.06), 0 1px 1px rgba(22,33,58,0.04);
+  --shadow-pop:  0 8px 24px rgba(22,33,58,0.16);
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  /* Spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+
+  /* Type */
+  --font-ui: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  --fs-11: 0.6875rem;
+  --fs-12: 0.75rem;
+  --fs-13: 0.8125rem;
+  --fs-14: 0.875rem;
+  --fs-16: 1rem;
+  --fs-18: 1.125rem;
+  --fs-20: 1.25rem;
+  --fs-24: 1.5rem;
+  --fs-28: 1.75rem;
+
+  /* Layout */
+  --max-w: 480px; /* mobile-first container */
+  --tabbar-h: 62px;
+  --topbar-h: 56px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper-50);
+  color: var(--text-900);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.app {
+  width: 100%;
+  max-width: var(--max-w);
+  min-height: 100vh;
+  background: var(--paper-50);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
+
+img, svg { display: block; max-width: 100%; }
+
+/* Focus visibility (accessibility floor) */
+:focus-visible {
+  outline: 2px solid var(--amber-600);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+
+
+.lang-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--ink-900);
+  color: var(--text-inverse);
+  min-height: 100vh;
+}
+
+.lang-top {
+  flex: 1.1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-7) var(--sp-6) var(--sp-6);
+  text-align: center;
+  background:
+    radial-gradient(120% 90% at 50% 0%, #223357 0%, var(--ink-900) 62%);
+}
+
+.lang-mark {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(155deg, var(--amber-500), var(--amber-600));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--sp-5);
+  box-shadow: 0 6px 20px rgba(198,138,46,0.35);
+}
+
+.lang-mark svg { width: 34px; height: 34px; }
+
+.lang-title {
+  font-size: var(--fs-24);
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 var(--sp-2);
+  letter-spacing: -0.01em;
+}
+
+.lang-sub {
+  font-size: var(--fs-14);
+  color: rgba(255,255,255,0.68);
+  margin: 0;
+  max-width: 30ch;
+}
+
+.lang-options {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper-0);
+  border-radius: 28px 28px 0 0;
+  padding: var(--sp-6) var(--sp-5) calc(var(--sp-6) + env(safe-area-inset-bottom, 0px));
+  gap: var(--sp-3);
+  margin-top: -20px;
+}
+
+.lang-options-label {
+  color: var(--text-400);
+  font-size: var(--fs-13);
+  margin: 0 0 var(--sp-2) var(--sp-1);
+}
+
+.lang-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 1px solid var(--line-100);
+  border-radius: var(--radius-md);
+  padding: var(--sp-4) var(--sp-4);
+  background: var(--paper-0);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+  text-align: left;
+}
+
+.lang-btn:active { transform: translateY(1px); }
+
+.lang-btn-native {
+  font-size: var(--fs-18);
+  font-weight: 600;
+  color: var(--text-900);
+}
+
+.lang-btn-sub {
+  font-size: var(--fs-12);
+  color: var(--text-400);
+  margin-top: 2px;
+}
+
+.lang-btn-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--line-200);
+  flex-shrink: 0;
+}
+
+/* Primary = Latvian (black/ink emphasis), others = white/neutral cards per brief */
+.lang-btn.is-primary {
+  background: var(--ink-900);
+  border-color: var(--ink-900);
+}
+.lang-btn.is-primary .lang-btn-native { color: var(--text-inverse); }
+.lang-btn.is-primary .lang-btn-sub { color: rgba(255,255,255,0.55); }
+.lang-btn.is-primary .lang-btn-check { border-color: rgba(255,255,255,0.4); }
+
+.lang-btn.is-selected {
+  border-color: var(--amber-600);
+}
+.lang-btn.is-selected .lang-btn-check {
+  border-color: var(--amber-600);
+  background: var(--amber-600);
+  position: relative;
+}
+.lang-btn.is-selected .lang-btn-check::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: var(--text-inverse);
+}
+
+.lang-continue {
+  margin-top: var(--sp-3);
+  width: 100%;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 15px var(--sp-5);
+  background: var(--amber-600);
+  color: var(--text-inverse);
+  font-size: var(--fs-16);
+  font-weight: 600;
+  cursor: pointer;
+}
+.lang-continue:disabled {
+  background: var(--line-200);
+  color: var(--text-400);
+  cursor: not-allowed;
+}
+
+.lang-footnote {
+  text-align: center;
+  color: var(--text-400);
+  font-size: var(--fs-12);
+  margin-top: var(--sp-4);
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <main class="lang-screen">
+    <section class="lang-top">
+      <div class="lang-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 12L10 18L20 6" stroke="#16213A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1 class="lang-title" id="lang-heading">Izvēlieties valodu</h1>
+      <p class="lang-sub" id="lang-subtext">Jūs varēsiet to mainīt vēlāk iestatījumos</p>
+    </section>
+
+    <section class="lang-options" aria-labelledby="lang-heading">
+      <p class="lang-options-label" data-i18n-label>Pieejamās valodas</p>
+
+      <button type="button" class="lang-btn is-primary is-selected" data-lang="lv" aria-pressed="true">
+        <span>
+          <span class="lang-btn-native">Latviešu</span>
+          <span class="lang-btn-sub">Latvian</span>
+        </span>
+        <span class="lang-btn-check" aria-hidden="true"></span>
+      </button>
+
+      <button type="button" class="lang-btn" data-lang="ru" aria-pressed="false">
+        <span>
+          <span class="lang-btn-native">Русский</span>
+          <span class="lang-btn-sub">Russian</span>
+        </span>
+        <span class="lang-btn-check" aria-hidden="true"></span>
+      </button>
+
+      <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">
+        <span>
+          <span class="lang-btn-native">English</span>
+          <span class="lang-btn-sub">English</span>
+        </span>
+        <span class="lang-btn-check" aria-hidden="true"></span>
+      </button>
+
+      <button type="button" class="lang-continue" id="lang-continue" data-i18n-continue>Turpināt</button>
+      <p class="lang-footnote" data-i18n-footnote>Izvēle tiks saglabāta šajā ierīcē</p>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "dz_lang"; // "lv" | "ru" | "en"
+
+  var COPY = {
+    lv: {
+      heading: "Izvēlieties valodu",
+      subtext: "Jūs varēsiet to mainīt vēlāk iestatījumos",
+      label: "Pieejamās valodas",
+      continueBtn: "Turpināt",
+      footnote: "Izvēle tiks saglabāta šajā ierīcē"
+    },
+    ru: {
+      heading: "Выберите язык",
+      subtext: "Вы сможете изменить его позже в настройках",
+      label: "Доступные языки",
+      continueBtn: "Продолжить",
+      footnote: "Выбор будет сохранён на этом устройстве"
+    },
+    en: {
+      heading: "Choose your language",
+      subtext: "You can change this later in settings",
+      label: "Available languages",
+      continueBtn: "Continue",
+      footnote: "Your choice will be saved on this device"
+    }
+  };
+
+  // If a language was already chosen before, skip straight to home.
+  var existing = null;
+  try { existing = localStorage.getItem(STORAGE_KEY); } catch (e) { /* storage unavailable */ }
+  if (existing && COPY[existing]) {
+    window.location.replace("home.html");
+    return;
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var buttons = Array.prototype.slice.call(document.querySelectorAll(".lang-btn"));
+    var continueBtn = document.getElementById("lang-continue");
+    var heading = document.getElementById("lang-heading");
+    var subtext = document.getElementById("lang-subtext");
+    var labelEl = document.querySelector("[data-i18n-label]");
+    var footnoteEl = document.querySelector("[data-i18n-footnote]");
+    var selected = "lv";
+
+    function applyCopy(langCode) {
+      var c = COPY[langCode];
+      heading.textContent = c.heading;
+      subtext.textContent = c.subtext;
+      labelEl.textContent = c.label;
+      continueBtn.textContent = c.continueBtn;
+      footnoteEl.textContent = c.footnote;
+      document.documentElement.setAttribute("lang", langCode);
+    }
+
+    function selectLang(code) {
+      selected = code;
+      buttons.forEach(function (btn) {
+        var isMatch = btn.getAttribute("data-lang") === code;
+        btn.classList.toggle("is-selected", isMatch);
+        btn.setAttribute("aria-pressed", isMatch ? "true" : "false");
+      });
+      applyCopy(code);
+    }
+
+    buttons.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        selectLang(btn.getAttribute("data-lang"));
+      });
+    });
+
+    continueBtn.addEventListener("click", function () {
+      try { localStorage.setItem(STORAGE_KEY, selected); } catch (e) { /* storage unavailable */ }
+      window.location.href = "home.html";
+    });
+
+    selectLang(selected);
+  });
+})();
+
+</script>
+</body>
+</html>
