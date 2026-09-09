@@ -12,33 +12,38 @@
    ========================================================= */
 
 :root {
-  /* Core palette */
-  --ink-900: #16213A;   /* deep navy — header, primary text on light */
-  --ink-800: #1E2C4C;
-  --ink-700: #2B3F66;
-  --ink-500: #56698F;   /* secondary ink, muted labels */
-  --amber-600: #C68A2E; /* primary accent (buttons, active states) */
-  --amber-500: #D9A441; /* lighter amber for gradients/highlights */
-  --amber-100: #FBEFD9; /* pale amber wash, chips */
-  --paper-50:  #F7F5F0; /* app background */
-  --paper-0:   #FFFFFF; /* cards */
-  --line-100:  #E7E3D9; /* hairline borders */
-  --line-200:  #D8D3C6;
-  --text-900:  #1C1C1E;
-  --text-600:  #55565B;
-  --text-400:  #8A8B8F;
-  --text-inverse: #FFFFFF;
-  --success-600: #3E7C5C;
+  /* Core palette — Design tokens per spec */
+  --ink-900: #0D3B43;    /* Deep Turquoise — primary dark, header gradient start, accent buttons */
+  --ink-800: #124A54;    /* mid-point of hero gradient */
+  --ink-700: #185863;    /* Emerald Glow — primary accent, gradient mid/end */
+  --ink-500: #2A7A88;    /* Cyan Light — soft accent, icon highlights */
+  --brand-600: #0D3B43;
+  --brand-500: #185863;
+  --amber-600: #E5A400; /* kept for small accents (arrows, highlights) */
+  --amber-500: #F5C21E;
+  --amber-100: #FFF3CF;
+  --paper-50:  #F6F7F9; /* Page Background */
+  --paper-0:   #FFFFFF; /* Card & Sheet Surface */
+  --line-100:  #E5E7EB; /* hairline borders, handlebar color */
+  --line-200:  #D8DBDF;
+  --text-900:  #111827; /* Text Primary */
+  --text-600:  #6B7280; /* Text Secondary */
+  --text-400:  #9CA3AF;
+  --text-inverse: #FFFFFF; /* Text On Dark */
+  --success-600: #185863;
   --danger-600: #B84C42;
+  --overlay: rgba(13,27,30,0.45); /* sheet backdrop */
 
   /* Elevation */
-  --shadow-card: 0 1px 2px rgba(22,33,58,0.06), 0 1px 1px rgba(22,33,58,0.04);
-  --shadow-pop:  0 8px 24px rgba(22,33,58,0.16);
+  --shadow-card: 0 1px 2px rgba(13,59,67,0.06), 0 1px 1px rgba(13,59,67,0.04);
+  --shadow-pop:  0 8px 24px rgba(13,59,67,0.16);
+  --shadow-sticky: 0 4px 16px rgba(0,0,0,0.05);
 
   /* Radius */
   --radius-sm: 8px;
-  --radius-md: 14px;
+  --radius-md: 16px;
   --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-pill: 999px;
 
   /* Spacing scale */
@@ -50,22 +55,55 @@
   --sp-6: 24px;
   --sp-7: 32px;
 
-  /* Type */
-  --font-ui: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
-  --fs-11: 0.6875rem;
-  --fs-12: 0.75rem;
-  --fs-13: 0.8125rem;
-  --fs-14: 0.875rem;
+  /* Type — one geometric grotesk stack used everywhere in the UI */
+  --font-ui: "Inter", "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Title H1 — screen headings: 22-24px / Bold / 120% */
+  --fs-h1: 1.375rem;      /* 22px */
+  --lh-h1: 1.2;
+  --fw-h1: 700;
+
+  /* Title H2 — block headings: 18-20px / SemiBold / 125% */
+  --fs-h2: 1.125rem;      /* 18px */
+  --lh-h2: 1.25;
+  --fw-h2: 600;
+
+  /* Subhead — category names, inputs, button labels: 15-16px / Medium / 135% */
+  --fs-subhead: 0.9375rem; /* 15px */
+  --lh-subhead: 1.35;
+  --fw-subhead: 500;
+
+  /* Body — subtitles, descriptions: 14-15px / Regular / 140% */
+  --fs-body: 0.875rem;    /* 14px */
+  --lh-body: 1.4;
+  --fw-body: 400;
+
+  /* Caption / Label — fine print, dates: 12-13px / Regular-Medium / 130% */
+  --fs-caption: 0.75rem;  /* 12px */
+  --lh-caption: 1.3;
+  --fw-caption: 400;
+
+  /* Micro — tab bar labels: 10-11px / Medium / 120% */
+  --fs-micro: 0.6875rem;  /* 11px */
+  --lh-micro: 1.2;
+  --fw-micro: 500;
+
+  /* Legacy aliases kept so existing component CSS keeps working */
+  --fs-11: var(--fs-micro);
+  --fs-12: var(--fs-caption);
+  --fs-13: var(--fs-subhead);
+  --fs-14: var(--fs-body);
   --fs-16: 1rem;
-  --fs-18: 1.125rem;
+  --fs-18: var(--fs-h2);
   --fs-20: 1.25rem;
-  --fs-24: 1.5rem;
+  --fs-24: var(--fs-h1);
   --fs-28: 1.75rem;
 
   /* Layout */
   --max-w: 480px; /* mobile-first container */
   --tabbar-h: 62px;
   --topbar-h: 56px;
+  --screen-margin: 16px; /* side margins from spec */
 }
 
 * { box-sizing: border-box; }
@@ -76,6 +114,9 @@ html, body {
   background: var(--paper-50);
   color: var(--text-900);
   font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-body);
   -webkit-font-smoothing: antialiased;
   text-size-adjust: 100%;
 }
@@ -96,14 +137,23 @@ body {
   flex-direction: column;
 }
 
-a { color: inherit; text-decoration: none; }
+a { color: inherit; text-decoration: none; font-family: inherit; }
 button { font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+
+/* Base type-scale utility classes, usable anywhere in the app */
+h1, .type-h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: var(--fw-h1); margin: 0; }
+h2, .type-h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: var(--fw-h2); margin: 0; }
+.type-subhead { font-size: var(--fs-subhead); line-height: var(--lh-subhead); font-weight: var(--fw-subhead); }
+.type-body { font-size: var(--fs-body); line-height: var(--lh-body); font-weight: var(--fw-body); }
+.type-caption { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: var(--fw-caption); }
+.type-micro { font-size: var(--fs-micro); line-height: var(--lh-micro); font-weight: var(--fw-micro); }
 
 img, svg { display: block; max-width: 100%; }
 
 /* Focus visibility (accessibility floor) */
 :focus-visible {
-  outline: 2px solid var(--amber-600);
+  outline: 2px solid var(--ink-700);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -125,157 +175,187 @@ img, svg { display: block; max-width: 100%; }
 }
 
 
+
 .lang-screen {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--ink-900);
-  color: var(--text-inverse);
+  background: var(--paper-50);
   min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Soft teal glow behind the globe — replaces the old hard dark block */
+.lang-glow {
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 420px;
+  height: 320px;
+  background: radial-gradient(closest-side, rgba(13,59,67,0.08), rgba(13,59,67,0) 70%);
+  pointer-events: none;
 }
 
 .lang-top {
-  flex: 1.1;
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: var(--sp-7) var(--sp-6) var(--sp-6);
+  padding: var(--sp-7) var(--sp-6) var(--sp-5);
   text-align: center;
-  background:
-    radial-gradient(120% 90% at 50% 0%, #223357 0%, var(--ink-900) 62%);
 }
 
 .lang-mark {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(155deg, var(--amber-500), var(--amber-600));
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100px;
+  height: 100px;
   margin-bottom: var(--sp-5);
-  box-shadow: 0 6px 20px rgba(198,138,46,0.35);
+  filter: drop-shadow(0 14px 20px rgba(13,59,67,0.22));
 }
-
-.lang-mark svg { width: 34px; height: 34px; }
+.lang-mark svg { width: 100%; height: 100%; }
 
 .lang-title {
-  font-size: var(--fs-24);
-  font-weight: 700;
-  line-height: 1.25;
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  font-weight: var(--fw-h1);
+  color: var(--text-900);
   margin: 0 0 var(--sp-2);
-  letter-spacing: -0.01em;
 }
 
 .lang-sub {
-  font-size: var(--fs-14);
-  color: rgba(255,255,255,0.68);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-body);
+  color: var(--text-600);
   margin: 0;
   max-width: 30ch;
 }
 
 .lang-options {
+  position: relative;
+  z-index: 1;
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--paper-0);
-  border-radius: 28px 28px 0 0;
-  padding: var(--sp-6) var(--sp-5) calc(var(--sp-6) + env(safe-area-inset-bottom, 0px));
+  padding: 0 var(--sp-4);
   gap: var(--sp-3);
-  margin-top: -20px;
 }
 
 .lang-options-label {
   color: var(--text-400);
-  font-size: var(--fs-13);
-  margin: 0 0 var(--sp-2) var(--sp-1);
+  font-size: 0.6875rem; /* 11px, smaller than caption to de-emphasize vs the H1 */
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 6px 0 var(--sp-1) var(--sp-1);
 }
 
 .lang-btn {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--sp-3);
   width: 100%;
-  border: 1px solid var(--line-100);
   border-radius: var(--radius-md);
-  padding: var(--sp-4) var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
   background: var(--paper-0);
+  border: 1px solid var(--line-100);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
   cursor: pointer;
-  transition: border-color 120ms ease, background 120ms ease;
   text-align: left;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .lang-btn:active { transform: translateY(1px); }
 
+.lang-btn-flag {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--paper-50);
+  color: var(--text-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.lang-btn-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 .lang-btn-native {
-  font-size: var(--fs-18);
+  font-size: var(--fs-subhead);
   font-weight: 600;
+  line-height: 1.3;
   color: var(--text-900);
 }
 
 .lang-btn-sub {
-  font-size: var(--fs-12);
-  color: var(--text-400);
-  margin-top: 2px;
+  font-size: var(--fs-caption);
+  font-weight: 400;
+  color: var(--text-600);
 }
 
 .lang-btn-check {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid var(--line-200);
   flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+.lang-btn-check svg { width: 14px; height: 14px; visibility: hidden; }
 
-/* Primary = Latvian (black/ink emphasis), others = white/neutral cards per brief */
-.lang-btn.is-primary {
+.lang-btn.is-selected {
+  background: rgba(242,248,249,0.5);
+  border: 2px solid var(--ink-900);
+  box-shadow: 0 10px 25px rgba(13,59,67,0.08);
+  padding: calc(var(--sp-3) - 1px) calc(var(--sp-4) - 1px); /* compensate for thicker border */
+}
+.lang-btn.is-selected .lang-btn-check {
   background: var(--ink-900);
   border-color: var(--ink-900);
 }
-.lang-btn.is-primary .lang-btn-native { color: var(--text-inverse); }
-.lang-btn.is-primary .lang-btn-sub { color: rgba(255,255,255,0.55); }
-.lang-btn.is-primary .lang-btn-check { border-color: rgba(255,255,255,0.4); }
+.lang-btn.is-selected .lang-btn-check svg { visibility: visible; }
+.lang-btn.is-selected .lang-btn-flag {
+  background: var(--ink-900);
+  color: #E0F2F1;
+}
 
-.lang-btn.is-selected {
-  border-color: var(--amber-600);
-}
-.lang-btn.is-selected .lang-btn-check {
-  border-color: var(--amber-600);
-  background: var(--amber-600);
+.lang-cta-bar {
   position: relative;
-}
-.lang-btn.is-selected .lang-btn-check::after {
-  content: "";
-  position: absolute;
-  inset: 5px;
-  border-radius: 50%;
-  background: var(--text-inverse);
+  z-index: 1;
+  padding: var(--sp-4) var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
 }
 
 .lang-continue {
-  margin-top: var(--sp-3);
   width: 100%;
+  height: 52px;
   border: none;
   border-radius: var(--radius-pill);
-  padding: 15px var(--sp-5);
-  background: var(--amber-600);
+  background: var(--ink-900);
   color: var(--text-inverse);
-  font-size: var(--fs-16);
+  font-size: var(--fs-subhead);
   font-weight: 600;
   cursor: pointer;
-}
-.lang-continue:disabled {
-  background: var(--line-200);
-  color: var(--text-400);
-  cursor: not-allowed;
 }
 
 .lang-footnote {
   text-align: center;
   color: var(--text-400);
-  font-size: var(--fs-12);
-  margin-top: var(--sp-4);
+  font-size: var(--fs-micro);
+  margin: var(--sp-2) 0 0;
 }
 
 </style>
@@ -283,10 +363,37 @@ img, svg { display: block; max-width: 100%; }
 <body>
 <div class="app">
   <main class="lang-screen">
+
+    <div class="lang-glow" aria-hidden="true"></div>
+
     <section class="lang-top">
       <div class="lang-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 12L10 18L20 6" stroke="#16213A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="globeBody" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#2A7A88"/>
+              <stop offset="55%" stop-color="#185863"/>
+              <stop offset="100%" stop-color="#0D3B43"/>
+            </radialGradient>
+            <radialGradient id="globeUnderGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#2A7A88" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#2A7A88" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <ellipse cx="50" cy="88" rx="30" ry="9" fill="url(#globeUnderGlow)"/>
+          <ellipse cx="50" cy="88" rx="26" ry="6" fill="#0D3B43" opacity="0.12"/>
+          <circle cx="50" cy="48" r="38" fill="url(#globeBody)"/>
+          <path d="M18 38C28 32 40 30 50 32C62 34 72 30 80 34" stroke="#F6F7F9" stroke-width="2" opacity="0.35" fill="none"/>
+          <path d="M14 52C26 48 38 50 50 52C64 54 74 50 84 52" stroke="#F6F7F9" stroke-width="2" opacity="0.3" fill="none"/>
+          <path d="M22 65C32 62 42 64 50 65C60 66 70 63 78 66" stroke="#F6F7F9" stroke-width="2" opacity="0.28" fill="none"/>
+          <ellipse cx="50" cy="48" rx="12" ry="38" stroke="#F6F7F9" stroke-width="1.6" opacity="0.28" fill="none"/>
+          <circle cx="78" cy="24" r="9" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1" style="filter: drop-shadow(0 3px 4px rgba(13,59,67,0.28))"/>
+          <text x="78" y="27.5" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="#0D3B43" text-anchor="middle">LV</text>
+          <circle cx="22" cy="22" r="8" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1" style="filter: drop-shadow(0 3px 4px rgba(13,59,67,0.22))"/>
+          <text x="22" y="25" font-family="Inter, sans-serif" font-size="7" font-weight="700" fill="#185863" text-anchor="middle">RU</text>
+          <circle cx="24" cy="76" r="7.5" fill="#FFFFFF" opacity="0.92" stroke="#FFFFFF" stroke-width="1" style="filter: drop-shadow(0 3px 4px rgba(13,59,67,0.2))"/>
+          <text x="24" y="78.7" font-family="Inter, sans-serif" font-size="6.5" font-weight="700" fill="#185863" text-anchor="middle">EN</text>
+          <ellipse cx="38" cy="34" rx="14" ry="8" fill="#FFFFFF" opacity="0.18"/>
         </svg>
       </div>
       <h1 class="lang-title" id="lang-heading">Izvēlieties valodu</h1>
@@ -296,33 +403,50 @@ img, svg { display: block; max-width: 100%; }
     <section class="lang-options" aria-labelledby="lang-heading">
       <p class="lang-options-label" data-i18n-label>Pieejamās valodas</p>
 
-      <button type="button" class="lang-btn is-primary is-selected" data-lang="lv" aria-pressed="true">
-        <span>
+      <button type="button" class="lang-btn is-selected" data-lang="lv" aria-pressed="true">
+        <span class="lang-btn-flag" aria-hidden="true">LV</span>
+        <span class="lang-btn-text">
           <span class="lang-btn-native">Latviešu</span>
           <span class="lang-btn-sub">Latvian</span>
         </span>
-        <span class="lang-btn-check" aria-hidden="true"></span>
+        <span class="lang-btn-check" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12.5L10 17L19 7" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
       </button>
 
       <button type="button" class="lang-btn" data-lang="ru" aria-pressed="false">
-        <span>
+        <span class="lang-btn-flag" aria-hidden="true">RU</span>
+        <span class="lang-btn-text">
           <span class="lang-btn-native">Русский</span>
           <span class="lang-btn-sub">Russian</span>
         </span>
-        <span class="lang-btn-check" aria-hidden="true"></span>
+        <span class="lang-btn-check" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12.5L10 17L19 7" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
       </button>
 
       <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">
-        <span>
+        <span class="lang-btn-flag" aria-hidden="true">EN</span>
+        <span class="lang-btn-text">
           <span class="lang-btn-native">English</span>
           <span class="lang-btn-sub">English</span>
         </span>
-        <span class="lang-btn-check" aria-hidden="true"></span>
+        <span class="lang-btn-check" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12.5L10 17L19 7" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
       </button>
+    </section>
 
+    <footer class="lang-cta-bar">
       <button type="button" class="lang-continue" id="lang-continue" data-i18n-continue>Turpināt</button>
       <p class="lang-footnote" data-i18n-footnote>Izvēle tiks saglabāta šajā ierīcē</p>
-    </section>
+    </footer>
   </main>
 </div>
 
