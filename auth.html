@@ -340,6 +340,92 @@ img, svg { display: block; max-width: 100%; }
   margin-bottom: var(--sp-4);
 }
 
+/* Переключатель "Вход / Регистрация" */
+.auth-mode-switch {
+  display: flex;
+  background: var(--paper-50);
+  border: 1px solid var(--line-100);
+  border-radius: var(--radius-pill);
+  padding: 4px;
+  margin-bottom: var(--sp-5);
+}
+.auth-mode-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-pill);
+  padding: 10px var(--sp-3);
+  font-size: var(--fs-13);
+  font-weight: 600;
+  color: var(--text-600);
+  cursor: pointer;
+}
+.auth-mode-btn.is-active {
+  background: var(--paper-0);
+  color: var(--ink-900);
+  box-shadow: var(--shadow-card);
+}
+
+/* Поле пароля с кнопкой "показать/скрыть" */
+.auth-password-wrap {
+  position: relative;
+  margin-bottom: var(--sp-3);
+}
+.auth-password-wrap .auth-input {
+  margin-bottom: 0;
+  padding-right: 44px;
+}
+.auth-password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.auth-password-toggle svg { width: 20px; height: 20px; }
+.auth-password-toggle.is-visible { color: var(--ink-700); }
+
+/* Сообщение об ошибке под формой */
+.auth-error {
+  color: var(--danger-600);
+  font-size: var(--fs-12);
+  line-height: 1.4;
+  margin: var(--sp-1) 0 var(--sp-3);
+}
+.auth-error[hidden] { display: none; }
+
+.auth-submit {
+  position: relative;
+}
+.auth-submit.is-loading {
+  color: transparent;
+}
+.auth-submit.is-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  animation: auth-spin 0.7s linear infinite;
+}
+@keyframes auth-spin {
+  to { transform: rotate(360deg); }
+}
+
 </style>
 </head>
 <body>
@@ -355,7 +441,6 @@ img, svg { display: block; max-width: 100%; }
     </div>
 
     <div class="auth-body">
-      <span class="auth-demo-badge" data-i18n="auth.demoNotice">Šī ir tikai maketa forma — reģistrācija vēl nedarbojas.</span>
 
       <div class="auth-mark" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -364,10 +449,16 @@ img, svg { display: block; max-width: 100%; }
         </svg>
       </div>
 
-      <h1 class="auth-title" data-i18n="auth.title">Sveicināti!</h1>
-      <p class="auth-subtitle" data-i18n="auth.subtitle">Ienāc vai reģistrējies, lai turpinātu</p>
+      <h1 class="auth-title" id="auth-heading" data-i18n="auth.title">Sveicināti!</h1>
+      <p class="auth-subtitle" id="auth-subheading" data-i18n="auth.subtitle">Ienāc vai reģistrējies, lai turpinātu</p>
 
-      <button class="auth-social" type="button" id="btn-google" disabled>
+      <!-- Переключатель "Вход / Регистрация" -->
+      <div class="auth-mode-switch" role="tablist" aria-label="Auth mode">
+        <button type="button" class="auth-mode-btn is-active" id="mode-login" role="tab" aria-selected="true" data-i18n="auth.modeLogin">Ienākt</button>
+        <button type="button" class="auth-mode-btn" id="mode-register" role="tab" aria-selected="false" data-i18n="auth.modeRegister">Reģistrēties</button>
+      </div>
+
+      <button class="auth-social" type="button" id="btn-google" disabled title="Drīzumā">
         <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
           <path fill="#FFC107" d="M43.6 20.5H42V20.4H24v7.2h11.3c-1.6 4.6-6 7.9-11.3 7.9-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.1-5.1C33.6 5 29 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.4-.4-3.5z"/>
           <path fill="#FF3D00" d="M6.3 14.7l5.9 4.3C13.8 15.3 18.5 12 24 12c3 0 5.8 1.1 7.9 3l5.1-5.1C33.6 5 29 3 24 3c-7.4 0-13.8 4.1-17.1 10.2z"/>
@@ -379,10 +470,25 @@ img, svg { display: block; max-width: 100%; }
 
       <div class="auth-divider" data-i18n="auth.or">vai</div>
 
-      <label class="auth-field-label" for="auth-contact" data-i18n="auth.emailLabel">E-pasts vai tālrunis</label>
-      <input class="auth-input" type="text" id="auth-contact" data-i18n-placeholder="auth.emailPlaceholder" placeholder="vards@epasts.lv" disabled>
+      <form id="auth-form" novalidate>
+        <label class="auth-field-label" for="auth-contact" data-i18n="auth.emailLabel">E-pasts vai tālrunis</label>
+        <input class="auth-input" type="text" id="auth-contact" name="login" autocomplete="username" data-i18n-placeholder="auth.emailPlaceholder" placeholder="vards@epasts.lv" required>
 
-      <button class="auth-submit" type="button" disabled data-i18n="auth.continue">Turpināt</button>
+        <label class="auth-field-label" for="auth-password" data-i18n="auth.passwordLabel">Parole</label>
+        <div class="auth-password-wrap">
+          <input class="auth-input" type="password" id="auth-password" name="password" autocomplete="current-password" data-i18n-placeholder="auth.passwordPlaceholder" placeholder="••••••••" required minlength="6">
+          <button type="button" class="auth-password-toggle" id="auth-password-toggle" aria-label="Rādīt paroli">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+            </svg>
+          </button>
+        </div>
+
+        <p class="auth-error" id="auth-error" role="alert" hidden></p>
+
+        <button class="auth-submit" type="submit" id="auth-submit" data-i18n="auth.continue">Turpināt</button>
+      </form>
 
       <p class="auth-terms" data-i18n="auth.terms">Turpinot, jūs piekrītat lietošanas noteikumiem un privātuma politikai.</p>
     </div>
@@ -390,6 +496,7 @@ img, svg { display: block; max-width: 100%; }
   </main>
 </div>
 
+<script src="dz-api.js"></script>
 <script>
 (function () {
   "use strict";
@@ -430,6 +537,19 @@ img, svg { display: block; max-width: 100%; }
       "auth.or": "vai",
       "auth.terms": "Turpinot, jūs piekrītat lietošanas noteikumiem un privātuma politikai.",
       "auth.demoNotice": "Šī ir tikai maketa forma — reģistrācija vēl nedarbojas.",
+      "auth.modeLogin": "Ienākt",
+      "auth.modeRegister": "Reģistrēties",
+      "auth.passwordLabel": "Parole",
+      "auth.passwordPlaceholder": "Vismaz 6 rakstzīmes",
+      "auth.continueRegister": "Reģistrēties",
+      "auth.error.missing_login": "Ievadi e-pastu vai tālruni.",
+      "auth.error.missing_password": "Ievadi paroli.",
+      "auth.error.password_too_short": "Parolei jābūt vismaz 6 rakstzīmju garai.",
+      "auth.error.invalid_email": "Pārbaudi e-pasta adresi.",
+      "auth.error.invalid_login": "Pārbaudi e-pastu vai tālruni.",
+      "auth.error.user_already_exists": "Šāds lietotājs jau eksistē. Mēģini ienākt.",
+      "auth.error.invalid_credentials": "Nepareizs e-pasts/tālrunis vai parole.",
+      "auth.error.request_failed": "Kaut kas nogāja greizi. Mēģini vēlreiz.",
       "empty.cta": "Ienākt profilā",
       "empty.favorites.title": "Saglabājiet sludinājumus, kas jums patīk",
       "empty.favorites.sub": "Piekļūstiet tiem jebkurā brīdī no jebkuras ierīces",
@@ -472,6 +592,19 @@ img, svg { display: block; max-width: 100%; }
       "auth.or": "или",
       "auth.terms": "Продолжая, вы принимаете условия использования и политику конфиденциальности.",
       "auth.demoNotice": "Это форма-макет — регистрация пока не работает.",
+      "auth.modeLogin": "Войти",
+      "auth.modeRegister": "Регистрация",
+      "auth.passwordLabel": "Пароль",
+      "auth.passwordPlaceholder": "Минимум 6 символов",
+      "auth.continueRegister": "Зарегистрироваться",
+      "auth.error.missing_login": "Введите почту или телефон.",
+      "auth.error.missing_password": "Введите пароль.",
+      "auth.error.password_too_short": "Пароль должен быть не короче 6 символов.",
+      "auth.error.invalid_email": "Проверьте адрес почты.",
+      "auth.error.invalid_login": "Проверьте почту или телефон.",
+      "auth.error.user_already_exists": "Такой пользователь уже есть. Попробуйте войти.",
+      "auth.error.invalid_credentials": "Неверная почта/телефон или пароль.",
+      "auth.error.request_failed": "Что-то пошло не так. Попробуйте ещё раз.",
       "empty.cta": "Войти в профиль",
       "empty.favorites.title": "Сохраняйте объявления, которые вам понравились",
       "empty.favorites.sub": "Открывайте их в любой момент с любого устройства",
@@ -514,6 +647,19 @@ img, svg { display: block; max-width: 100%; }
       "auth.or": "or",
       "auth.terms": "By continuing you agree to the terms of use and privacy policy.",
       "auth.demoNotice": "This is a mockup form only — sign-up isn't wired up yet.",
+      "auth.modeLogin": "Sign in",
+      "auth.modeRegister": "Sign up",
+      "auth.passwordLabel": "Password",
+      "auth.passwordPlaceholder": "At least 6 characters",
+      "auth.continueRegister": "Sign up",
+      "auth.error.missing_login": "Enter your email or phone.",
+      "auth.error.missing_password": "Enter your password.",
+      "auth.error.password_too_short": "Password must be at least 6 characters.",
+      "auth.error.invalid_email": "Check your email address.",
+      "auth.error.invalid_login": "Check your email or phone.",
+      "auth.error.user_already_exists": "This account already exists. Try signing in instead.",
+      "auth.error.invalid_credentials": "Wrong email/phone or password.",
+      "auth.error.request_failed": "Something went wrong. Please try again.",
       "empty.cta": "Sign in to profile",
       "empty.favorites.title": "Save listings you like",
       "empty.favorites.sub": "Access them anytime from any device",
@@ -572,6 +718,98 @@ img, svg { display: block; max-width: 100%; }
   });
 })();
 
+</script>
+<script>
+(function () {
+  "use strict";
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // Если уже залогинен — незачем показывать форму входа, сразу на главную.
+    if (window.DzApi && window.DzApi.isLoggedIn()) {
+      window.location.replace("home.html");
+      return;
+    }
+
+    var modeLoginBtn = document.getElementById("mode-login");
+    var modeRegisterBtn = document.getElementById("mode-register");
+    var form = document.getElementById("auth-form");
+    var submitBtn = document.getElementById("auth-submit");
+    var errorEl = document.getElementById("auth-error");
+    var passwordInput = document.getElementById("auth-password");
+    var passwordToggle = document.getElementById("auth-password-toggle");
+
+    var mode = "login"; // "login" | "register"
+
+    function t(key) {
+      return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.t(key) : key;
+    }
+
+    function setMode(next) {
+      mode = next;
+      var isLogin = mode === "login";
+      modeLoginBtn.classList.toggle("is-active", isLogin);
+      modeLoginBtn.setAttribute("aria-selected", isLogin ? "true" : "false");
+      modeRegisterBtn.classList.toggle("is-active", !isLogin);
+      modeRegisterBtn.setAttribute("aria-selected", !isLogin ? "true" : "false");
+      submitBtn.textContent = isLogin ? t("auth.continue") : t("auth.continueRegister");
+      passwordInput.setAttribute("autocomplete", isLogin ? "current-password" : "new-password");
+      hideError();
+    }
+
+    function showError(message) {
+      errorEl.textContent = message;
+      errorEl.hidden = false;
+    }
+
+    function hideError() {
+      errorEl.hidden = true;
+      errorEl.textContent = "";
+    }
+
+    modeLoginBtn.addEventListener("click", function () { setMode("login"); });
+    modeRegisterBtn.addEventListener("click", function () { setMode("register"); });
+
+    passwordToggle.addEventListener("click", function () {
+      var showing = passwordInput.type === "text";
+      passwordInput.type = showing ? "password" : "text";
+      passwordToggle.classList.toggle("is-visible", !showing);
+    });
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      hideError();
+
+      var loginValue = document.getElementById("auth-contact").value.trim();
+      var passwordValue = passwordInput.value;
+
+      if (!loginValue) {
+        showError(t("auth.error.missing_login"));
+        return;
+      }
+      if (!passwordValue) {
+        showError(t("auth.error.missing_password"));
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add("is-loading");
+
+      var action = mode === "login" ? window.DzApi.login : window.DzApi.register;
+
+      action(loginValue, passwordValue)
+        .then(function () {
+          window.location.href = "home.html";
+        })
+        .catch(function (err) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("is-loading");
+          showError(window.DzApi.errorMessage(err));
+        });
+    });
+
+    setMode("login");
+  });
+})();
 </script>
 </body>
 </html>
