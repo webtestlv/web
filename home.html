@@ -123,14 +123,28 @@ html, body {
 
 body {
   min-height: 100vh;
+  min-height: 100svh; /* stable viewport height: doesn't shift when mobile browser chrome shows/hides */
   display: flex;
   justify-content: center;
+}
+
+/* On screens with a bottom tab bar, the document itself must never
+   scroll or resize — only the inner .page-scroll container does. If the
+   body were free to grow or shift with the mobile browser's own chrome,
+   any position: sticky element inside (like the search bar) would drift
+   along with it. Locking body's height here keeps that reference frame
+   completely stable. */
+body:has(.app.has-tabbar) {
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
 }
 
 .app {
   width: 100%;
   max-width: var(--max-w);
   min-height: 100vh;
+  min-height: 100svh;
   background: var(--paper-50);
   position: relative;
   display: flex;
@@ -501,7 +515,18 @@ img, svg { display: block; max-width: 100%; }
   grid-template-columns: repeat(5, 1fr);
   background: var(--paper-0);
   box-shadow: 0 -4px 16px rgba(0,0,0,0.03);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  flex-shrink: 0;
+}
+
+/* Safe-area padding lives on its own element rather than as padding on
+   .tabbar itself. Some mobile browsers (e.g. DuckDuckGo) recalculate
+   env(safe-area-inset-bottom) as their own chrome shows/hides during
+   scroll; if that value drove the tab bar's own padding, the whole bar's
+   height — and so its position — visibly shifted on every scroll tick.
+   Isolating it here means only this thin strip resizes, never the bar. */
+.tabbar-safe-area {
+  height: env(safe-area-inset-bottom, 0px);
+  background: var(--paper-0);
   flex-shrink: 0;
 }
 
@@ -1037,6 +1062,7 @@ img, svg { display: block; max-width: 100%; }
       <span data-i18n="tab.profile">Profils</span>
     </button>
   </nav>
+  <div class="tabbar-safe-area" aria-hidden="true"></div>
 
   <div class="sheet-overlay" id="sheet-overlay" onclick="closeAuthSheet()"></div>
 
