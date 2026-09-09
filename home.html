@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title data-i18n="app.title">Dzintars — sludinājumi Latvijā</title>
+<style>
+/* =========================================================
+   Base theme tokens — "Dzintars" marketplace (Latvia)
+   Not-Avito palette: deep ink blue + amber (Baltic amber),
+   warm neutral background, no neon.
+   ========================================================= */
+
+:root {
+  /* Core palette — Design tokens per spec */
+  --ink-900: #0D3B43;    /* Deep Turquoise — primary dark, header gradient start, accent buttons */
+  --ink-800: #124A54;    /* mid-point of hero gradient */
+  --ink-700: #185863;    /* Emerald Glow — primary accent, gradient mid/end */
+  --ink-500: #2A7A88;    /* Cyan Light — soft accent, icon highlights */
+  --brand-600: #0D3B43;
+  --brand-500: #185863;
+  --amber-600: #E5A400; /* kept for small accents (arrows, highlights) */
+  --amber-500: #F5C21E;
+  --amber-100: #FFF3CF;
+  --paper-50:  #F6F7F9; /* Page Background */
+  --paper-0:   #FFFFFF; /* Card & Sheet Surface */
+  --line-100:  #E5E7EB; /* hairline borders, handlebar color */
+  --line-200:  #D8DBDF;
+  --text-900:  #111827; /* Text Primary */
+  --text-600:  #6B7280; /* Text Secondary */
+  --text-400:  #9CA3AF;
+  --text-inverse: #FFFFFF; /* Text On Dark */
+  --success-600: #185863;
+  --danger-600: #B84C42;
+  --overlay: rgba(13,27,30,0.45); /* sheet backdrop */
+
+  /* Elevation */
+  --shadow-card: 0 1px 2px rgba(13,59,67,0.06), 0 1px 1px rgba(13,59,67,0.04);
+  --shadow-pop:  0 8px 24px rgba(13,59,67,0.16);
+  --shadow-sticky: 0 4px 16px rgba(0,0,0,0.05);
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  /* Spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+
+  /* Type — one geometric grotesk stack used everywhere in the UI */
+  --font-ui: "Inter", "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Title H1 — screen headings: 22-24px / Bold / 120% */
+  --fs-h1: 1.375rem;      /* 22px */
+  --lh-h1: 1.2;
+  --fw-h1: 700;
+
+  /* Title H2 — block headings: 18-20px / SemiBold / 125% */
+  --fs-h2: 1.125rem;      /* 18px */
+  --lh-h2: 1.25;
+  --fw-h2: 600;
+
+  /* Subhead — category names, inputs, button labels: 15-16px / Medium / 135% */
+  --fs-subhead: 0.9375rem; /* 15px */
+  --lh-subhead: 1.35;
+  --fw-subhead: 500;
+
+  /* Body — subtitles, descriptions: 14-15px / Regular / 140% */
+  --fs-body: 0.875rem;    /* 14px */
+  --lh-body: 1.4;
+  --fw-body: 400;
+
+  /* Caption / Label — fine print, dates: 12-13px / Regular-Medium / 130% */
+  --fs-caption: 0.75rem;  /* 12px */
+  --lh-caption: 1.3;
+  --fw-caption: 400;
+
+  /* Micro — tab bar labels: 10-11px / Medium / 120% */
+  --fs-micro: 0.6875rem;  /* 11px */
+  --lh-micro: 1.2;
+  --fw-micro: 500;
+
+  /* Legacy aliases kept so existing component CSS keeps working */
+  --fs-11: var(--fs-micro);
+  --fs-12: var(--fs-caption);
+  --fs-13: var(--fs-subhead);
+  --fs-14: var(--fs-body);
+  --fs-16: 1rem;
+  --fs-18: var(--fs-h2);
+  --fs-20: 1.25rem;
+  --fs-24: var(--fs-h1);
+  --fs-28: 1.75rem;
+
+  /* Layout */
+  --max-w: 480px; /* mobile-first container */
+  --tabbar-h: 62px;
+  --topbar-h: 56px;
+  --screen-margin: 16px; /* side margins from spec */
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper-50);
+  color: var(--text-900);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-body);
+  -webkit-font-smoothing: antialiased;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.app {
+  width: 100%;
+  max-width: var(--max-w);
+  min-height: 100vh;
+  background: var(--paper-50);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+a { color: inherit; text-decoration: none; font-family: inherit; }
+button { font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+
+/* Base type-scale utility classes, usable anywhere in the app */
+h1, .type-h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: var(--fw-h1); margin: 0; }
+h2, .type-h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: var(--fw-h2); margin: 0; }
+.type-subhead { font-size: var(--fs-subhead); line-height: var(--lh-subhead); font-weight: var(--fw-subhead); }
+.type-body { font-size: var(--fs-body); line-height: var(--lh-body); font-weight: var(--fw-body); }
+.type-caption { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: var(--fw-caption); }
+.type-micro { font-size: var(--fs-micro); line-height: var(--lh-micro); font-weight: var(--fw-micro); }
+
+img, svg { display: block; max-width: 100%; }
+
+/* Focus visibility (accessibility floor) */
+:focus-visible {
+  outline: 2px solid var(--ink-700);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+
+
+
+/* ===================== Hero banner (search + teaser, one surface) ===================== */
+/* Single deep-teal gradient plate holding both the search row and the
+   "cards for you" teaser. Scrolls away as one piece; only the inner
+   .sticky-search row stays pinned once the banner has scrolled past. */
+.hero-banner {
+  background: linear-gradient(135deg, #2E8FA3 0%, var(--ink-900) 100%);
+  border-radius: 0 0 22px 22px;
+  padding-bottom: var(--sp-4);
+}
+
+.sticky-search {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: transparent;
+  padding: var(--sp-3) var(--sp-4);
+  transition: background 220ms ease, backdrop-filter 220ms ease, box-shadow 220ms ease;
+}
+
+/* Once the banner has scrolled fully out of view, JS adds this class:
+   the teal gradient behind the search row is gone, so the bar itself
+   switches to a frosted neutral surface with its own soft shadow. */
+.sticky-search.is-scrolled {
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 6px 16px rgba(20,45,52,0.10);
+}
+
+.hero-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.search-field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: rgba(255,255,255,0.95);
+  border-radius: var(--radius-pill);
+  height: 40px;
+  padding: 0 6px 0 var(--sp-3);
+  min-width: 0;
+  transition: background 220ms ease, border-color 220ms ease;
+}
+
+/* On the neutral (scrolled) header, the search pill gets a light
+   grey outline instead of sitting flush on the gradient. */
+.sticky-search.is-scrolled .search-field {
+  background: var(--paper-0);
+  border: 1px solid var(--line-200);
+}
+
+.search-field svg { flex-shrink: 0; width: 17px; height: 17px; color: var(--text-600); }
+
+.search-field input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--fs-13);
+  color: var(--text-900);
+  width: 100%;
+  min-width: 0;
+}
+.search-field input::placeholder { color: var(--text-400); font-weight: 400; }
+
+.search-filter-btn {
+  border: none;
+  background: transparent;
+  padding: 6px;
+  color: var(--text-600);
+  display: flex;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.search-filter-btn svg { width: 18px; height: 18px; }
+
+.btn-signin {
+  border: none;
+  background: var(--paper-0);
+  color: var(--ink-900);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  height: 40px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* ===================== "Cards for you" teaser ===================== */
+/* Lives inside .hero-banner, on the same gradient — not its own card. */
+.foryou-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4) 0;
+}
+
+.foryou-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.foryou-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-h2);
+  color: var(--text-inverse);
+}
+
+.foryou-arrow { color: var(--amber-500); width: 14px; height: 14px; flex-shrink: 0; }
+
+.foryou-sub { font-size: var(--fs-12); color: rgba(255,255,255,0.75); }
+
+/* Small fanned-out card stack — stands in for "picked for you" listings */
+.foryou-stack {
+  position: relative;
+  width: 62px;
+  height: 46px;
+  flex-shrink: 0;
+}
+
+.stack-card {
+  position: absolute;
+  top: 0;
+  width: 38px;
+  height: 46px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.94);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.18);
+}
+.stack-card-1 { left: 0; transform: rotate(-10deg); background: rgba(255,255,255,0.75); }
+.stack-card-2 { left: 12px; transform: rotate(4deg); background: rgba(255,255,255,0.88); }
+.stack-card-3 {
+  left: 22px;
+  background: linear-gradient(155deg, var(--amber-500), var(--amber-600));
+  box-shadow: 0 6px 14px rgba(0,0,0,0.22);
+}
+
+/* ===================== Category grid ===================== */
+/* Two independent horizontal rows — each row sizes its own cards,
+   so a wide card in one row never stretches the column in the other row. */
+.category-scroller {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+
+.cat-row {
+  display: flex;
+  gap: var(--sp-3);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+.cat-row::-webkit-scrollbar { display: none; }
+
+/* Category tiles sit directly on the page's unified gradient — no separate band. */
+.cat-tile {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+  width: 128px;
+  height: 76px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Wide tiles (long category names) span more horizontal space
+   while keeping the same fixed height — a rectangle, not a pill. */
+.cat-tile.is-wide {
+  width: 220px;
+}
+
+.cat-tile-label {
+  font-size: var(--fs-subhead);
+  font-weight: var(--fw-subhead);
+  line-height: var(--lh-subhead);
+  color: var(--text-900);
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+/* ===================== Section heading ===================== */
+.section-heading {
+  padding: var(--sp-5) var(--sp-4) var(--sp-2);
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-h2);
+  line-height: var(--lh-h2);
+  color: var(--text-900);
+}
+
+/* ===================== Listing feed ===================== */
+.listing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-4) var(--sp-4);
+}
+
+/* Fixed-shape empty listing placeholder card.
+   Dimensions are locked so future real content drops in without reflow:
+   - photo: 1:1 square
+   - title: exactly 2 lines (2.6em reserved)
+   - price: 1 line
+   - location: 1 line
+*/
+.listing-card {
+  background: var(--paper-0);
+  border: 1px solid var(--line-100);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-card);
+}
+
+.listing-photo {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: repeating-linear-gradient(
+    135deg,
+    #EDEAE2,
+    #EDEAE2 10px,
+    #E4E0D5 10px,
+    #E4E0D5 20px
+  );
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.listing-photo svg { width: 34px; height: 34px; color: var(--text-400); opacity: 0.7; }
+
+.listing-fav {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.listing-fav svg { width: 16px; height: 16px; color: var(--ink-900); }
+
+.listing-body {
+  padding: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.listing-title {
+  font-size: var(--fs-13);
+  line-height: 1.3;
+  color: var(--text-600);
+  height: 2.6em; /* exactly 2 lines reserved */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.listing-price {
+  font-size: var(--fs-16);
+  font-weight: 700;
+  color: var(--text-900);
+  height: 1.3em;
+}
+
+.listing-location {
+  font-size: var(--fs-12);
+  color: var(--text-400);
+  height: 1.2em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.listing-card.is-empty .listing-title,
+.listing-card.is-empty .listing-price,
+.listing-card.is-empty .listing-location {
+  border-radius: 4px;
+  background: var(--line-100);
+  color: transparent;
+}
+.listing-card.is-empty .listing-price { width: 60%; }
+.listing-card.is-empty .listing-location { width: 40%; }
+.listing-card.is-empty .listing-fav { display: none; }
+
+/* ===================== Bottom tab bar ===================== */
+.tabbar {
+  position: relative;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  background: var(--paper-0);
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.03);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  flex-shrink: 0;
+}
+
+.tab-item {
+  border: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 2px 10px;
+  color: #C4C4C4;
+  cursor: pointer;
+}
+.tab-item svg { width: 30px; height: 30px; }
+.tab-item span { font-size: var(--fs-13); font-weight: 500; }
+.tab-item.is-active { color: #000000; }
+.tab-item.is-active svg { color: #000000; }
+
+/* Lock the app shell to the viewport height on the home screen so the
+   tab bar stays fixed and the scrolling feed never renders on top of it. */
+.app.has-tabbar {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.page-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: var(--sp-4);
+  /* Flat soft pastel grey behind the categories and listings —
+     no gradient here; the gradient lives only in .hero-banner above. */
+  background-color: #F6F7F9;
+}
+
+</style>
+</head>
+<body>
+<div class="app has-tabbar">
+
+  <div class="page-scroll">
+
+    <div class="hero-banner">
+      <header class="sticky-search">
+        <div class="hero-row">
+          <div class="search-field" onclick="this.querySelector('input').focus()">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M10.5 4C7.5 4 5 6.5 5 9.5C5 12.5 7.5 15 10.5 15C11.8 15 13 14.5 13.9 13.7L13.9 13.7C14 13.8 14 13.9 14.1 14L17.6 17.5C18 17.9 18.6 17.9 19 17.5C19.4 17.1 19.4 16.5 19 16.1L15.5 12.6C15.4 12.5 15.3 12.4 15.2 12.4C16 11.5 16.5 10.3 16.5 9.5C16.5 6.5 14 4 11 4H10.5ZM7 9.5C7 7.6 8.6 6 10.5 6C12.4 6 14 7.6 14 9.5C14 11.4 12.4 13 10.5 13C8.6 13 7 11.4 7 9.5Z"/>
+            </svg>
+            <input type="text" data-i18n-placeholder="search.placeholder" placeholder="Meklēt visos reģionos…">
+            <button class="search-filter-btn" type="button" aria-label="Filtri">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 7H20M8 12H16M11 17H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="8" cy="7" r="1.6" fill="currentColor" stroke="var(--paper-0)" stroke-width="1"/>
+                <circle cx="16" cy="12" r="1.6" fill="currentColor" stroke="var(--paper-0)" stroke-width="1"/>
+                <circle cx="11" cy="17" r="1.6" fill="currentColor" stroke="var(--paper-0)" stroke-width="1"/>
+              </svg>
+            </button>
+          </div>
+          <a href="auth.html" class="btn-signin" data-i18n="nav.signin">Ienākt</a>
+        </div>
+      </header>
+
+      <a class="foryou-row" href="#">
+        <div class="foryou-text">
+          <span class="foryou-title">
+            <span data-i18n="home.foryou.title">Kartītes tev</span>
+            <svg class="foryou-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="foryou-sub" data-i18n="home.foryou.sub">Pēc taviem meklējumiem un pilsētas</span>
+        </div>
+        <div class="foryou-stack" aria-hidden="true">
+          <span class="stack-card stack-card-1"></span>
+          <span class="stack-card stack-card-2"></span>
+          <span class="stack-card stack-card-3"></span>
+        </div>
+      </a>
+    </div>
+
+
+    <!-- Category grid: two rows, horizontal scroll, custom duotone icons -->
+    <nav class="category-scroller" aria-label="Kategorijas">
+
+      <div class="cat-row">
+        <a class="cat-tile is-wide" href="#">
+          <span class="cat-tile-label" data-i18n="cat.realestate">Nekustamais īpašums</span>
+        </a>
+
+        <a class="cat-tile" href="#">
+          <span class="cat-tile-label" data-i18n="cat.transport">Transports</span>
+        </a>
+
+        <a class="cat-tile is-wide" href="#">
+          <span class="cat-tile-label" data-i18n="cat.clothes">Apģērbs, apavi</span>
+        </a>
+
+        <a class="cat-tile" href="#">
+          <span class="cat-tile-label" data-i18n="cat.parts">Rezerves daļas</span>
+        </a>
+      </div>
+
+      <div class="cat-row">
+        <a class="cat-tile" href="#">
+          <span class="cat-tile-label" data-i18n="cat.services">Pakalpojumi</span>
+        </a>
+
+        <a class="cat-tile is-wide" href="#">
+          <span class="cat-tile-label" data-i18n="cat.home">Mājai un dārzam</span>
+        </a>
+
+        <a class="cat-tile" href="#">
+          <span class="cat-tile-label" data-i18n="cat.jobs">Darbs</span>
+        </a>
+
+        <a class="cat-tile" href="#">
+          <span class="cat-tile-label" data-i18n="cat.business">Bizness 360</span>
+        </a>
+      </div>
+
+    </nav>
+
+    <h2 class="section-heading" data-i18n="home.recommended">Ieteiktie sludinājumi</h2>
+
+    <!-- Empty listing placeholders: fixed dimensions, ready for real data.
+         Each card = 1:1 photo + 2-line title + price line + location line. -->
+    <div class="listing-grid" id="listing-grid">
+      <!-- 8 placeholders rendered by JS to keep markup DRY; static fallback below for no-JS -->
+      <noscript>
+        <article class="listing-card is-empty">
+          <div class="listing-photo">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="8.5" cy="10" r="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M3 16L8 12L12 15L16 11L21 16" stroke="currentColor" stroke-width="1.6"/></svg>
+          </div>
+          <div class="listing-body">
+            <div class="listing-title">&nbsp;</div>
+            <div class="listing-price">&nbsp;</div>
+            <div class="listing-location">&nbsp;</div>
+          </div>
+        </article>
+      </noscript>
+    </div>
+
+  </div>
+
+  <nav class="tabbar" aria-label="Galvenā navigācija">
+    <button class="tab-item is-active" type="button">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M11 4C7.1 4 4 7.1 4 11C4 14.9 7.1 18 11 18C14.9 18 18 14.9 18 11C18 7.1 14.9 4 11 4ZM7 11C7 8.8 8.8 7 11 7C13.2 7 15 8.8 15 11C15 13.2 13.2 15 11 15C8.8 15 7 13.2 7 11Z"/>
+        <rect x="15.3" y="14.9" width="3.2" height="7.4" rx="1.6" transform="rotate(-45 15.3 14.9)"/>
+      </svg>
+      <span data-i18n="tab.search">Meklēt</span>
+    </button>
+    <button class="tab-item" type="button">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 21C12 21 3.5 15.9 3.5 9.8C3.5 6.7 5.9 4.3 8.9 4.3C10.5 4.3 12 5.1 12 6.4C12 5.1 13.5 4.3 15.1 4.3C18.1 4.3 20.5 6.7 20.5 9.8C20.5 15.9 12 21 12 21Z"/>
+      </svg>
+      <span data-i18n="tab.favorites">Izlase</span>
+    </button>
+    <button class="tab-item" type="button">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="3" width="16" height="18" rx="3.5"/>
+        <rect x="7.2" y="7.2" width="9.6" height="1.8" rx="0.9" fill="var(--paper-0)"/>
+        <rect x="7.2" y="10.6" width="9.6" height="1.8" rx="0.9" fill="var(--paper-0)"/>
+        <circle cx="16.6" cy="17.4" r="3.6" fill="currentColor"/>
+        <path d="M16.6 15.6V19.2M14.8 17.4H18.4" stroke="var(--paper-0)" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <span data-i18n="tab.listings">Sludinājumi</span>
+    </button>
+    <button class="tab-item" type="button">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 11.5C4 7.4 7.6 4 12 4C16.4 4 20 7.4 20 11.5C20 15.6 16.4 19 12 19C10.9 19 9.9 18.8 9 18.4L5.2 19.7C4.6 19.9 4 19.4 4.2 18.8L5.3 16C4.5 14.7 4 13.2 4 11.5Z"/>
+      </svg>
+      <span data-i18n="tab.messages">Ziņas</span>
+    </button>
+    <a class="tab-item" href="auth.html">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="7.6" r="4"/>
+        <path d="M4 20.5C4 16.4 7.6 13.2 12 13.2C16.4 13.2 20 16.4 20 20.5C20 21.1 19.5 21.5 19 21.5H5C4.5 21.5 4 21.1 4 20.5Z"/>
+      </svg>
+      <span data-i18n="tab.profile">Profils</span>
+    </a>
+  </nav>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "dz_lang";
+  var DEFAULT_LANG = "lv";
+
+  var DICT = {
+    lv: {
+      "app.title": "Dzintars — sludinājumi Latvijā",
+      "nav.signin": "Ienākt",
+      "search.placeholder": "Meklēt visos reģionos…",
+      "home.foryou.title": "Kartītes tev",
+      "home.foryou.sub": "Pēc taviem meklējumiem un pilsētas",
+      "home.recommended": "Ieteiktie sludinājumi",
+      "cat.realestate": "Nekustamais īpašums",
+      "cat.transport": "Transports",
+      "cat.parts": "Rezerves daļas",
+      "cat.clothes": "Apģērbs, apavi",
+      "cat.services": "Pakalpojumi",
+      "cat.jobs": "Darbs",
+      "cat.business": "Bizness 360",
+      "cat.home": "Mājai un dārzam",
+      "tab.search": "Meklēt",
+      "tab.favorites": "Izlase",
+      "tab.listings": "Sludinājumi",
+      "tab.messages": "Ziņas",
+      "tab.profile": "Profils",
+      "listing.placeholder.title": "Sludinājuma nosaukums parādīsies šeit",
+      "listing.placeholder.price": "Cena",
+      "listing.placeholder.location": "Pilsēta",
+      "auth.title": "Sveicināti!",
+      "auth.subtitle": "Ienāc vai reģistrējies, lai turpinātu",
+      "auth.google": "Turpināt ar Gmail",
+      "auth.emailLabel": "E-pasts vai tālrunis",
+      "auth.emailPlaceholder": "vards@epasts.lv",
+      "auth.continue": "Turpināt",
+      "auth.or": "vai",
+      "auth.terms": "Turpinot, jūs piekrītat lietošanas noteikumiem un privātuma politikai.",
+      "auth.demoNotice": "Šī ir tikai maketa forma — reģistrācija vēl nedarbojas."
+    },
+    ru: {
+      "app.title": "Dzintars — объявления в Латвии",
+      "nav.signin": "Войти",
+      "search.placeholder": "Поиск во всех регионах…",
+      "home.foryou.title": "Карточки для вас",
+      "home.foryou.sub": "По вашим поискам и городу",
+      "home.recommended": "Рекомендуемые объявления",
+      "cat.realestate": "Недвижимость",
+      "cat.transport": "Транспорт",
+      "cat.parts": "Запчасти",
+      "cat.clothes": "Одежда, обувь",
+      "cat.services": "Услуги",
+      "cat.jobs": "Работа",
+      "cat.business": "Бизнес 360",
+      "cat.home": "Для дома и дачи",
+      "tab.search": "Поиск",
+      "tab.favorites": "Избранное",
+      "tab.listings": "Объявления",
+      "tab.messages": "Сообщения",
+      "tab.profile": "Профиль",
+      "listing.placeholder.title": "Здесь появится название объявления",
+      "listing.placeholder.price": "Цена",
+      "listing.placeholder.location": "Город",
+      "auth.title": "Добро пожаловать!",
+      "auth.subtitle": "Войдите или зарегистрируйтесь, чтобы продолжить",
+      "auth.google": "Продолжить с Gmail",
+      "auth.emailLabel": "Почта или телефон",
+      "auth.emailPlaceholder": "imya@pochta.lv",
+      "auth.continue": "Продолжить",
+      "auth.or": "или",
+      "auth.terms": "Продолжая, вы принимаете условия использования и политику конфиденциальности.",
+      "auth.demoNotice": "Это форма-макет — регистрация пока не работает."
+    },
+    en: {
+      "app.title": "Dzintars — classifieds in Latvia",
+      "nav.signin": "Sign in",
+      "search.placeholder": "Search all regions…",
+      "home.foryou.title": "Picked for you",
+      "home.foryou.sub": "Based on your searches and city",
+      "home.recommended": "Recommended listings",
+      "cat.realestate": "Real estate",
+      "cat.transport": "Vehicles",
+      "cat.parts": "Spare parts",
+      "cat.clothes": "Clothes, shoes",
+      "cat.services": "Services",
+      "cat.jobs": "Jobs",
+      "cat.business": "Business 360",
+      "cat.home": "Home & garden",
+      "tab.search": "Search",
+      "tab.favorites": "Favorites",
+      "tab.listings": "Listings",
+      "tab.messages": "Messages",
+      "tab.profile": "Profile",
+      "listing.placeholder.title": "Listing title will appear here",
+      "listing.placeholder.price": "Price",
+      "listing.placeholder.location": "City",
+      "auth.title": "Welcome!",
+      "auth.subtitle": "Sign in or sign up to continue",
+      "auth.google": "Continue with Gmail",
+      "auth.emailLabel": "Email or phone",
+      "auth.emailPlaceholder": "name@email.com",
+      "auth.continue": "Continue",
+      "auth.or": "or",
+      "auth.terms": "By continuing you agree to the terms of use and privacy policy.",
+      "auth.demoNotice": "This is a mockup form only — sign-up isn't wired up yet."
+    }
+  };
+
+  function getLang() {
+    var lang = DEFAULT_LANG;
+    try {
+      var stored = localStorage.getItem(STORAGE_KEY);
+      if (stored && DICT[stored]) lang = stored;
+    } catch (e) { /* storage unavailable */ }
+    return lang;
+  }
+
+  function applyTranslations(lang) {
+    var dict = DICT[lang] || DICT[DEFAULT_LANG];
+    document.documentElement.setAttribute("lang", lang);
+
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      var key = el.getAttribute("data-i18n");
+      if (dict[key]) el.textContent = dict[key];
+    });
+
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
+      var key = el.getAttribute("data-i18n-placeholder");
+      if (dict[key]) el.setAttribute("placeholder", dict[key]);
+    });
+
+    var titleEl = document.querySelector("title[data-i18n]");
+    if (titleEl && dict[titleEl.getAttribute("data-i18n")]) {
+      document.title = dict[titleEl.getAttribute("data-i18n")];
+    }
+  }
+
+  window.Dzintars = window.Dzintars || {};
+  window.Dzintars.i18n = {
+    STORAGE_KEY: STORAGE_KEY,
+    dict: DICT,
+    getLang: getLang,
+    t: function (key) {
+      var dict = DICT[getLang()] || DICT[DEFAULT_LANG];
+      return dict[key] || key;
+    },
+    apply: function () { applyTranslations(getLang()); }
+  };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    applyTranslations(getLang());
+  });
+})();
+
+</script>
+<script>
+(function () {
+  "use strict";
+
+  // Placeholder icon shown inside every empty listing photo slot.
+  var PHOTO_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/>' +
+    '<circle cx="8.5" cy="10" r="1.5" stroke="currentColor" stroke-width="1.6"/>' +
+    '<path d="M3 16L8 12L12 15L16 11L21 16" stroke="currentColor" stroke-width="1.6"/>' +
+    '</svg>';
+
+  var LISTING_COUNT = 8; // fixed grid size for this static placeholder feed
+
+  function buildCard() {
+    var article = document.createElement("article");
+    article.className = "listing-card is-empty";
+    article.innerHTML =
+      '<div class="listing-photo">' + PHOTO_ICON + '</div>' +
+      '<div class="listing-body">' +
+        '<div class="listing-title"></div>' +
+        '<div class="listing-price"></div>' +
+        '<div class="listing-location"></div>' +
+      '</div>';
+    return article;
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var grid = document.getElementById("listing-grid");
+    if (!grid) return;
+    for (var i = 0; i < LISTING_COUNT; i++) {
+      grid.appendChild(buildCard());
+    }
+  });
+
+  // Toggle the sticky search bar's surface once the teal hero banner has
+  // scrolled fully out of view: transparent-on-gradient -> frosted neutral.
+  document.addEventListener("DOMContentLoaded", function () {
+    var banner = document.querySelector(".hero-banner");
+    var stickySearch = document.querySelector(".sticky-search");
+    var scrollContainer = document.querySelector(".page-scroll");
+    if (!banner || !stickySearch || !scrollContainer || !("IntersectionObserver" in window)) return;
+
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          // entry.isIntersecting is false once the banner's bottom edge
+          // has scrolled above the sticky bar's threshold.
+          stickySearch.classList.toggle("is-scrolled", !entry.isIntersecting);
+        });
+      },
+      {
+        root: scrollContainer,
+        // Shrink the top of the observed root so the banner is considered
+        // "gone" as soon as it passes behind the sticky bar's own height,
+        // not only once it's fully off-screen.
+        rootMargin: "-56px 0px 0px 0px",
+        threshold: 0
+      }
+    );
+
+    observer.observe(banner);
+  });
+})();
+
+
+</script>
+</body>
+</html>
