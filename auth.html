@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title data-i18n="auth.title">Sveicināti!</title>
+<style>
+/* =========================================================
+   Base theme tokens — "Dzintars" marketplace (Latvia)
+   Not-Avito palette: deep ink blue + amber (Baltic amber),
+   warm neutral background, no neon.
+   ========================================================= */
+
+:root {
+  /* Core palette — Design tokens per spec */
+  --ink-900: #0D3B43;    /* Deep Turquoise — primary dark, header gradient start, accent buttons */
+  --ink-800: #124A54;    /* mid-point of hero gradient */
+  --ink-700: #185863;    /* Emerald Glow — primary accent, gradient mid/end */
+  --ink-500: #2A7A88;    /* Cyan Light — soft accent, icon highlights */
+  --brand-600: #0D3B43;
+  --brand-500: #185863;
+  --amber-600: #E5A400; /* kept for small accents (arrows, highlights) */
+  --amber-500: #F5C21E;
+  --amber-100: #FFF3CF;
+  --paper-50:  #F6F7F9; /* Page Background */
+  --paper-0:   #FFFFFF; /* Card & Sheet Surface */
+  --line-100:  #E5E7EB; /* hairline borders, handlebar color */
+  --line-200:  #D8DBDF;
+  --text-900:  #111827; /* Text Primary */
+  --text-600:  #6B7280; /* Text Secondary */
+  --text-400:  #9CA3AF;
+  --text-inverse: #FFFFFF; /* Text On Dark */
+  --success-600: #185863;
+  --danger-600: #B84C42;
+  --overlay: rgba(13,27,30,0.45); /* sheet backdrop */
+
+  /* Elevation */
+  --shadow-card: 0 1px 2px rgba(13,59,67,0.06), 0 1px 1px rgba(13,59,67,0.04);
+  --shadow-pop:  0 8px 24px rgba(13,59,67,0.16);
+  --shadow-sticky: 0 4px 16px rgba(0,0,0,0.05);
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  /* Spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+
+  /* Type — one geometric grotesk stack used everywhere in the UI */
+  --font-ui: "Inter", "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Title H1 — screen headings: 22-24px / Bold / 120% */
+  --fs-h1: 1.375rem;      /* 22px */
+  --lh-h1: 1.2;
+  --fw-h1: 700;
+
+  /* Title H2 — block headings: 18-20px / SemiBold / 125% */
+  --fs-h2: 1.125rem;      /* 18px */
+  --lh-h2: 1.25;
+  --fw-h2: 600;
+
+  /* Subhead — category names, inputs, button labels: 15-16px / Medium / 135% */
+  --fs-subhead: 0.9375rem; /* 15px */
+  --lh-subhead: 1.35;
+  --fw-subhead: 500;
+
+  /* Body — subtitles, descriptions: 14-15px / Regular / 140% */
+  --fs-body: 0.875rem;    /* 14px */
+  --lh-body: 1.4;
+  --fw-body: 400;
+
+  /* Caption / Label — fine print, dates: 12-13px / Regular-Medium / 130% */
+  --fs-caption: 0.75rem;  /* 12px */
+  --lh-caption: 1.3;
+  --fw-caption: 400;
+
+  /* Micro — tab bar labels: 10-11px / Medium / 120% */
+  --fs-micro: 0.6875rem;  /* 11px */
+  --lh-micro: 1.2;
+  --fw-micro: 500;
+
+  /* Legacy aliases kept so existing component CSS keeps working */
+  --fs-11: var(--fs-micro);
+  --fs-12: var(--fs-caption);
+  --fs-13: var(--fs-subhead);
+  --fs-14: var(--fs-body);
+  --fs-16: 1rem;
+  --fs-18: var(--fs-h2);
+  --fs-20: 1.25rem;
+  --fs-24: var(--fs-h1);
+  --fs-28: 1.75rem;
+
+  /* Layout */
+  --max-w: 480px; /* mobile-first container */
+  --tabbar-h: 62px;
+  --topbar-h: 56px;
+  --screen-margin: 16px; /* side margins from spec */
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper-50);
+  color: var(--text-900);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-body);
+  -webkit-font-smoothing: antialiased;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.app {
+  width: 100%;
+  max-width: var(--max-w);
+  min-height: 100vh;
+  background: var(--paper-50);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+a { color: inherit; text-decoration: none; font-family: inherit; }
+button { font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+
+/* Base type-scale utility classes, usable anywhere in the app */
+h1, .type-h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: var(--fw-h1); margin: 0; }
+h2, .type-h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: var(--fw-h2); margin: 0; }
+.type-subhead { font-size: var(--fs-subhead); line-height: var(--lh-subhead); font-weight: var(--fw-subhead); }
+.type-body { font-size: var(--fs-body); line-height: var(--lh-body); font-weight: var(--fw-body); }
+.type-caption { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: var(--fw-caption); }
+.type-micro { font-size: var(--fs-micro); line-height: var(--lh-micro); font-weight: var(--fw-micro); }
+
+img, svg { display: block; max-width: 100%; }
+
+/* Focus visibility (accessibility floor) */
+:focus-visible {
+  outline: 2px solid var(--ink-700);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+
+
+
+.auth-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--paper-50);
+}
+
+.auth-top {
+  display: flex;
+  align-items: center;
+  padding: var(--sp-4);
+}
+
+.auth-back {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--line-100);
+  background: var(--paper-0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.auth-back svg { width: 18px; height: 18px; color: var(--text-900); }
+
+.auth-body {
+  flex: 1;
+  padding: var(--sp-2) var(--sp-5) var(--sp-6);
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-mark {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(155deg, var(--amber-500), var(--amber-600));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--sp-5);
+}
+.auth-mark svg { width: 30px; height: 30px; }
+
+.auth-title {
+  font-size: var(--fs-24);
+  font-weight: 700;
+  margin: 0 0 var(--sp-2);
+  color: var(--text-900);
+}
+
+.auth-subtitle {
+  font-size: var(--fs-14);
+  color: var(--text-600);
+  margin: 0 0 var(--sp-6);
+}
+
+.auth-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  border: 1px solid var(--line-200);
+  border-radius: var(--radius-md);
+  padding: 13px var(--sp-4);
+  background: var(--paper-0);
+  font-size: var(--fs-14);
+  font-weight: 600;
+  color: var(--text-900);
+  cursor: pointer;
+  margin-bottom: var(--sp-5);
+}
+.auth-social svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-5);
+  color: var(--text-400);
+  font-size: var(--fs-12);
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line-100);
+}
+
+.auth-field-label {
+  font-size: var(--fs-13);
+  font-weight: 600;
+  color: var(--text-900);
+  margin-bottom: var(--sp-2);
+  display: block;
+}
+
+.auth-input {
+  width: 100%;
+  border: 1px solid var(--line-200);
+  border-radius: var(--radius-md);
+  padding: 14px var(--sp-4);
+  font-size: var(--fs-16);
+  color: var(--text-900);
+  background: var(--paper-0);
+  margin-bottom: var(--sp-5);
+}
+.auth-input::placeholder { color: var(--text-400); }
+.auth-input:focus { border-color: var(--amber-600); outline: none; }
+
+.auth-submit {
+  width: 100%;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 15px var(--sp-5);
+  background: var(--ink-900);
+  color: var(--text-inverse);
+  font-size: var(--fs-16);
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: var(--sp-4);
+}
+.auth-submit:disabled {
+  background: var(--line-200);
+  color: var(--text-400);
+}
+
+.auth-terms {
+  font-size: var(--fs-12);
+  color: var(--text-400);
+  line-height: 1.5;
+  text-align: center;
+  margin-top: auto;
+}
+
+.auth-demo-badge {
+  align-self: flex-start;
+  background: var(--amber-100);
+  color: var(--amber-600);
+  font-size: var(--fs-12);
+  font-weight: 600;
+  padding: 6px var(--sp-3);
+  border-radius: var(--radius-pill);
+  margin-bottom: var(--sp-4);
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <main class="auth-screen">
+
+    <div class="auth-top">
+      <button class="auth-back" type="button" onclick="window.location.href='home.html'" aria-label="Atpakaļ">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="auth-body">
+      <span class="auth-demo-badge" data-i18n="auth.demoNotice">Šī ir tikai maketa forma — reģistrācija vēl nedarbojas.</span>
+
+      <div class="auth-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="8" r="3.4" stroke="#1B4F5C" stroke-width="1.9"/>
+          <path d="M5 20C5 16.7 8.1 14 12 14C15.9 14 19 16.7 19 20" stroke="#1B4F5C" stroke-width="1.9" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <h1 class="auth-title" data-i18n="auth.title">Sveicināti!</h1>
+      <p class="auth-subtitle" data-i18n="auth.subtitle">Ienāc vai reģistrējies, lai turpinātu</p>
+
+      <button class="auth-social" type="button" id="btn-google" disabled>
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#FFC107" d="M43.6 20.5H42V20.4H24v7.2h11.3c-1.6 4.6-6 7.9-11.3 7.9-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.1-5.1C33.6 5 29 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.4-.4-3.5z"/>
+          <path fill="#FF3D00" d="M6.3 14.7l5.9 4.3C13.8 15.3 18.5 12 24 12c3 0 5.8 1.1 7.9 3l5.1-5.1C33.6 5 29 3 24 3c-7.4 0-13.8 4.1-17.1 10.2z"/>
+          <path fill="#4CAF50" d="M24 45c5 0 9.5-1.9 12.9-5l-6-4.9C29.1 36.6 26.7 37.5 24 37.5c-5.2 0-9.6-3.3-11.3-7.9l-6 4.6C10.1 40.8 16.5 45 24 45z"/>
+          <path fill="#1976D2" d="M43.6 20.5H42V20.4H24v7.2h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6 4.9C40.7 35.6 45 30.4 45 24c0-1.2-.1-2.4-1.4-3.5z"/>
+        </svg>
+        <span data-i18n="auth.google">Turpināt ar Gmail</span>
+      </button>
+
+      <div class="auth-divider" data-i18n="auth.or">vai</div>
+
+      <label class="auth-field-label" for="auth-contact" data-i18n="auth.emailLabel">E-pasts vai tālrunis</label>
+      <input class="auth-input" type="text" id="auth-contact" data-i18n-placeholder="auth.emailPlaceholder" placeholder="vards@epasts.lv" disabled>
+
+      <button class="auth-submit" type="button" disabled data-i18n="auth.continue">Turpināt</button>
+
+      <p class="auth-terms" data-i18n="auth.terms">Turpinot, jūs piekrītat lietošanas noteikumiem un privātuma politikai.</p>
+    </div>
+
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "dz_lang";
+  var DEFAULT_LANG = "lv";
+
+  var DICT = {
+    lv: {
+      "app.title": "Dzintars — sludinājumi Latvijā",
+      "nav.signin": "Ienākt",
+      "search.placeholder": "Meklēt visos reģionos…",
+      "home.foryou.title": "Kartītes tev",
+      "home.foryou.sub": "Pēc taviem meklējumiem un pilsētas",
+      "home.recommended": "Ieteiktie sludinājumi",
+      "cat.realestate": "Nekustamais īpašums",
+      "cat.transport": "Transports",
+      "cat.parts": "Rezerves daļas",
+      "cat.clothes": "Apģērbs, apavi",
+      "cat.services": "Pakalpojumi",
+      "cat.jobs": "Darbs",
+      "cat.business": "Bizness 360",
+      "cat.home": "Mājai un dārzam",
+      "tab.search": "Meklēt",
+      "tab.favorites": "Izlase",
+      "tab.listings": "Sludinājumi",
+      "tab.messages": "Ziņas",
+      "tab.profile": "Profils",
+      "listing.placeholder.title": "Sludinājuma nosaukums parādīsies šeit",
+      "listing.placeholder.price": "Cena",
+      "listing.placeholder.location": "Pilsēta",
+      "auth.title": "Sveicināti!",
+      "auth.subtitle": "Ienāc vai reģistrējies, lai turpinātu",
+      "auth.google": "Turpināt ar Gmail",
+      "auth.emailLabel": "E-pasts vai tālrunis",
+      "auth.emailPlaceholder": "vards@epasts.lv",
+      "auth.continue": "Turpināt",
+      "auth.or": "vai",
+      "auth.terms": "Turpinot, jūs piekrītat lietošanas noteikumiem un privātuma politikai.",
+      "auth.demoNotice": "Šī ir tikai maketa forma — reģistrācija vēl nedarbojas."
+    },
+    ru: {
+      "app.title": "Dzintars — объявления в Латвии",
+      "nav.signin": "Войти",
+      "search.placeholder": "Поиск во всех регионах…",
+      "home.foryou.title": "Карточки для вас",
+      "home.foryou.sub": "По вашим поискам и городу",
+      "home.recommended": "Рекомендуемые объявления",
+      "cat.realestate": "Недвижимость",
+      "cat.transport": "Транспорт",
+      "cat.parts": "Запчасти",
+      "cat.clothes": "Одежда, обувь",
+      "cat.services": "Услуги",
+      "cat.jobs": "Работа",
+      "cat.business": "Бизнес 360",
+      "cat.home": "Для дома и дачи",
+      "tab.search": "Поиск",
+      "tab.favorites": "Избранное",
+      "tab.listings": "Объявления",
+      "tab.messages": "Сообщения",
+      "tab.profile": "Профиль",
+      "listing.placeholder.title": "Здесь появится название объявления",
+      "listing.placeholder.price": "Цена",
+      "listing.placeholder.location": "Город",
+      "auth.title": "Добро пожаловать!",
+      "auth.subtitle": "Войдите или зарегистрируйтесь, чтобы продолжить",
+      "auth.google": "Продолжить с Gmail",
+      "auth.emailLabel": "Почта или телефон",
+      "auth.emailPlaceholder": "imya@pochta.lv",
+      "auth.continue": "Продолжить",
+      "auth.or": "или",
+      "auth.terms": "Продолжая, вы принимаете условия использования и политику конфиденциальности.",
+      "auth.demoNotice": "Это форма-макет — регистрация пока не работает."
+    },
+    en: {
+      "app.title": "Dzintars — classifieds in Latvia",
+      "nav.signin": "Sign in",
+      "search.placeholder": "Search all regions…",
+      "home.foryou.title": "Picked for you",
+      "home.foryou.sub": "Based on your searches and city",
+      "home.recommended": "Recommended listings",
+      "cat.realestate": "Real estate",
+      "cat.transport": "Vehicles",
+      "cat.parts": "Spare parts",
+      "cat.clothes": "Clothes, shoes",
+      "cat.services": "Services",
+      "cat.jobs": "Jobs",
+      "cat.business": "Business 360",
+      "cat.home": "Home & garden",
+      "tab.search": "Search",
+      "tab.favorites": "Favorites",
+      "tab.listings": "Listings",
+      "tab.messages": "Messages",
+      "tab.profile": "Profile",
+      "listing.placeholder.title": "Listing title will appear here",
+      "listing.placeholder.price": "Price",
+      "listing.placeholder.location": "City",
+      "auth.title": "Welcome!",
+      "auth.subtitle": "Sign in or sign up to continue",
+      "auth.google": "Continue with Gmail",
+      "auth.emailLabel": "Email or phone",
+      "auth.emailPlaceholder": "name@email.com",
+      "auth.continue": "Continue",
+      "auth.or": "or",
+      "auth.terms": "By continuing you agree to the terms of use and privacy policy.",
+      "auth.demoNotice": "This is a mockup form only — sign-up isn't wired up yet."
+    }
+  };
+
+  function getLang() {
+    var lang = DEFAULT_LANG;
+    try {
+      var stored = localStorage.getItem(STORAGE_KEY);
+      if (stored && DICT[stored]) lang = stored;
+    } catch (e) { /* storage unavailable */ }
+    return lang;
+  }
+
+  function applyTranslations(lang) {
+    var dict = DICT[lang] || DICT[DEFAULT_LANG];
+    document.documentElement.setAttribute("lang", lang);
+
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      var key = el.getAttribute("data-i18n");
+      if (dict[key]) el.textContent = dict[key];
+    });
+
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
+      var key = el.getAttribute("data-i18n-placeholder");
+      if (dict[key]) el.setAttribute("placeholder", dict[key]);
+    });
+
+    var titleEl = document.querySelector("title[data-i18n]");
+    if (titleEl && dict[titleEl.getAttribute("data-i18n")]) {
+      document.title = dict[titleEl.getAttribute("data-i18n")];
+    }
+  }
+
+  window.Dzintars = window.Dzintars || {};
+  window.Dzintars.i18n = {
+    STORAGE_KEY: STORAGE_KEY,
+    dict: DICT,
+    getLang: getLang,
+    t: function (key) {
+      var dict = DICT[getLang()] || DICT[DEFAULT_LANG];
+      return dict[key] || key;
+    },
+    apply: function () { applyTranslations(getLang()); }
+  };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    applyTranslations(getLang());
+  });
+})();
+
+</script>
+</body>
+</html>
