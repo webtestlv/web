@@ -123,14 +123,28 @@ html, body {
 
 body {
   min-height: 100vh;
+  min-height: 100svh; /* stable viewport height: doesn't shift when mobile browser chrome shows/hides */
   display: flex;
   justify-content: center;
+}
+
+/* On screens with a bottom tab bar, the document itself must never
+   scroll or resize — only the inner .page-scroll container does. If the
+   body were free to grow or shift with the mobile browser's own chrome,
+   any position: sticky element inside (like the search bar) would drift
+   along with it. Locking body's height here keeps that reference frame
+   completely stable. */
+body:has(.app.has-tabbar) {
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
 }
 
 .app {
   width: 100%;
   max-width: var(--max-w);
   min-height: 100vh;
+  min-height: 100svh;
   background: var(--paper-50);
   position: relative;
   display: flex;
