@@ -460,6 +460,7 @@ img, svg { display: block; max-width: 100%; }
   cursor: pointer;
 }
 .listing-fav svg { width: 16px; height: 16px; color: var(--ink-900); }
+.listing-fav.is-saved svg { fill: var(--danger-600); stroke: var(--danger-600); }
 
 .listing-body {
   padding: var(--sp-3);
@@ -815,6 +816,87 @@ img, svg { display: block; max-width: 100%; }
   line-height: 1.5;
 }
 
+/* Переключатель "Вход / Регистрация" — общий для auth.html и этого sheet */
+.auth-mode-switch {
+  display: flex;
+  background: var(--paper-50);
+  border: 1px solid var(--line-100);
+  border-radius: var(--radius-pill);
+  padding: 4px;
+  margin-bottom: var(--sp-5);
+}
+.auth-mode-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-pill);
+  padding: 10px var(--sp-3);
+  font-size: var(--fs-13);
+  font-weight: 600;
+  color: var(--text-600);
+  cursor: pointer;
+}
+.auth-mode-btn.is-active {
+  background: var(--paper-0);
+  color: var(--ink-900);
+  box-shadow: var(--shadow-card);
+}
+
+.auth-password-wrap {
+  position: relative;
+  margin-bottom: var(--sp-4);
+}
+.auth-password-wrap .sheet-input {
+  padding-right: 44px;
+}
+.auth-password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.auth-password-toggle svg { width: 20px; height: 20px; }
+.auth-password-toggle.is-visible { color: var(--ink-700); }
+
+.auth-error {
+  color: var(--danger-600);
+  font-size: var(--fs-12);
+  line-height: 1.4;
+  margin: var(--sp-1) 0 var(--sp-3);
+}
+.auth-error[hidden] { display: none; }
+
+.sheet-submit.is-loading {
+  color: transparent;
+  position: relative;
+}
+.sheet-submit.is-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  animation: auth-spin 0.7s linear infinite;
+}
+@keyframes auth-spin {
+  to { transform: rotate(360deg); }
+}
+
 </style>
 </head>
 <body>
@@ -841,7 +923,7 @@ img, svg { display: block; max-width: 100%; }
               </svg>
             </button>
           </div>
-          <button type="button" class="btn-signin" onclick="openAuthSheet()" data-i18n="nav.signin">Ienākt</button>
+          <button type="button" class="btn-signin" id="btn-signin" onclick="openAuthSheet()" data-i18n="nav.signin">Ienākt</button>
         </div>
       </header>
 
@@ -946,7 +1028,7 @@ img, svg { display: block; max-width: 100%; }
         </div>
         <h1 class="empty-state-title" data-i18n="empty.favorites.title">Saglabājiet sludinājumus, kas jums patīk</h1>
         <p class="empty-state-sub" data-i18n="empty.favorites.sub">Pieejiet tiem jebkurā brīdī no jebkuras ierīces</p>
-        <button class="empty-state-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
+        <button class="empty-state-cta js-guest-only-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
       </div>
     </div>
 
@@ -971,7 +1053,7 @@ img, svg { display: block; max-width: 100%; }
         </div>
         <h1 class="empty-state-title" data-i18n="empty.listings.title">Iespējams, jūsu sludinājums ieinteresēs kādu no 20 000 lietotāju</h1>
         <p class="empty-state-sub" data-i18n="empty.listings.sub">Ienāciet profilā, lai publicētu savu pirmo sludinājumu</p>
-        <button class="empty-state-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
+        <button class="empty-state-cta js-guest-only-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
       </div>
     </div>
 
@@ -995,12 +1077,12 @@ img, svg { display: block; max-width: 100%; }
         </div>
         <h1 class="empty-state-title" data-i18n="empty.messages.title">Sazinieties ar pārdevējiem un pircējiem tiešā čatā</h1>
         <p class="empty-state-sub" data-i18n="empty.messages.sub">Visas sarunas vienuviet, drošā un ērtā veidā</p>
-        <button class="empty-state-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
+        <button class="empty-state-cta js-guest-only-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
       </div>
     </div>
 
     <div class="tab-panel" data-panel="profile">
-      <div class="empty-state">
+      <div class="empty-state" id="profile-guest-state">
         <div class="empty-state-illustration" aria-hidden="true">
           <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -1018,7 +1100,30 @@ img, svg { display: block; max-width: 100%; }
         </div>
         <h1 class="empty-state-title" data-i18n="empty.profile.title">Ienāciet, lai pārvaldītu savu profilu</h1>
         <p class="empty-state-sub" data-i18n="empty.profile.sub">Sludinājumi, iestatījumi un vēsture vienuviet</p>
-        <button class="empty-state-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
+        <button class="empty-state-cta js-guest-only-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
+      </div>
+
+      <!-- Показывается вместо empty-state, когда пользователь залогинен.
+           По ТЗ: после успешной регистрации/входа здесь просто "ТЕСТ". -->
+      <div class="empty-state" id="profile-logged-in-state" hidden>
+        <div class="empty-state-illustration" aria-hidden="true">
+          <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="profileBodyOk" cx="35%" cy="25%" r="80%">
+                <stop offset="0%" stop-color="#2A7A88"/>
+                <stop offset="55%" stop-color="#185863"/>
+                <stop offset="100%" stop-color="#0D3B43"/>
+              </radialGradient>
+            </defs>
+            <ellipse cx="70" cy="122" rx="34" ry="8" fill="#0D3B43" opacity="0.1"/>
+            <circle cx="70" cy="56" r="24" fill="url(#profileBodyOk)"/>
+            <path d="M32 112C32 90 49 76 70 76C91 76 108 90 108 112C108 116 105 119 101 119H39C35 119 32 116 32 112Z" fill="url(#profileBodyOk)"/>
+            <ellipse cx="61" cy="47" rx="8" ry="5" fill="#FFFFFF" opacity="0.25"/>
+          </svg>
+        </div>
+        <h1 class="empty-state-title">ТЕСТ</h1>
+        <p class="empty-state-sub" id="profile-logged-in-login">&nbsp;</p>
+        <button class="empty-state-cta" type="button" id="profile-logout-btn" data-i18n="profile.logout">Iziet</button>
       </div>
     </div>
 
@@ -1072,8 +1177,6 @@ img, svg { display: block; max-width: 100%; }
     </div>
 
     <div class="sheet-body">
-      <span class="sheet-demo-badge" data-i18n="auth.demoNotice">Šī ir tikai maketa forma — reģistrācija vēl nedarbojas.</span>
-
       <div class="sheet-illustration" aria-hidden="true">
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -1096,7 +1199,12 @@ img, svg { display: block; max-width: 100%; }
       <h2 class="sheet-title" id="sheet-title" data-i18n="auth.title">Sveicināti!</h2>
       <p class="sheet-subtitle" data-i18n="auth.subtitle">Ienāc vai reģistrējies, lai turpinātu</p>
 
-      <button class="sheet-social" type="button" id="sheet-btn-google" disabled>
+      <div class="auth-mode-switch" role="tablist" aria-label="Auth mode">
+        <button type="button" class="auth-mode-btn is-active" id="sheet-mode-login" role="tab" aria-selected="true" data-i18n="auth.modeLogin">Ienākt</button>
+        <button type="button" class="auth-mode-btn" id="sheet-mode-register" role="tab" aria-selected="false" data-i18n="auth.modeRegister">Reģistrēties</button>
+      </div>
+
+      <button class="sheet-social" type="button" id="sheet-btn-google" disabled title="Drīzumā">
         <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
           <path fill="#FFC107" d="M43.6 20.5H42V20.4H24v7.2h11.3c-1.6 4.6-6 7.9-11.3 7.9-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.1-5.1C33.6 5 29 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.4-.4-3.5z"/>
           <path fill="#FF3D00" d="M6.3 14.7l5.9 4.3C13.8 15.3 18.5 12 24 12c3 0 5.8 1.1 7.9 3l5.1-5.1C33.6 5 29 3 24 3c-7.4 0-13.8 4.1-17.1 10.2z"/>
@@ -1108,10 +1216,25 @@ img, svg { display: block; max-width: 100%; }
 
       <div class="sheet-divider" data-i18n="auth.or">vai</div>
 
-      <label class="sheet-field-label" for="sheet-contact" data-i18n="auth.emailLabel">E-pasts vai tālrunis</label>
-      <input class="sheet-input" type="text" id="sheet-contact" data-i18n-placeholder="auth.emailPlaceholder" placeholder="vards@epasts.lv" disabled>
+      <form id="sheet-auth-form" novalidate>
+        <label class="sheet-field-label" for="sheet-contact" data-i18n="auth.emailLabel">E-pasts vai tālrunis</label>
+        <input class="sheet-input" type="text" id="sheet-contact" name="login" autocomplete="username" data-i18n-placeholder="auth.emailPlaceholder" placeholder="vards@epasts.lv" required>
 
-      <button class="sheet-submit" type="button" disabled data-i18n="auth.continue">Turpināt</button>
+        <label class="sheet-field-label" for="sheet-password" data-i18n="auth.passwordLabel">Parole</label>
+        <div class="auth-password-wrap">
+          <input class="sheet-input" type="password" id="sheet-password" name="password" autocomplete="current-password" data-i18n-placeholder="auth.passwordPlaceholder" placeholder="••••••••" required minlength="6" style="margin-bottom:0;">
+          <button type="button" class="auth-password-toggle" id="sheet-password-toggle" aria-label="Rādīt paroli">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+            </svg>
+          </button>
+        </div>
+
+        <p class="auth-error" id="sheet-auth-error" role="alert" hidden></p>
+
+        <button class="sheet-submit" type="submit" id="sheet-auth-submit" data-i18n="auth.continue">Turpināt</button>
+      </form>
 
       <p class="sheet-terms" data-i18n="auth.terms">Turpinot, jūs piekrītat lietošanas noteikumiem un privātuma politikai.</p>
     </div>
@@ -1119,6 +1242,7 @@ img, svg { display: block; max-width: 100%; }
 
 </div>
 
+<script src="dz-api.js"></script>
 <script>
 (function () {
   "use strict";
@@ -1167,7 +1291,22 @@ img, svg { display: block; max-width: 100%; }
       "empty.messages.title": "Sazinieties ar pārdevējiem un pircējiem tiešā čatā",
       "empty.messages.sub": "Visas sarunas vienuviet, drošā un ērtā veidā",
       "empty.profile.title": "Ienāciet, lai pārvaldītu savu profilu",
-      "empty.profile.sub": "Sludinājumi, iestatījumi un vēsture vienuviet"
+      "empty.profile.sub": "Sludinājumi, iestatījumi un vēsture vienuviet",
+      "profile.logout": "Iziet",
+      "nav.signout": "Iziet",
+      "auth.modeLogin": "Ienākt",
+      "auth.modeRegister": "Reģistrēties",
+      "auth.passwordLabel": "Parole",
+      "auth.passwordPlaceholder": "Vismaz 6 rakstzīmes",
+      "auth.continueRegister": "Reģistrēties",
+      "auth.error.missing_login": "Ievadi e-pastu vai tālruni.",
+      "auth.error.missing_password": "Ievadi paroli.",
+      "auth.error.password_too_short": "Parolei jābūt vismaz 6 rakstzīmju garai.",
+      "auth.error.invalid_email": "Pārbaudi e-pasta adresi.",
+      "auth.error.invalid_login": "Pārbaudi e-pastu vai tālruni.",
+      "auth.error.user_already_exists": "Šāds lietotājs jau eksistē. Mēģini ienākt.",
+      "auth.error.invalid_credentials": "Nepareizs e-pasts/tālrunis vai parole.",
+      "auth.error.request_failed": "Kaut kas nogāja greizi. Mēģini vēlreiz."
     },
     ru: {
       "app.title": "Dzintars — объявления в Латвии",
@@ -1209,7 +1348,22 @@ img, svg { display: block; max-width: 100%; }
       "empty.messages.title": "Общайтесь с продавцами и покупателями напрямую",
       "empty.messages.sub": "Все переписки в одном месте, безопасно и удобно",
       "empty.profile.title": "Войдите, чтобы управлять своим профилем",
-      "empty.profile.sub": "Объявления, настройки и история — всё в одном месте"
+      "empty.profile.sub": "Объявления, настройки и история — всё в одном месте",
+      "profile.logout": "Выйти",
+      "nav.signout": "Выйти",
+      "auth.modeLogin": "Войти",
+      "auth.modeRegister": "Регистрация",
+      "auth.passwordLabel": "Пароль",
+      "auth.passwordPlaceholder": "Минимум 6 символов",
+      "auth.continueRegister": "Зарегистрироваться",
+      "auth.error.missing_login": "Введите почту или телефон.",
+      "auth.error.missing_password": "Введите пароль.",
+      "auth.error.password_too_short": "Пароль должен быть не короче 6 символов.",
+      "auth.error.invalid_email": "Проверьте адрес почты.",
+      "auth.error.invalid_login": "Проверьте почту или телефон.",
+      "auth.error.user_already_exists": "Такой пользователь уже есть. Попробуйте войти.",
+      "auth.error.invalid_credentials": "Неверная почта/телефон или пароль.",
+      "auth.error.request_failed": "Что-то пошло не так. Попробуйте ещё раз."
     },
     en: {
       "app.title": "Dzintars — classifieds in Latvia",
@@ -1251,7 +1405,22 @@ img, svg { display: block; max-width: 100%; }
       "empty.messages.title": "Chat directly with sellers and buyers",
       "empty.messages.sub": "All your conversations in one safe, convenient place",
       "empty.profile.title": "Sign in to manage your profile",
-      "empty.profile.sub": "Listings, settings and history, all in one place"
+      "empty.profile.sub": "Listings, settings and history, all in one place",
+      "profile.logout": "Sign out",
+      "nav.signout": "Sign out",
+      "auth.modeLogin": "Sign in",
+      "auth.modeRegister": "Sign up",
+      "auth.passwordLabel": "Password",
+      "auth.passwordPlaceholder": "At least 6 characters",
+      "auth.continueRegister": "Sign up",
+      "auth.error.missing_login": "Enter your email or phone.",
+      "auth.error.missing_password": "Enter your password.",
+      "auth.error.password_too_short": "Password must be at least 6 characters.",
+      "auth.error.invalid_email": "Check your email address.",
+      "auth.error.invalid_login": "Check your email or phone.",
+      "auth.error.user_already_exists": "This account already exists. Try signing in instead.",
+      "auth.error.invalid_credentials": "Wrong email/phone or password.",
+      "auth.error.request_failed": "Something went wrong. Please try again."
     }
   };
 
@@ -1313,13 +1482,25 @@ img, svg { display: block; max-width: 100%; }
     '<path d="M3 16L8 12L12 15L16 11L21 16" stroke="currentColor" stroke-width="1.6"/>' +
     '</svg>';
 
+  // "В избранное" — кнопка уже описана в CSS (.listing-fav) и скрыта на
+  // плейсхолдер-карточках правилом ".is-empty .listing-fav". Как только
+  // здесь появятся настоящие объявления (без класса is-empty и с
+  // data-listing-id, заполненным реальным id), кнопка станет видимой и
+  // рабочей сама по себе — доп. правок не потребуется.
+  var FAV_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="M12 21C12 21 3.5 15.9 3.5 9.8C3.5 6.7 5.9 4.3 8.9 4.3C10.5 4.3 12 5.1 12 6.4C12 5.1 13.5 4.3 15.1 4.3C18.1 4.3 20.5 6.7 20.5 9.8C20.5 15.9 12 21 12 21Z" ' +
+      'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>' +
+    '</svg>';
+
   var LISTING_COUNT = 8; // fixed grid size for this static placeholder feed
 
   function buildCard() {
     var article = document.createElement("article");
     article.className = "listing-card is-empty";
     article.innerHTML =
-      '<div class="listing-photo">' + PHOTO_ICON + '</div>' +
+      '<div class="listing-photo">' + PHOTO_ICON +
+        '<button type="button" class="listing-fav" data-listing-id="" aria-label="Pievienot izlasei">' + FAV_ICON + '</button>' +
+      '</div>' +
       '<div class="listing-body">' +
         '<div class="listing-title"></div>' +
         '<div class="listing-price"></div>' +
@@ -1334,6 +1515,35 @@ img, svg { display: block; max-width: 100%; }
     for (var i = 0; i < LISTING_COUNT; i++) {
       grid.appendChild(buildCard());
     }
+
+    // Один делегированный обработчик на весь grid: работает для карточек,
+    // которые есть сейчас, и для любых, что появятся здесь позже.
+    grid.addEventListener("click", function (e) {
+      var btn = e.target.closest(".listing-fav");
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation(); // не переходить по карточке при клике на сердечко
+
+      var listingId = btn.getAttribute("data-listing-id");
+
+      if (!window.DzApi || !window.DzApi.isLoggedIn()) {
+        // Гость: избранное недоступно, открываем форму входа/регистрации.
+        if (window.openAuthSheet) window.openAuthSheet();
+        return;
+      }
+
+      if (!listingId) {
+        // Залогинен, но это плейсхолдер без реального id объявления —
+        // пока данных нет, делать нечего (по договорённости — no-op).
+        return;
+      }
+
+      var isSaved = btn.classList.contains("is-saved");
+      var action = isSaved ? window.DzApi.removeFavorite : window.DzApi.addFavorite;
+      action(listingId).then(function () {
+        btn.classList.toggle("is-saved", !isSaved);
+      });
+    });
   });
 
   // Toggle the sticky search bar's surface once the teal hero banner has
@@ -1445,6 +1655,185 @@ img, svg { display: block; max-width: 100%; }
   });
 })();
 
+</script>
+<script>
+(function () {
+  "use strict";
+
+  function t(key) {
+    return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.t(key) : key;
+  }
+
+  // -------------------------------------------------------------------
+  // Обновление UI в зависимости от состояния "гость / залогинен"
+  // -------------------------------------------------------------------
+
+  function applyGuestUI() {
+    var signInBtn = document.getElementById("btn-signin");
+    if (signInBtn) {
+      signInBtn.textContent = t("nav.signin");
+      signInBtn.setAttribute("data-i18n", "nav.signin");
+      signInBtn.onclick = window.openAuthSheet;
+    }
+
+    var guestState = document.getElementById("profile-guest-state");
+    var loggedState = document.getElementById("profile-logged-in-state");
+    if (guestState) guestState.hidden = false;
+    if (loggedState) loggedState.hidden = true;
+
+    document.querySelectorAll(".js-guest-only-cta").forEach(function (btn) {
+      btn.hidden = false;
+    });
+  }
+
+  function applyLoggedInUI(user) {
+    var signInBtn = document.getElementById("btn-signin");
+    if (signInBtn) {
+      signInBtn.textContent = t("nav.signout");
+      signInBtn.removeAttribute("data-i18n");
+      signInBtn.onclick = handleLogoutClick;
+    }
+
+    var guestState = document.getElementById("profile-guest-state");
+    var loggedState = document.getElementById("profile-logged-in-state");
+    if (guestState) guestState.hidden = true;
+    if (loggedState) loggedState.hidden = false;
+
+    var loginLabel = document.getElementById("profile-logged-in-login");
+    if (loginLabel && user) loginLabel.textContent = user.login;
+
+    // На панелях favorites/listings/messages данных пока нет (это
+    // статичные плейсхолдеры), но раз пользователь уже вошёл, кнопка
+    // "войти в профиль" на них была бы дезориентирующей — прячем её.
+    document.querySelectorAll(".js-guest-only-cta").forEach(function (btn) {
+      btn.hidden = true;
+    });
+  }
+
+  function handleLogoutClick() {
+    window.DzApi.logout().then(function () {
+      applyGuestUI();
+    });
+  }
+
+  var logoutBtn = document.getElementById("profile-logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", handleLogoutClick);
+  }
+
+  // -------------------------------------------------------------------
+  // Форма входа/регистрации внутри bottom-sheet
+  // -------------------------------------------------------------------
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var modeLoginBtn = document.getElementById("sheet-mode-login");
+    var modeRegisterBtn = document.getElementById("sheet-mode-register");
+    var form = document.getElementById("sheet-auth-form");
+    var submitBtn = document.getElementById("sheet-auth-submit");
+    var errorEl = document.getElementById("sheet-auth-error");
+    var loginInput = document.getElementById("sheet-contact");
+    var passwordInput = document.getElementById("sheet-password");
+    var passwordToggle = document.getElementById("sheet-password-toggle");
+
+    if (!form) return; // sheet ещё не в разметке / не найден — не мешаем странице
+
+    var mode = "login";
+
+    function setMode(next) {
+      mode = next;
+      var isLogin = mode === "login";
+      modeLoginBtn.classList.toggle("is-active", isLogin);
+      modeLoginBtn.setAttribute("aria-selected", isLogin ? "true" : "false");
+      modeRegisterBtn.classList.toggle("is-active", !isLogin);
+      modeRegisterBtn.setAttribute("aria-selected", !isLogin ? "true" : "false");
+      submitBtn.textContent = isLogin ? t("auth.continue") : t("auth.continueRegister");
+      passwordInput.setAttribute("autocomplete", isLogin ? "current-password" : "new-password");
+      hideError();
+    }
+
+    function showError(message) {
+      errorEl.textContent = message;
+      errorEl.hidden = false;
+    }
+    function hideError() {
+      errorEl.hidden = true;
+      errorEl.textContent = "";
+    }
+
+    function updateReadyState() {
+      var ready = loginInput.value.trim() && passwordInput.value;
+      submitBtn.classList.toggle("is-ready", !!ready);
+    }
+    loginInput.addEventListener("input", updateReadyState);
+    passwordInput.addEventListener("input", updateReadyState);
+
+    modeLoginBtn.addEventListener("click", function () { setMode("login"); });
+    modeRegisterBtn.addEventListener("click", function () { setMode("register"); });
+
+    passwordToggle.addEventListener("click", function () {
+      var showing = passwordInput.type === "text";
+      passwordInput.type = showing ? "password" : "text";
+      passwordToggle.classList.toggle("is-visible", !showing);
+    });
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      hideError();
+
+      var loginValue = loginInput.value.trim();
+      var passwordValue = passwordInput.value;
+
+      if (!loginValue) { showError(t("auth.error.missing_login")); return; }
+      if (!passwordValue) { showError(t("auth.error.missing_password")); return; }
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add("is-loading");
+
+      var action = mode === "login" ? window.DzApi.login : window.DzApi.register;
+
+      action(loginValue, passwordValue)
+        .then(function (user) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("is-loading");
+          window.closeAuthSheet();
+          form.reset();
+          setMode("login");
+          applyLoggedInUI(user);
+        })
+        .catch(function (err) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("is-loading");
+          showError(window.DzApi.errorMessage(err));
+        });
+    });
+
+    setMode("login");
+  });
+
+  // -------------------------------------------------------------------
+  // Проверка сессии при загрузке страницы
+  // -------------------------------------------------------------------
+
+  document.addEventListener("DOMContentLoaded", function () {
+    if (!window.DzApi) return;
+
+    if (!window.DzApi.isLoggedIn()) {
+      applyGuestUI();
+      return;
+    }
+
+    // Токен есть локально — сразу применяем UI из кэша, чтобы не мигать
+    // гостевым состоянием, а затем тихо сверяемся с сервером.
+    var cached = window.DzApi.getCachedUser();
+    if (cached) applyLoggedInUI(cached);
+    else applyGuestUI();
+
+    window.DzApi.fetchMe().then(function (user) {
+      if (user) applyLoggedInUI(user);
+      else applyGuestUI(); // токен оказался недействителен на сервере
+    });
+  });
+})();
 </script>
 </body>
 </html>
