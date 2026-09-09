@@ -123,14 +123,28 @@ html, body {
 
 body {
   min-height: 100vh;
+  min-height: 100svh; /* stable viewport height: doesn't shift when mobile browser chrome shows/hides */
   display: flex;
   justify-content: center;
+}
+
+/* On screens with a bottom tab bar, the document itself must never
+   scroll or resize — only the inner .page-scroll container does. If the
+   body were free to grow or shift with the mobile browser's own chrome,
+   any position: sticky element inside (like the search bar) would drift
+   along with it. Locking body's height here keeps that reference frame
+   completely stable. */
+body:has(.app.has-tabbar) {
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
 }
 
 .app {
   width: 100%;
   max-width: var(--max-w);
   min-height: 100vh;
+  min-height: 100svh;
   background: var(--paper-50);
   position: relative;
   display: flex;
@@ -415,7 +429,16 @@ img, svg { display: block; max-width: 100%; }
       "auth.continue": "Turpināt",
       "auth.or": "vai",
       "auth.terms": "Turpinot, jūs piekrītat lietošanas noteikumiem un privātuma politikai.",
-      "auth.demoNotice": "Šī ir tikai maketa forma — reģistrācija vēl nedarbojas."
+      "auth.demoNotice": "Šī ir tikai maketa forma — reģistrācija vēl nedarbojas.",
+      "empty.cta": "Ienākt profilā",
+      "empty.favorites.title": "Saglabājiet sludinājumus, kas jums patīk",
+      "empty.favorites.sub": "Piekļūstiet tiem jebkurā brīdī no jebkuras ierīces",
+      "empty.listings.title": "Iespējams, jūsu sludinājums ieinteresēs kādu no 20 000 lietotāju",
+      "empty.listings.sub": "Ienāciet profilā, lai publicētu savu pirmo sludinājumu",
+      "empty.messages.title": "Sazinieties ar pārdevējiem un pircējiem tiešā čatā",
+      "empty.messages.sub": "Visas sarunas vienuviet, drošā un ērtā veidā",
+      "empty.profile.title": "Ienāciet, lai pārvaldītu savu profilu",
+      "empty.profile.sub": "Sludinājumi, iestatījumi un vēsture vienuviet"
     },
     ru: {
       "app.title": "Dzintars — объявления в Латвии",
@@ -448,7 +471,16 @@ img, svg { display: block; max-width: 100%; }
       "auth.continue": "Продолжить",
       "auth.or": "или",
       "auth.terms": "Продолжая, вы принимаете условия использования и политику конфиденциальности.",
-      "auth.demoNotice": "Это форма-макет — регистрация пока не работает."
+      "auth.demoNotice": "Это форма-макет — регистрация пока не работает.",
+      "empty.cta": "Войти в профиль",
+      "empty.favorites.title": "Сохраняйте объявления, которые вам понравились",
+      "empty.favorites.sub": "Открывайте их в любой момент с любого устройства",
+      "empty.listings.title": "Возможно, ваше объявление заинтересует кого-то из 20 000 пользователей",
+      "empty.listings.sub": "Войдите в профиль, чтобы опубликовать своё первое объявление",
+      "empty.messages.title": "Общайтесь с продавцами и покупателями напрямую",
+      "empty.messages.sub": "Все переписки в одном месте, безопасно и удобно",
+      "empty.profile.title": "Войдите, чтобы управлять своим профилем",
+      "empty.profile.sub": "Объявления, настройки и история — всё в одном месте"
     },
     en: {
       "app.title": "Dzintars — classifieds in Latvia",
@@ -481,7 +513,16 @@ img, svg { display: block; max-width: 100%; }
       "auth.continue": "Continue",
       "auth.or": "or",
       "auth.terms": "By continuing you agree to the terms of use and privacy policy.",
-      "auth.demoNotice": "This is a mockup form only — sign-up isn't wired up yet."
+      "auth.demoNotice": "This is a mockup form only — sign-up isn't wired up yet.",
+      "empty.cta": "Sign in to profile",
+      "empty.favorites.title": "Save listings you like",
+      "empty.favorites.sub": "Access them anytime from any device",
+      "empty.listings.title": "Your listing could catch the eye of one of 20,000 users",
+      "empty.listings.sub": "Sign in to post your first listing",
+      "empty.messages.title": "Chat directly with sellers and buyers",
+      "empty.messages.sub": "All your conversations in one safe, convenient place",
+      "empty.profile.title": "Sign in to manage your profile",
+      "empty.profile.sub": "Listings, settings and history, all in one place"
     }
   };
 
