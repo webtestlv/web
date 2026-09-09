@@ -522,10 +522,13 @@ img, svg { display: block; max-width: 100%; }
 .tab-item.is-active svg { color: #000000; }
 
 /* Lock the app shell to the viewport height on the home screen so the
-   tab bar stays fixed and the scrolling feed never renders on top of it. */
+   tab bar stays fixed and the scrolling feed never renders on top of it.
+   Uses svh (small viewport height) rather than dvh: dvh recalculates as
+   the mobile browser's address bar shows/hides during scroll, which made
+   the tab bar visibly jump. svh stays constant regardless of browser chrome. */
 .app.has-tabbar {
   height: 100vh;
-  height: 100dvh;
+  height: 100svh;
   overflow: hidden;
 }
 
@@ -538,12 +541,263 @@ img, svg { display: block; max-width: 100%; }
   background-color: #F6F7F9;
 }
 
+
+/* ===================== Tab panels ===================== */
+/* Each tab in the bottom bar shows its own panel inside .page-scroll.
+   Only one panel is visible at a time; JS toggles .is-active. */
+.tab-panel {
+  display: none;
+}
+.tab-panel.is-active {
+  display: block;
+}
+
+/* ===================== Empty-state placeholder screens ===================== */
+/* Used for Favorites / Listings / Messages / Profile before the user
+   signs in. Illustration + heading + motivating subtext + CTA, all
+   centered, sitting on the plain --paper-50 background. */
+.empty-state {
+  min-height: calc(100svh - var(--topbar-h) - var(--tabbar-h) - 80px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--sp-7) var(--sp-6);
+}
+
+.empty-state-illustration {
+  width: 140px;
+  height: 140px;
+  margin-bottom: var(--sp-5);
+  filter: drop-shadow(0 14px 22px rgba(13,59,67,0.16));
+}
+.empty-state-illustration svg { width: 100%; height: 100%; }
+
+.empty-state-title {
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  font-weight: var(--fw-h1);
+  color: var(--text-900);
+  margin: 0 0 var(--sp-2);
+  max-width: 26ch;
+}
+
+.empty-state-sub {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-body);
+  color: var(--text-600);
+  margin: 0 0 var(--sp-6);
+  max-width: 32ch;
+}
+
+.empty-state-cta {
+  height: 52px;
+  padding: 0 var(--sp-6);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--ink-900);
+  color: var(--text-inverse);
+  font-size: var(--fs-subhead);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+
+/* ===================== Auth Bottom Sheet ===================== */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 90;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+.sheet-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.auth-sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  width: 100%;
+  max-width: var(--max-w);
+  transform: translate(-50%, 100%);
+  background: var(--paper-0);
+  border-radius: 28px 28px 0 0;
+  z-index: 91;
+  max-height: 92vh;
+  max-height: 92svh;
+  overflow-y: auto;
+  transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.auth-sheet.is-open {
+  transform: translate(-50%, 0);
+}
+
+.sheet-handlebar-row {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-3) 0 var(--sp-2);
+  position: sticky;
+  top: 0;
+  background: var(--paper-0);
+  border-radius: 28px 28px 0 0;
+}
+
+.sheet-handlebar {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-100);
+}
+
+.sheet-body {
+  padding: 0 var(--sp-5) var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.sheet-demo-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(13,59,67,0.08);
+  color: var(--ink-900);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  padding: 6px var(--sp-3);
+  border-radius: var(--radius-pill);
+  margin-bottom: var(--sp-4);
+}
+
+.sheet-illustration {
+  width: 80px;
+  height: 80px;
+  margin-bottom: var(--sp-4);
+  filter: drop-shadow(0 10px 16px rgba(13,59,67,0.18));
+}
+.sheet-illustration svg { width: 100%; height: 100%; }
+
+.sheet-title {
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  font-weight: var(--fw-h1);
+  color: var(--text-900);
+  margin: 0 0 var(--sp-2);
+}
+
+.sheet-subtitle {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-body);
+  color: var(--text-600);
+  margin: 0 0 var(--sp-5);
+}
+
+.sheet-social {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  background: var(--paper-0);
+  border: 1px solid var(--line-100);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  height: 52px;
+  font-size: var(--fs-subhead);
+  font-weight: 600;
+  color: var(--text-900);
+  cursor: pointer;
+  margin-bottom: var(--sp-4);
+}
+.sheet-social svg { width: 22px; height: 22px; flex-shrink: 0; }
+
+.sheet-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  color: var(--text-400);
+  font-size: var(--fs-caption);
+  margin-bottom: var(--sp-4);
+}
+.sheet-divider::before,
+.sheet-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line-100);
+}
+
+.sheet-field-label {
+  align-self: flex-start;
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--text-900);
+  margin-bottom: var(--sp-2);
+}
+
+.sheet-input {
+  width: 100%;
+  height: 52px;
+  border: none;
+  background: var(--paper-50);
+  border-radius: var(--radius-md);
+  padding: 0 var(--sp-4);
+  font-size: var(--fs-subhead);
+  color: var(--text-900);
+  margin-bottom: var(--sp-4);
+  transition: background 150ms ease, box-shadow 150ms ease;
+}
+.sheet-input::placeholder { color: var(--text-400); }
+.sheet-input:focus {
+  outline: none;
+  background: var(--paper-0);
+  box-shadow: 0 0 0 2px var(--ink-900), 0 4px 14px rgba(13,59,67,0.12);
+}
+
+.sheet-submit {
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: rgba(13,59,67,0.25);
+  color: var(--text-inverse);
+  font-size: var(--fs-subhead);
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: var(--sp-4);
+  transition: background 150ms ease;
+}
+.sheet-submit.is-ready {
+  background: var(--ink-900);
+  cursor: pointer;
+}
+
+.sheet-terms {
+  font-size: var(--fs-micro);
+  color: var(--text-400);
+  line-height: 1.5;
+}
+
 </style>
 </head>
 <body>
 <div class="app has-tabbar">
 
   <div class="page-scroll">
+
+    <div class="tab-panel is-active" data-panel="search">
 
     <div class="hero-banner">
       <header class="sticky-search">
@@ -562,7 +816,7 @@ img, svg { display: block; max-width: 100%; }
               </svg>
             </button>
           </div>
-          <a href="auth.html" class="btn-signin" data-i18n="nav.signin">Ienākt</a>
+          <button type="button" class="btn-signin" onclick="openAuthSheet()" data-i18n="nav.signin">Ienākt</button>
         </div>
       </header>
 
@@ -646,23 +900,120 @@ img, svg { display: block; max-width: 100%; }
       </noscript>
     </div>
 
+    </div>
+    <!-- /panel: search -->
+
+    <div class="tab-panel" data-panel="favorites">
+      <div class="empty-state">
+        <div class="empty-state-illustration" aria-hidden="true">
+          <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="heartBody" cx="35%" cy="25%" r="80%">
+                <stop offset="0%" stop-color="#2A7A88"/>
+                <stop offset="55%" stop-color="#185863"/>
+                <stop offset="100%" stop-color="#0D3B43"/>
+              </radialGradient>
+            </defs>
+            <ellipse cx="70" cy="122" rx="34" ry="8" fill="#0D3B43" opacity="0.1"/>
+            <path d="M70 108C70 108 30 84 30 54C30 38 42 27 57 27C64 27 70 31 70 40C70 31 76 27 83 27C98 27 110 38 110 54C110 84 70 108 70 108Z" fill="url(#heartBody)"/>
+            <ellipse cx="52" cy="46" rx="12" ry="8" fill="#FFFFFF" opacity="0.22"/>
+          </svg>
+        </div>
+        <h1 class="empty-state-title" data-i18n="empty.favorites.title">Saglabājiet sludinājumus, kas jums patīk</h1>
+        <p class="empty-state-sub" data-i18n="empty.favorites.sub">Pieejiet tiem jebkurā brīdī no jebkuras ierīces</p>
+        <button class="empty-state-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
+      </div>
+    </div>
+
+    <div class="tab-panel" data-panel="listings">
+      <div class="empty-state">
+        <div class="empty-state-illustration" aria-hidden="true">
+          <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="cardsBody" cx="35%" cy="25%" r="80%">
+                <stop offset="0%" stop-color="#2A7A88"/>
+                <stop offset="55%" stop-color="#185863"/>
+                <stop offset="100%" stop-color="#0D3B43"/>
+              </radialGradient>
+            </defs>
+            <ellipse cx="70" cy="122" rx="34" ry="8" fill="#0D3B43" opacity="0.1"/>
+            <rect x="34" y="42" width="58" height="72" rx="10" transform="rotate(-8 34 42)" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5"/>
+            <rect x="46" y="34" width="58" height="72" rx="10" fill="url(#cardsBody)"/>
+            <rect x="58" y="50" width="34" height="6" rx="3" fill="#FFFFFF" opacity="0.85"/>
+            <rect x="58" y="62" width="24" height="6" rx="3" fill="#FFFFFF" opacity="0.55"/>
+            <circle cx="75" cy="86" r="10" fill="#FFFFFF" opacity="0.18"/>
+          </svg>
+        </div>
+        <h1 class="empty-state-title" data-i18n="empty.listings.title">Iespējams, jūsu sludinājums ieinteresēs kādu no 20 000 lietotāju</h1>
+        <p class="empty-state-sub" data-i18n="empty.listings.sub">Ienāciet profilā, lai publicētu savu pirmo sludinājumu</p>
+        <button class="empty-state-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
+      </div>
+    </div>
+
+    <div class="tab-panel" data-panel="messages">
+      <div class="empty-state">
+        <div class="empty-state-illustration" aria-hidden="true">
+          <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="chatBody" cx="35%" cy="25%" r="80%">
+                <stop offset="0%" stop-color="#2A7A88"/>
+                <stop offset="55%" stop-color="#185863"/>
+                <stop offset="100%" stop-color="#0D3B43"/>
+              </radialGradient>
+            </defs>
+            <ellipse cx="70" cy="122" rx="34" ry="8" fill="#0D3B43" opacity="0.1"/>
+            <path d="M35 40C35 33 41 27 48 27H92C99 27 105 33 105 40V72C105 79 99 85 92 85H60L44 98V85H48C41 85 35 79 35 72V40Z" fill="url(#chatBody)"/>
+            <rect x="50" y="45" width="42" height="6" rx="3" fill="#FFFFFF" opacity="0.85"/>
+            <rect x="50" y="58" width="28" height="6" rx="3" fill="#FFFFFF" opacity="0.55"/>
+            <ellipse cx="60" cy="40" rx="10" ry="6" fill="#FFFFFF" opacity="0.2"/>
+          </svg>
+        </div>
+        <h1 class="empty-state-title" data-i18n="empty.messages.title">Sazinieties ar pārdevējiem un pircējiem tiešā čatā</h1>
+        <p class="empty-state-sub" data-i18n="empty.messages.sub">Visas sarunas vienuviet, drošā un ērtā veidā</p>
+        <button class="empty-state-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
+      </div>
+    </div>
+
+    <div class="tab-panel" data-panel="profile">
+      <div class="empty-state">
+        <div class="empty-state-illustration" aria-hidden="true">
+          <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="profileBody" cx="35%" cy="25%" r="80%">
+                <stop offset="0%" stop-color="#2A7A88"/>
+                <stop offset="55%" stop-color="#185863"/>
+                <stop offset="100%" stop-color="#0D3B43"/>
+              </radialGradient>
+            </defs>
+            <ellipse cx="70" cy="122" rx="34" ry="8" fill="#0D3B43" opacity="0.1"/>
+            <circle cx="70" cy="56" r="24" fill="url(#profileBody)"/>
+            <path d="M32 112C32 90 49 76 70 76C91 76 108 90 108 112C108 116 105 119 101 119H39C35 119 32 116 32 112Z" fill="url(#profileBody)"/>
+            <ellipse cx="61" cy="47" rx="8" ry="5" fill="#FFFFFF" opacity="0.25"/>
+          </svg>
+        </div>
+        <h1 class="empty-state-title" data-i18n="empty.profile.title">Ienāciet, lai pārvaldītu savu profilu</h1>
+        <p class="empty-state-sub" data-i18n="empty.profile.sub">Sludinājumi, iestatījumi un vēsture vienuviet</p>
+        <button class="empty-state-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
+      </div>
+    </div>
+
   </div>
 
   <nav class="tabbar" aria-label="Galvenā navigācija">
-    <button class="tab-item is-active" type="button">
+    <button class="tab-item is-active" type="button" data-tab="search" onclick="switchTab(this)">
       <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path fill-rule="evenodd" clip-rule="evenodd" d="M11 4C7.1 4 4 7.1 4 11C4 14.9 7.1 18 11 18C14.9 18 18 14.9 18 11C18 7.1 14.9 4 11 4ZM7 11C7 8.8 8.8 7 11 7C13.2 7 15 8.8 15 11C15 13.2 13.2 15 11 15C8.8 15 7 13.2 7 11Z"/>
         <rect x="15.3" y="14.9" width="3.2" height="7.4" rx="1.6" transform="rotate(-45 15.3 14.9)"/>
       </svg>
       <span data-i18n="tab.search">Meklēt</span>
     </button>
-    <button class="tab-item" type="button">
+    <button class="tab-item" type="button" data-tab="favorites" onclick="switchTab(this)">
       <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 21C12 21 3.5 15.9 3.5 9.8C3.5 6.7 5.9 4.3 8.9 4.3C10.5 4.3 12 5.1 12 6.4C12 5.1 13.5 4.3 15.1 4.3C18.1 4.3 20.5 6.7 20.5 9.8C20.5 15.9 12 21 12 21Z"/>
       </svg>
       <span data-i18n="tab.favorites">Izlase</span>
     </button>
-    <button class="tab-item" type="button">
+    <button class="tab-item" type="button" data-tab="listings" onclick="switchTab(this)">
       <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <rect x="4" y="3" width="16" height="18" rx="3.5"/>
         <rect x="7.2" y="7.2" width="9.6" height="1.8" rx="0.9" fill="var(--paper-0)"/>
@@ -672,20 +1023,73 @@ img, svg { display: block; max-width: 100%; }
       </svg>
       <span data-i18n="tab.listings">Sludinājumi</span>
     </button>
-    <button class="tab-item" type="button">
+    <button class="tab-item" type="button" data-tab="messages" onclick="switchTab(this)">
       <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path d="M4 11.5C4 7.4 7.6 4 12 4C16.4 4 20 7.4 20 11.5C20 15.6 16.4 19 12 19C10.9 19 9.9 18.8 9 18.4L5.2 19.7C4.6 19.9 4 19.4 4.2 18.8L5.3 16C4.5 14.7 4 13.2 4 11.5Z"/>
       </svg>
       <span data-i18n="tab.messages">Ziņas</span>
     </button>
-    <a class="tab-item" href="auth.html">
+    <button class="tab-item" type="button" data-tab="profile" onclick="switchTab(this)">
       <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <circle cx="12" cy="7.6" r="4"/>
         <path d="M4 20.5C4 16.4 7.6 13.2 12 13.2C16.4 13.2 20 16.4 20 20.5C20 21.1 19.5 21.5 19 21.5H5C4.5 21.5 4 21.1 4 20.5Z"/>
       </svg>
       <span data-i18n="tab.profile">Profils</span>
-    </a>
+    </button>
   </nav>
+
+  <div class="sheet-overlay" id="sheet-overlay" onclick="closeAuthSheet()"></div>
+
+  <div class="auth-sheet" id="auth-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet-handlebar-row">
+      <div class="sheet-handlebar" aria-hidden="true"></div>
+    </div>
+
+    <div class="sheet-body">
+      <span class="sheet-demo-badge" data-i18n="auth.demoNotice">Šī ir tikai maketa forma — reģistrācija vēl nedarbojas.</span>
+
+      <div class="sheet-illustration" aria-hidden="true">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="sheetKeyBody" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#2A7A88"/>
+              <stop offset="55%" stop-color="#185863"/>
+              <stop offset="100%" stop-color="#0D3B43"/>
+            </radialGradient>
+          </defs>
+          <ellipse cx="50" cy="90" rx="24" ry="6" fill="#0D3B43" opacity="0.12"/>
+          <circle cx="38" cy="38" r="24" fill="url(#sheetKeyBody)"/>
+          <circle cx="38" cy="38" r="10" fill="#F6F7F9"/>
+          <rect x="52" y="52" width="10" height="34" rx="4" transform="rotate(45 52 52)" fill="url(#sheetKeyBody)"/>
+          <rect x="66" y="66" width="9" height="9" rx="2.5" transform="rotate(45 66 66)" fill="#F6F7F9"/>
+          <rect x="76" y="76" width="9" height="9" rx="2.5" transform="rotate(45 76 76)" fill="#F6F7F9"/>
+          <ellipse cx="30" cy="28" rx="9" ry="5" fill="#FFFFFF" opacity="0.22"/>
+        </svg>
+      </div>
+
+      <h2 class="sheet-title" id="sheet-title" data-i18n="auth.title">Sveicināti!</h2>
+      <p class="sheet-subtitle" data-i18n="auth.subtitle">Ienāc vai reģistrējies, lai turpinātu</p>
+
+      <button class="sheet-social" type="button" id="sheet-btn-google" disabled>
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#FFC107" d="M43.6 20.5H42V20.4H24v7.2h11.3c-1.6 4.6-6 7.9-11.3 7.9-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.1-5.1C33.6 5 29 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.4-.4-3.5z"/>
+          <path fill="#FF3D00" d="M6.3 14.7l5.9 4.3C13.8 15.3 18.5 12 24 12c3 0 5.8 1.1 7.9 3l5.1-5.1C33.6 5 29 3 24 3c-7.4 0-13.8 4.1-17.1 10.2z"/>
+          <path fill="#4CAF50" d="M24 45c5 0 9.5-1.9 12.9-5l-6-4.9C29.1 36.6 26.7 37.5 24 37.5c-5.2 0-9.6-3.3-11.3-7.9l-6 4.6C10.1 40.8 16.5 45 24 45z"/>
+          <path fill="#1976D2" d="M43.6 20.5H42V20.4H24v7.2h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6 4.9C40.7 35.6 45 30.4 45 24c0-1.2-.1-2.4-1.4-3.5z"/>
+        </svg>
+        <span data-i18n="auth.google">Turpināt ar Gmail</span>
+      </button>
+
+      <div class="sheet-divider" data-i18n="auth.or">vai</div>
+
+      <label class="sheet-field-label" for="sheet-contact" data-i18n="auth.emailLabel">E-pasts vai tālrunis</label>
+      <input class="sheet-input" type="text" id="sheet-contact" data-i18n-placeholder="auth.emailPlaceholder" placeholder="vards@epasts.lv" disabled>
+
+      <button class="sheet-submit" type="button" disabled data-i18n="auth.continue">Turpināt</button>
+
+      <p class="sheet-terms" data-i18n="auth.terms">Turpinot, jūs piekrītat lietošanas noteikumiem un privātuma politikai.</p>
+    </div>
+  </div>
 
 </div>
 
@@ -728,7 +1132,16 @@ img, svg { display: block; max-width: 100%; }
       "auth.continue": "Turpināt",
       "auth.or": "vai",
       "auth.terms": "Turpinot, jūs piekrītat lietošanas noteikumiem un privātuma politikai.",
-      "auth.demoNotice": "Šī ir tikai maketa forma — reģistrācija vēl nedarbojas."
+      "auth.demoNotice": "Šī ir tikai maketa forma — reģistrācija vēl nedarbojas.",
+      "empty.cta": "Ienākt profilā",
+      "empty.favorites.title": "Saglabājiet sludinājumus, kas jums patīk",
+      "empty.favorites.sub": "Piekļūstiet tiem jebkurā brīdī no jebkuras ierīces",
+      "empty.listings.title": "Iespējams, jūsu sludinājums ieinteresēs kādu no 20 000 lietotāju",
+      "empty.listings.sub": "Ienāciet profilā, lai publicētu savu pirmo sludinājumu",
+      "empty.messages.title": "Sazinieties ar pārdevējiem un pircējiem tiešā čatā",
+      "empty.messages.sub": "Visas sarunas vienuviet, drošā un ērtā veidā",
+      "empty.profile.title": "Ienāciet, lai pārvaldītu savu profilu",
+      "empty.profile.sub": "Sludinājumi, iestatījumi un vēsture vienuviet"
     },
     ru: {
       "app.title": "Dzintars — объявления в Латвии",
@@ -761,7 +1174,16 @@ img, svg { display: block; max-width: 100%; }
       "auth.continue": "Продолжить",
       "auth.or": "или",
       "auth.terms": "Продолжая, вы принимаете условия использования и политику конфиденциальности.",
-      "auth.demoNotice": "Это форма-макет — регистрация пока не работает."
+      "auth.demoNotice": "Это форма-макет — регистрация пока не работает.",
+      "empty.cta": "Войти в профиль",
+      "empty.favorites.title": "Сохраняйте объявления, которые вам понравились",
+      "empty.favorites.sub": "Открывайте их в любой момент с любого устройства",
+      "empty.listings.title": "Возможно, ваше объявление заинтересует кого-то из 20 000 пользователей",
+      "empty.listings.sub": "Войдите в профиль, чтобы опубликовать своё первое объявление",
+      "empty.messages.title": "Общайтесь с продавцами и покупателями напрямую",
+      "empty.messages.sub": "Все переписки в одном месте, безопасно и удобно",
+      "empty.profile.title": "Войдите, чтобы управлять своим профилем",
+      "empty.profile.sub": "Объявления, настройки и история — всё в одном месте"
     },
     en: {
       "app.title": "Dzintars — classifieds in Latvia",
@@ -794,7 +1216,16 @@ img, svg { display: block; max-width: 100%; }
       "auth.continue": "Continue",
       "auth.or": "or",
       "auth.terms": "By continuing you agree to the terms of use and privacy policy.",
-      "auth.demoNotice": "This is a mockup form only — sign-up isn't wired up yet."
+      "auth.demoNotice": "This is a mockup form only — sign-up isn't wired up yet.",
+      "empty.cta": "Sign in to profile",
+      "empty.favorites.title": "Save listings you like",
+      "empty.favorites.sub": "Access them anytime from any device",
+      "empty.listings.title": "Your listing could catch the eye of one of 20,000 users",
+      "empty.listings.sub": "Sign in to post your first listing",
+      "empty.messages.title": "Chat directly with sellers and buyers",
+      "empty.messages.sub": "All your conversations in one safe, convenient place",
+      "empty.profile.title": "Sign in to manage your profile",
+      "empty.profile.sub": "Listings, settings and history, all in one place"
     }
   };
 
@@ -907,8 +1338,86 @@ img, svg { display: block; max-width: 100%; }
 
     observer.observe(banner);
   });
+
+  // Bottom tab bar navigation: swap the visible panel without a page
+  // reload. Each panel lives inside .page-scroll; only one is shown.
+  window.switchTab = function (button) {
+    var targetId = button.getAttribute("data-tab");
+    if (!targetId) return;
+
+    var buttons = document.querySelectorAll(".tab-item");
+    buttons.forEach(function (btn) {
+      btn.classList.toggle("is-active", btn === button);
+    });
+
+    var panels = document.querySelectorAll(".tab-panel");
+    panels.forEach(function (panel) {
+      panel.classList.toggle("is-active", panel.getAttribute("data-panel") === targetId);
+    });
+
+    var scrollContainer = document.querySelector(".page-scroll");
+    if (scrollContainer) scrollContainer.scrollTop = 0;
+
+    // The sticky search bar only needs its "scrolled" frosted style on the
+    // search tab, where the teal hero banner can scroll away beneath it.
+    // Other tabs have no banner, so always show the neutral surface there.
+    var stickySearch = document.querySelector(".sticky-search");
+    if (stickySearch) {
+      stickySearch.classList.toggle("is-scrolled", targetId !== "search");
+    }
+  };
 })();
 
+
+</script>
+<script>
+(function () {
+  "use strict";
+
+  function getElements() {
+    return {
+      overlay: document.getElementById("sheet-overlay"),
+      sheet: document.getElementById("auth-sheet")
+    };
+  }
+
+  window.openAuthSheet = function () {
+    var els = getElements();
+    if (!els.overlay || !els.sheet) return;
+    els.overlay.classList.add("is-open");
+    els.sheet.classList.add("is-open");
+    document.body.style.overflow = "hidden";
+  };
+
+  window.closeAuthSheet = function () {
+    var els = getElements();
+    if (!els.overlay || !els.sheet) return;
+    els.overlay.classList.remove("is-open");
+    els.sheet.classList.remove("is-open");
+    document.body.style.overflow = "";
+  };
+
+  // Close on Escape for keyboard users
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      var sheet = document.getElementById("auth-sheet");
+      if (sheet && sheet.classList.contains("is-open")) {
+        window.closeAuthSheet();
+      }
+    }
+  });
+
+  // Prevent a click inside the sheet from bubbling to the overlay's
+  // close-on-click handler.
+  document.addEventListener("DOMContentLoaded", function () {
+    var sheet = document.getElementById("auth-sheet");
+    if (sheet) {
+      sheet.addEventListener("click", function (e) {
+        e.stopPropagation();
+      });
+    }
+  });
+})();
 
 </script>
 </body>
