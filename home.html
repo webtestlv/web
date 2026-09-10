@@ -591,6 +591,13 @@ img, svg { display: block; max-width: 100%; }
   text-align: center;
   padding: var(--sp-7) var(--sp-6);
 }
+/* Гарантирует, что [hidden] всегда скрывает элемент, даже когда у него
+   есть класс с собственным display (например .empty-state задаёт
+   display:flex) — без этого правила два блока с одинаковым классом
+   .empty-state, где один скрыт через hidden, оба остаются видимыми. */
+[hidden] {
+  display: none !important;
+}
 
 .empty-state-illustration {
   width: 140px;
@@ -1027,7 +1034,8 @@ img, svg { display: block; max-width: 100%; }
           </svg>
         </div>
         <h1 class="empty-state-title" data-i18n="empty.favorites.title">Saglabājiet sludinājumus, kas jums patīk</h1>
-        <p class="empty-state-sub" data-i18n="empty.favorites.sub">Pieejiet tiem jebkurā brīdī no jebkuras ierīces</p>
+        <p class="empty-state-sub js-guest-only-text" data-i18n="empty.favorites.sub">Pieejiet tiem jebkurā brīdī no jebkuras ierīces</p>
+        <p class="empty-state-sub js-logged-in-text" id="favorites-logged-in-sub" hidden data-i18n="empty.favorites.subLoggedIn">Pagaidām nekas nav saglabāts</p>
         <button class="empty-state-cta js-guest-only-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
       </div>
     </div>
@@ -1052,7 +1060,8 @@ img, svg { display: block; max-width: 100%; }
           </svg>
         </div>
         <h1 class="empty-state-title" data-i18n="empty.listings.title">Iespējams, jūsu sludinājums ieinteresēs kādu no 20 000 lietotāju</h1>
-        <p class="empty-state-sub" data-i18n="empty.listings.sub">Ienāciet profilā, lai publicētu savu pirmo sludinājumu</p>
+        <p class="empty-state-sub js-guest-only-text" data-i18n="empty.listings.sub">Ienāciet profilā, lai publicētu savu pirmo sludinājumu</p>
+        <p class="empty-state-sub js-logged-in-text" id="listings-logged-in-sub" hidden data-i18n="empty.listings.subLoggedIn">Publicējiet savu pirmo sludinājumu</p>
         <button class="empty-state-cta js-guest-only-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
       </div>
     </div>
@@ -1076,7 +1085,8 @@ img, svg { display: block; max-width: 100%; }
           </svg>
         </div>
         <h1 class="empty-state-title" data-i18n="empty.messages.title">Sazinieties ar pārdevējiem un pircējiem tiešā čatā</h1>
-        <p class="empty-state-sub" data-i18n="empty.messages.sub">Visas sarunas vienuviet, drošā un ērtā veidā</p>
+        <p class="empty-state-sub js-guest-only-text" data-i18n="empty.messages.sub">Visas sarunas vienuviet, drošā un ērtā veidā</p>
+        <p class="empty-state-sub js-logged-in-text" id="messages-logged-in-sub" hidden data-i18n="empty.messages.subLoggedIn">Pagaidām sarunu nav</p>
         <button class="empty-state-cta js-guest-only-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
       </div>
     </div>
@@ -1286,10 +1296,13 @@ img, svg { display: block; max-width: 100%; }
       "empty.cta": "Ienākt profilā",
       "empty.favorites.title": "Saglabājiet sludinājumus, kas jums patīk",
       "empty.favorites.sub": "Piekļūstiet tiem jebkurā brīdī no jebkuras ierīces",
+      "empty.favorites.subLoggedIn": "Pagaidām nekas nav saglabāts",
       "empty.listings.title": "Iespējams, jūsu sludinājums ieinteresēs kādu no 20 000 lietotāju",
       "empty.listings.sub": "Ienāciet profilā, lai publicētu savu pirmo sludinājumu",
+      "empty.listings.subLoggedIn": "Publicējiet savu pirmo sludinājumu",
       "empty.messages.title": "Sazinieties ar pārdevējiem un pircējiem tiešā čatā",
       "empty.messages.sub": "Visas sarunas vienuviet, drošā un ērtā veidā",
+      "empty.messages.subLoggedIn": "Pagaidām sarunu nav",
       "empty.profile.title": "Ienāciet, lai pārvaldītu savu profilu",
       "empty.profile.sub": "Sludinājumi, iestatījumi un vēsture vienuviet",
       "profile.logout": "Iziet",
@@ -1343,10 +1356,13 @@ img, svg { display: block; max-width: 100%; }
       "empty.cta": "Войти в профиль",
       "empty.favorites.title": "Сохраняйте объявления, которые вам понравились",
       "empty.favorites.sub": "Открывайте их в любой момент с любого устройства",
+      "empty.favorites.subLoggedIn": "Пока здесь ничего не сохранено",
       "empty.listings.title": "Возможно, ваше объявление заинтересует кого-то из 20 000 пользователей",
       "empty.listings.sub": "Войдите в профиль, чтобы опубликовать своё первое объявление",
+      "empty.listings.subLoggedIn": "Опубликуйте своё первое объявление",
       "empty.messages.title": "Общайтесь с продавцами и покупателями напрямую",
       "empty.messages.sub": "Все переписки в одном месте, безопасно и удобно",
+      "empty.messages.subLoggedIn": "Пока сообщений нет",
       "empty.profile.title": "Войдите, чтобы управлять своим профилем",
       "empty.profile.sub": "Объявления, настройки и история — всё в одном месте",
       "profile.logout": "Выйти",
@@ -1400,10 +1416,13 @@ img, svg { display: block; max-width: 100%; }
       "empty.cta": "Sign in to profile",
       "empty.favorites.title": "Save listings you like",
       "empty.favorites.sub": "Access them anytime from any device",
+      "empty.favorites.subLoggedIn": "Nothing saved here yet",
       "empty.listings.title": "Your listing could catch the eye of one of 20,000 users",
       "empty.listings.sub": "Sign in to post your first listing",
+      "empty.listings.subLoggedIn": "Post your first listing",
       "empty.messages.title": "Chat directly with sellers and buyers",
       "empty.messages.sub": "All your conversations in one safe, convenient place",
+      "empty.messages.subLoggedIn": "No messages yet",
       "empty.profile.title": "Sign in to manage your profile",
       "empty.profile.sub": "Listings, settings and history, all in one place",
       "profile.logout": "Sign out",
@@ -1684,6 +1703,12 @@ img, svg { display: block; max-width: 100%; }
     document.querySelectorAll(".js-guest-only-cta").forEach(function (btn) {
       btn.hidden = false;
     });
+    document.querySelectorAll(".js-guest-only-text").forEach(function (el) {
+      el.hidden = false;
+    });
+    document.querySelectorAll(".js-logged-in-text").forEach(function (el) {
+      el.hidden = true;
+    });
   }
 
   function applyLoggedInUI(user) {
@@ -1704,9 +1729,16 @@ img, svg { display: block; max-width: 100%; }
 
     // На панелях favorites/listings/messages данных пока нет (это
     // статичные плейсхолдеры), но раз пользователь уже вошёл, кнопка
-    // "войти в профиль" на них была бы дезориентирующей — прячем её.
+    // "войти в профиль" и гостевой текст на них были бы дезориентирующими —
+    // прячем их и показываем нейтральный "пока пусто" текст вместо них.
     document.querySelectorAll(".js-guest-only-cta").forEach(function (btn) {
       btn.hidden = true;
+    });
+    document.querySelectorAll(".js-guest-only-text").forEach(function (el) {
+      el.hidden = true;
+    });
+    document.querySelectorAll(".js-logged-in-text").forEach(function (el) {
+      el.hidden = false;
     });
   }
 
