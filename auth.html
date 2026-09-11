@@ -223,6 +223,11 @@ img, svg { display: block; max-width: 100%; }
   display: flex;
   flex-direction: column;
 }
+/* См. пояснение в home.html: гарантирует, что [hidden] всегда побеждает
+   классы с собственным display. */
+[hidden] {
+  display: none !important;
+}
 
 .auth-mark {
   width: 56px;
