@@ -13,7 +13,7 @@
 (function () {
   "use strict";
 
-  var API_BASE_URL = "https://dzintars-api.YOUR-SUBDOMAIN.workers.dev";
+  var API_BASE_URL = "https://dzintars-api.estoniabolt.workers.dev";
 
   var TOKEN_KEY = "dz_token";
   var USER_KEY = "dz_user";
