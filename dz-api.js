@@ -13,7 +13,7 @@
 (function () {
   "use strict";
 
-  var API_BASE_URL = "https://dzintars-api.estoniabolt.workers.dev";
+  var API_BASE_URL = "https://dzintars-api.YOUR-SUBDOMAIN.workers.dev";
 
   var TOKEN_KEY = "dz_token";
   var USER_KEY = "dz_user";
@@ -152,6 +152,84 @@
     });
   }
 
+  // ---------------------------------------------------------------------
+  // Категории и объявления (Version 1)
+  // ---------------------------------------------------------------------
+
+  // Собирает query-строку из объекта, пропуская undefined/null/"" значения,
+  // чтобы вызывающему коду не нужно было самому фильтровать пустые фильтры.
+  function buildQuery(params) {
+    if (!params) return "";
+    var parts = [];
+    Object.keys(params).forEach(function (key) {
+      var value = params[key];
+      if (value === undefined || value === null || value === "") return;
+      parts.push(encodeURIComponent(key) + "=" + encodeURIComponent(value));
+    });
+    return parts.length ? "?" + parts.join("&") : "";
+  }
+
+  function getCategories() {
+    return request("/api/categories").then(function (data) {
+      return data.categories;
+    });
+  }
+
+  function createListing(fields) {
+    return request("/api/listings", { method: "POST", body: fields }).then(function (data) {
+      return data.listing;
+    });
+  }
+
+  function getListings(filters) {
+    return request("/api/listings" + buildQuery(filters)).then(function (data) {
+      return data; // { listings, page, limit, total, hasMore }
+    });
+  }
+
+  function getListing(id) {
+    return request("/api/listings/" + encodeURIComponent(id)).then(function (data) {
+      return data.listing;
+    });
+  }
+
+  function updateListing(id, fields) {
+    return request("/api/listings/" + encodeURIComponent(id), {
+      method: "PATCH",
+      body: fields,
+    }).then(function (data) {
+      return data.listing;
+    });
+  }
+
+  function deleteListing(id) {
+    return request("/api/listings/" + encodeURIComponent(id), { method: "DELETE" });
+  }
+
+  function pauseListing(id) {
+    return request("/api/listings/" + encodeURIComponent(id) + "/pause", { method: "POST" }).then(function (data) {
+      return data.listing;
+    });
+  }
+
+  function resumeListing(id) {
+    return request("/api/listings/" + encodeURIComponent(id) + "/resume", { method: "POST" }).then(function (data) {
+      return data.listing;
+    });
+  }
+
+  function markListingSold(id) {
+    return request("/api/listings/" + encodeURIComponent(id) + "/sold", { method: "POST" }).then(function (data) {
+      return data.listing;
+    });
+  }
+
+  function getMyListings() {
+    return request("/api/my/listings").then(function (data) {
+      return data.listings;
+    });
+  }
+
   function addFavorite(listingId) {
     return request("/api/favorites/" + encodeURIComponent(listingId), {
       method: "POST",
@@ -170,9 +248,12 @@
 
   // Переводит понятный код ошибки от сервера в текст на нужном языке.
   // Использует словарь Dzintars.i18n, если он уже подключён на странице.
-  function errorMessage(err) {
+  // namespace по умолчанию "auth.error." (обратная совместимость с уже
+  // существующими вызовами); для ошибок создания объявления передавай
+  // "listing.error." — коды там другие (TITLE_REQUIRED и т.п.).
+  function errorMessage(err, namespace) {
     var code = (err && err.code) || "request_failed";
-    var key = "auth.error." + code;
+    var key = (namespace || "auth.error.") + code;
     if (window.Dzintars && window.Dzintars.i18n) {
       var translated = window.Dzintars.i18n.t(key);
       if (translated !== key) return translated;
@@ -193,5 +274,16 @@
     addFavorite: addFavorite,
     removeFavorite: removeFavorite,
     errorMessage: errorMessage,
+    // Version 1 — категории и объявления
+    getCategories: getCategories,
+    createListing: createListing,
+    getListings: getListings,
+    getListing: getListing,
+    updateListing: updateListing,
+    deleteListing: deleteListing,
+    pauseListing: pauseListing,
+    resumeListing: resumeListing,
+    markListingSold: markListingSold,
+    getMyListings: getMyListings,
   };
 })();
