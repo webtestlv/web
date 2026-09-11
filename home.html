@@ -235,6 +235,7 @@ img, svg { display: block; max-width: 100%; }
   height: 40px;
   padding: 0 6px 0 var(--sp-3);
   min-width: 0;
+  overflow: hidden;
   transition: background 220ms ease, border-color 220ms ease;
 }
 
@@ -410,6 +411,10 @@ img, svg { display: block; max-width: 100%; }
   grid-template-columns: 1fr 1fr;
   gap: var(--sp-3);
   padding: 0 var(--sp-4) var(--sp-4);
+}
+
+#favorites-list {
+  padding-top: var(--sp-4);
 }
 
 /* Fixed-shape empty listing placeholder card.
@@ -735,6 +740,7 @@ img, svg { display: block; max-width: 100%; }
 .search-filter-btn.has-active-filters {
   background: var(--ink-900);
   color: var(--text-inverse);
+  border-radius: 999px;
 }
 
 /* ===================== Create-listing sheet ===================== */
@@ -3341,11 +3347,19 @@ textarea.sheet-input {
         debounceTimer = setTimeout(applyFiltersAndReload, 400);
       });
       els.searchInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") {
+        if (e.key === "Enter" || e.keyCode === 13) {
           e.preventDefault();
           clearTimeout(debounceTimer);
           applyFiltersAndReload();
         }
+      });
+      // Некоторые мобильные клавиатуры (особенно Android) не всегда шлют
+      // keydown с key === "Enter" для кнопки "Перейти"/"Done" — вместо
+      // этого приходит событие change при потере фокуса, либо
+      // beforeinput с insertLineBreak. Подстраховываемся на оба случая.
+      els.searchInput.addEventListener("change", function () {
+        clearTimeout(debounceTimer);
+        applyFiltersAndReload();
       });
     }
 
@@ -3791,4 +3805,4 @@ textarea.sheet-input {
 })();
 </script>
 </body>
-             </html>
+   </html>
