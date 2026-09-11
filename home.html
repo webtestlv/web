@@ -351,8 +351,10 @@ img, svg { display: block; max-width: 100%; }
   overflow-x: auto;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* старый Edge/IE */
 }
-.cat-row::-webkit-scrollbar { display: none; }
+.cat-row::-webkit-scrollbar { display: none; } /* Chrome/Safari/новый Edge */
 
 /* Category tiles sit directly on the page's unified gradient — no separate band. */
 .cat-tile {
@@ -638,6 +640,332 @@ img, svg { display: block; max-width: 100%; }
 }
 
 
+/* ===================== Listing price / badges ===================== */
+.listing-price-badge {
+  display: inline-block;
+  font-size: var(--fs-12);
+  font-weight: 600;
+  color: var(--ink-700);
+}
+
+/* ===================== Search filter panel ===================== */
+/* Reuses .auth-sheet / .sheet-overlay bottom-sheet mechanics (same
+   translateY animation, same overlay) — just a different sheet element
+   so it can be open independently of the auth sheet. */
+.filter-sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  width: 100%;
+  max-width: var(--max-w);
+  transform: translate(-50%, 100%);
+  background: var(--paper-0);
+  border-radius: 28px 28px 0 0;
+  z-index: 91;
+  max-height: 92vh;
+  max-height: 92svh;
+  overflow-y: auto;
+  transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.filter-sheet.is-open {
+  transform: translate(-50%, 0);
+}
+
+.filter-body {
+  padding: 0 var(--sp-5) var(--sp-5);
+}
+
+.filter-row {
+  margin-bottom: var(--sp-4);
+}
+.filter-row-split {
+  display: flex;
+  gap: var(--sp-3);
+}
+.filter-row-split .filter-row { flex: 1; margin-bottom: var(--sp-4); }
+
+.filter-select,
+.filter-input {
+  width: 100%;
+  height: 52px;
+  border: none;
+  background: var(--paper-50);
+  border-radius: var(--radius-md);
+  padding: 0 var(--sp-4);
+  font-size: var(--fs-subhead);
+  color: var(--text-900);
+  font-family: inherit;
+}
+.filter-select:focus,
+.filter-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ink-900);
+}
+.filter-input::placeholder { color: var(--text-400); }
+
+.filter-actions {
+  display: flex;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+.filter-btn-reset {
+  flex: 1;
+  height: 52px;
+  border: 1px solid var(--line-100);
+  border-radius: var(--radius-pill);
+  background: var(--paper-0);
+  color: var(--text-900);
+  font-size: var(--fs-subhead);
+  font-weight: 600;
+  cursor: pointer;
+}
+.filter-btn-apply {
+  flex: 2;
+  height: 52px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--ink-900);
+  color: var(--text-inverse);
+  font-size: var(--fs-subhead);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.search-filter-btn.has-active-filters {
+  background: var(--ink-900);
+  color: var(--text-inverse);
+}
+
+/* ===================== Create-listing sheet ===================== */
+/* Same bottom-sheet mechanics as .auth-sheet, kept as a distinct element
+   so it can be opened from several places (FAB, empty state, my-listings
+   tab) without interfering with the login sheet. */
+.listing-sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  width: 100%;
+  max-width: var(--max-w);
+  transform: translate(-50%, 100%);
+  background: var(--paper-0);
+  border-radius: 28px 28px 0 0;
+  z-index: 91;
+  max-height: 92vh;
+  max-height: 92svh;
+  overflow-y: auto;
+  transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.listing-sheet.is-open {
+  transform: translate(-50%, 0);
+}
+
+.listing-form-body {
+  padding: 0 var(--sp-5) var(--sp-5);
+}
+
+.listing-form-title {
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  font-weight: var(--fw-h1);
+  color: var(--text-900);
+  margin: 0 0 var(--sp-2);
+}
+.listing-form-subtitle {
+  font-size: var(--fs-body);
+  color: var(--text-600);
+  margin: 0 0 var(--sp-5);
+}
+
+.listing-form-row { margin-bottom: var(--sp-4); }
+.listing-form-row-split {
+  display: flex;
+  gap: var(--sp-3);
+}
+.listing-form-row-split .listing-form-row { flex: 1; }
+
+.listing-form-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+.listing-form-checkbox-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--ink-900);
+  flex-shrink: 0;
+}
+.listing-form-checkbox-row label {
+  font-size: var(--fs-body);
+  color: var(--text-900);
+  cursor: pointer;
+}
+
+textarea.sheet-input {
+  height: auto;
+  min-height: 96px;
+  padding: var(--sp-3) var(--sp-4);
+  resize: vertical;
+  font-family: inherit;
+}
+
+.listing-form-error {
+  color: var(--danger-600);
+  font-size: var(--fs-12);
+  line-height: 1.4;
+  margin: calc(var(--sp-1) * -1) 0 var(--sp-3);
+}
+.listing-form-error[hidden] { display: none; }
+
+.listing-form-success {
+  color: var(--success-600);
+  font-size: var(--fs-13);
+  font-weight: 600;
+  text-align: center;
+  margin: 0 0 var(--sp-3);
+}
+.listing-form-success[hidden] { display: none; }
+
+/* ===================== Floating "post listing" button ===================== */
+.post-fab {
+  position: fixed;
+  right: var(--sp-4);
+  bottom: calc(var(--tabbar-h) + var(--sp-4) + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  height: 52px;
+  padding: 0 var(--sp-5) 0 var(--sp-4);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--ink-900);
+  color: var(--text-inverse);
+  font-size: var(--fs-subhead);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-pop);
+}
+.post-fab svg { width: 20px; height: 20px; }
+.post-fab[hidden] { display: none; }
+
+/* ===================== "My listings" tab ===================== */
+.mylistings-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+
+.mylistings-card {
+  background: var(--paper-0);
+  border: 1px solid var(--line-100);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: var(--sp-3);
+  display: flex;
+  gap: var(--sp-3);
+}
+
+.mylistings-card-photo {
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: repeating-linear-gradient(135deg, #EDEAE2, #EDEAE2 8px, #E4E0D5 8px, #E4E0D5 16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mylistings-card-photo svg { width: 26px; height: 26px; color: var(--text-400); opacity: 0.7; }
+
+.mylistings-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mylistings-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.mylistings-card-title {
+  font-size: var(--fs-13);
+  font-weight: 600;
+  color: var(--text-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mylistings-status-pill {
+  flex-shrink: 0;
+  font-size: var(--fs-11);
+  font-weight: 600;
+  padding: 3px var(--sp-2);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+.mylistings-status-pill.status-ACTIVE { background: rgba(24,88,99,0.12); color: var(--ink-700); }
+.mylistings-status-pill.status-PAUSED { background: var(--paper-50); color: var(--text-600); border: 1px solid var(--line-100); }
+.mylistings-status-pill.status-SOLD { background: rgba(13,59,67,0.08); color: var(--text-600); }
+
+.mylistings-card-price {
+  font-size: var(--fs-16);
+  font-weight: 700;
+  color: var(--text-900);
+  margin-top: 2px;
+}
+
+.mylistings-card-meta {
+  font-size: var(--fs-12);
+  color: var(--text-400);
+  margin-top: 2px;
+}
+
+.mylistings-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.mylistings-action-btn {
+  height: 30px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-100);
+  background: var(--paper-0);
+  color: var(--text-900);
+  font-size: var(--fs-11);
+  font-weight: 600;
+  cursor: pointer;
+}
+.mylistings-action-btn.is-primary {
+  border-color: var(--ink-900);
+  background: var(--ink-900);
+  color: var(--text-inverse);
+}
+.mylistings-action-btn.is-danger {
+  color: var(--danger-600);
+  border-color: var(--danger-600);
+}
+
+.mylistings-loading,
+.listing-grid-loading {
+  padding: var(--sp-6);
+  text-align: center;
+  color: var(--text-400);
+  font-size: var(--fs-body);
+}
+
+
 /* ===================== Auth Bottom Sheet ===================== */
 .sheet-overlay {
   position: fixed;
@@ -920,8 +1248,8 @@ img, svg { display: block; max-width: 100%; }
             <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <path fill-rule="evenodd" clip-rule="evenodd" d="M10.5 4C7.5 4 5 6.5 5 9.5C5 12.5 7.5 15 10.5 15C11.8 15 13 14.5 13.9 13.7L13.9 13.7C14 13.8 14 13.9 14.1 14L17.6 17.5C18 17.9 18.6 17.9 19 17.5C19.4 17.1 19.4 16.5 19 16.1L15.5 12.6C15.4 12.5 15.3 12.4 15.2 12.4C16 11.5 16.5 10.3 16.5 9.5C16.5 6.5 14 4 11 4H10.5ZM7 9.5C7 7.6 8.6 6 10.5 6C12.4 6 14 7.6 14 9.5C14 11.4 12.4 13 10.5 13C8.6 13 7 11.4 7 9.5Z"/>
             </svg>
-            <input type="text" data-i18n-placeholder="search.placeholder" placeholder="Meklēt visos reģionos…">
-            <button class="search-filter-btn" type="button" aria-label="Filtri">
+            <input type="text" id="search-input" data-i18n-placeholder="search.placeholder" placeholder="Meklēt visos reģionos…">
+            <button class="search-filter-btn" type="button" id="search-filter-btn" aria-label="Filtri">
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4 7H20M8 12H16M11 17H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 <circle cx="8" cy="7" r="1.6" fill="currentColor" stroke="var(--paper-0)" stroke-width="1"/>
@@ -996,10 +1324,11 @@ img, svg { display: block; max-width: 100%; }
 
     <h2 class="section-heading" data-i18n="home.recommended">Ieteiktie sludinājumi</h2>
 
-    <!-- Empty listing placeholders: fixed dimensions, ready for real data.
-         Each card = 1:1 photo + 2-line title + price line + location line. -->
+    <!-- Real listings render here via renderListings() (see the Version 1
+         script block near the bottom of the file). Loading/empty states
+         are swapped in by the same function; the noscript fallback below
+         only matters with JS disabled. -->
     <div class="listing-grid" id="listing-grid">
-      <!-- 8 placeholders rendered by JS to keep markup DRY; static fallback below for no-JS -->
       <noscript>
         <article class="listing-card is-empty">
           <div class="listing-photo">
@@ -1041,7 +1370,8 @@ img, svg { display: block; max-width: 100%; }
     </div>
 
     <div class="tab-panel" data-panel="listings">
-      <div class="empty-state">
+      <!-- Гость: тот же empty-state, что и раньше (не трогаем). -->
+      <div class="empty-state" id="listings-guest-state">
         <div class="empty-state-illustration" aria-hidden="true">
           <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -1060,10 +1390,29 @@ img, svg { display: block; max-width: 100%; }
           </svg>
         </div>
         <h1 class="empty-state-title" data-i18n="empty.listings.title">Iespējams, jūsu sludinājums ieinteresēs kādu no 20 000 lietotāju</h1>
-        <p class="empty-state-sub js-guest-only-text" data-i18n="empty.listings.sub">Ienāciet profilā, lai publicētu savu pirmo sludinājumu</p>
-        <p class="empty-state-sub js-logged-in-text" id="listings-logged-in-sub" hidden data-i18n="empty.listings.subLoggedIn">Publicējiet savu pirmo sludinājumu</p>
-        <button class="empty-state-cta js-guest-only-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
+        <p class="empty-state-sub" data-i18n="empty.listings.sub">Ienāciet profilā, lai publicētu savu pirmo sludinājumu</p>
+        <button class="empty-state-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
       </div>
+
+      <!-- Залогинен, но своих объявлений ещё нет. -->
+      <div class="empty-state" id="listings-logged-empty-state" hidden>
+        <div class="empty-state-illustration" aria-hidden="true">
+          <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="70" cy="122" rx="34" ry="8" fill="#0D3B43" opacity="0.1"/>
+            <rect x="34" y="42" width="58" height="72" rx="10" transform="rotate(-8 34 42)" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5"/>
+            <rect x="46" y="34" width="58" height="72" rx="10" fill="url(#cardsBody)"/>
+            <rect x="58" y="50" width="34" height="6" rx="3" fill="#FFFFFF" opacity="0.85"/>
+            <rect x="58" y="62" width="24" height="6" rx="3" fill="#FFFFFF" opacity="0.55"/>
+            <circle cx="75" cy="86" r="10" fill="#FFFFFF" opacity="0.18"/>
+          </svg>
+        </div>
+        <h1 class="empty-state-title" data-i18n="myListings.empty.title">Vēl nav neviena sludinājuma</h1>
+        <p class="empty-state-sub" data-i18n="myListings.empty.sub">Publicē savu pirmo sludinājumu — tas parādīsies šeit</p>
+        <button class="empty-state-cta" type="button" onclick="window.openListingSheet && window.openListingSheet()" data-i18n="listing.create.cta">Publicēt sludinājumu</button>
+      </div>
+
+      <!-- Залогинен, есть свои объявления — реальный список, рендерится JS. -->
+      <div class="mylistings-list" id="mylistings-list" hidden></div>
     </div>
 
     <div class="tab-panel" data-panel="messages">
@@ -1250,6 +1599,154 @@ img, svg { display: block; max-width: 100%; }
     </div>
   </div>
 
+  <!-- ===================== Create-listing bottom sheet ===================== -->
+  <!-- Same structure/mechanics as .auth-sheet above (translate-Y bottom
+       sheet, overlay, handlebar) — a separate element so it can be opened
+       independently (FAB, empty-state CTA, "my listings" tab). -->
+  <div class="sheet-overlay" id="listing-sheet-overlay" onclick="closeListingSheet()"></div>
+
+  <div class="listing-sheet" id="listing-sheet" role="dialog" aria-modal="true" aria-labelledby="listing-sheet-title">
+    <div class="sheet-handlebar-row">
+      <div class="sheet-handlebar" aria-hidden="true"></div>
+    </div>
+
+    <div class="listing-form-body">
+      <h2 class="listing-form-title" id="listing-sheet-title" data-i18n="listing.create.title">Jauns sludinājums</h2>
+      <p class="listing-form-subtitle" data-i18n="listing.create.subtitle">Aizpildi pamatinformāciju par savu preci</p>
+
+      <p class="listing-form-success" id="listing-form-success" hidden data-i18n="listing.success">Sludinājums publicēts!</p>
+
+      <form id="listing-form" novalidate>
+        <input type="hidden" id="listing-form-id" value="">
+
+        <div class="listing-form-row">
+          <label class="sheet-field-label" for="listing-field-category" data-i18n="listing.field.category">Kategorija</label>
+          <select class="filter-select" id="listing-field-category" name="category" required>
+            <option value="" data-i18n="listing.field.categoryPlaceholder">Izvēlies kategoriju</option>
+          </select>
+        </div>
+
+        <div class="listing-form-row">
+          <label class="sheet-field-label" for="listing-field-title" data-i18n="listing.field.title">Nosaukums</label>
+          <input class="sheet-input" style="margin-bottom:0;" type="text" id="listing-field-title" name="title" maxlength="120" data-i18n-placeholder="listing.field.titlePlaceholder" placeholder="Piemēram: iPhone 13, 128GB" required>
+        </div>
+
+        <div class="listing-form-row">
+          <label class="sheet-field-label" for="listing-field-description" data-i18n="listing.field.description">Apraksts</label>
+          <textarea class="sheet-input" id="listing-field-description" name="description" maxlength="4000" data-i18n-placeholder="listing.field.descriptionPlaceholder" placeholder="Pastāsti par preces stāvokli, iemeslu pārdošanai un citu noderīgu informāciju"></textarea>
+        </div>
+
+        <div class="listing-form-row-split">
+          <div class="listing-form-row">
+            <label class="sheet-field-label" for="listing-field-price-type" data-i18n="listing.field.priceType">Cenas veids</label>
+            <select class="filter-select" id="listing-field-price-type" name="price_type">
+              <option value="FIXED" data-i18n="listing.priceType.FIXED">Fiksēta</option>
+              <option value="NEGOTIABLE" data-i18n="listing.priceType.NEGOTIABLE">Iespējama vienošanās</option>
+              <option value="FREE" data-i18n="listing.priceType.FREE">Par brīvu</option>
+              <option value="EXCHANGE" data-i18n="listing.priceType.EXCHANGE">Apmaiņa</option>
+            </select>
+          </div>
+          <div class="listing-form-row" id="listing-price-row">
+            <label class="sheet-field-label" for="listing-field-price" data-i18n="listing.field.price">Cena</label>
+            <input class="filter-input" type="number" id="listing-field-price" name="price" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+          </div>
+        </div>
+
+        <div class="listing-form-row-split">
+          <div class="listing-form-row">
+            <label class="sheet-field-label" for="listing-field-condition" data-i18n="listing.field.condition">Stāvoklis</label>
+            <select class="filter-select" id="listing-field-condition" name="condition">
+              <option value="" data-i18n="listing.field.conditionPlaceholder">Nav norādīts</option>
+              <option value="NEW" data-i18n="listing.condition.NEW">Jauns</option>
+              <option value="LIKE_NEW" data-i18n="listing.condition.LIKE_NEW">Kā jauns</option>
+              <option value="GOOD" data-i18n="listing.condition.GOOD">Labs</option>
+              <option value="USED" data-i18n="listing.condition.USED">Lietots</option>
+            </select>
+          </div>
+          <div class="listing-form-row">
+            <label class="sheet-field-label" for="listing-field-city" data-i18n="listing.field.city">Pilsēta</label>
+            <input class="filter-input" type="text" id="listing-field-city" name="city" maxlength="100" data-i18n-placeholder="listing.field.cityPlaceholder" placeholder="Piemēram: Rīga">
+          </div>
+        </div>
+
+        <div class="listing-form-row">
+          <label class="sheet-field-label" for="listing-field-phone" data-i18n="listing.field.phone">Tālrunis</label>
+          <input class="sheet-input" style="margin-bottom:0;" type="tel" id="listing-field-phone" name="phone" data-i18n-placeholder="listing.field.phonePlaceholder" placeholder="+371 20000000">
+        </div>
+
+        <div class="listing-form-checkbox-row">
+          <input type="checkbox" id="listing-field-show-phone" name="show_phone">
+          <label for="listing-field-show-phone" data-i18n="listing.field.showPhone">Rādīt tālruni sludinājumā</label>
+        </div>
+
+        <p class="listing-form-error" id="listing-form-error" role="alert" hidden></p>
+
+        <button class="sheet-submit is-ready" type="submit" id="listing-form-submit" data-i18n="listing.submit">Publicēt</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== Search filters bottom sheet ===================== -->
+  <div class="sheet-overlay" id="filter-sheet-overlay" onclick="closeFilterSheet()"></div>
+
+  <div class="filter-sheet" id="filter-sheet" role="dialog" aria-modal="true" aria-labelledby="filter-sheet-title">
+    <div class="sheet-handlebar-row">
+      <div class="sheet-handlebar" aria-hidden="true"></div>
+    </div>
+    <div class="filter-body">
+      <h2 class="listing-form-title" id="filter-sheet-title" data-i18n="search.filters.title">Filtri</h2>
+
+      <div class="filter-row">
+        <label class="sheet-field-label" for="filter-category" data-i18n="search.filters.category">Kategorija</label>
+        <select class="filter-select" id="filter-category">
+          <option value="" data-i18n="search.filters.allCategories">Visas kategorijas</option>
+        </select>
+      </div>
+
+      <div class="filter-row-split">
+        <div class="filter-row">
+          <label class="sheet-field-label" for="filter-price-min" data-i18n="search.filters.priceMin">Cena no</label>
+          <input class="filter-input" type="number" id="filter-price-min" min="0" step="1" inputmode="decimal" placeholder="0">
+        </div>
+        <div class="filter-row">
+          <label class="sheet-field-label" for="filter-price-max" data-i18n="search.filters.priceMax">Cena līdz</label>
+          <input class="filter-input" type="number" id="filter-price-max" min="0" step="1" inputmode="decimal" placeholder="∞">
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <label class="sheet-field-label" for="filter-condition" data-i18n="search.filters.condition">Stāvoklis</label>
+        <select class="filter-select" id="filter-condition">
+          <option value="" data-i18n="listing.field.conditionPlaceholder">Nav norādīts</option>
+          <option value="NEW" data-i18n="listing.condition.NEW">Jauns</option>
+          <option value="LIKE_NEW" data-i18n="listing.condition.LIKE_NEW">Kā jauns</option>
+          <option value="GOOD" data-i18n="listing.condition.GOOD">Labs</option>
+          <option value="USED" data-i18n="listing.condition.USED">Lietots</option>
+        </select>
+      </div>
+
+      <div class="filter-row">
+        <label class="sheet-field-label" for="filter-city" data-i18n="search.filters.city">Pilsēta</label>
+        <input class="filter-input" type="text" id="filter-city" maxlength="100" data-i18n-placeholder="listing.field.cityPlaceholder" placeholder="Piemēram: Rīga">
+      </div>
+
+      <div class="filter-actions">
+        <button class="filter-btn-reset" type="button" id="filter-reset-btn" data-i18n="search.filters.reset">Notīrīt</button>
+        <button class="filter-btn-apply" type="button" id="filter-apply-btn" data-i18n="search.filters.apply">Piemērot</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== Floating "post listing" button ===================== -->
+  <!-- Скрыта для гостя (см. applyGuestUI/applyLoggedInUI), видна везде,
+       кроме случаев когда сама форма создания уже открыта поверх. -->
+  <button type="button" class="post-fab" id="post-fab" hidden onclick="window.openListingSheet && window.openListingSheet()">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+    </svg>
+    <span data-i18n="listing.create.cta">Publicēt sludinājumu</span>
+  </button>
+
 </div>
 
 <script src="dz-api.js"></script>
@@ -1319,7 +1816,78 @@ img, svg { display: block; max-width: 100%; }
       "auth.error.invalid_login": "Pārbaudi e-pastu vai tālruni.",
       "auth.error.user_already_exists": "Šāds lietotājs jau eksistē. Mēģini ienākt.",
       "auth.error.invalid_credentials": "Nepareizs e-pasts/tālrunis vai parole.",
-      "auth.error.request_failed": "Kaut kas nogāja greizi. Mēģini vēlreiz."
+      "auth.error.request_failed": "Kaut kas nogāja greizi. Mēģini vēlreiz.",
+
+      "listing.empty.title": "Pagaidām nav neviena sludinājuma",
+      "listing.empty.sub": "Esi pirmais, kas publicē!",
+      "listing.create.cta": "Publicēt sludinājumu",
+      "listing.create.title": "Jauns sludinājums",
+      "listing.create.subtitle": "Aizpildi pamatinformāciju par savu preci",
+      "listing.field.category": "Kategorija",
+      "listing.field.categoryPlaceholder": "Izvēlies kategoriju",
+      "listing.field.title": "Nosaukums",
+      "listing.field.titlePlaceholder": "Piemēram: iPhone 13, 128GB",
+      "listing.field.description": "Apraksts",
+      "listing.field.descriptionPlaceholder": "Pastāsti par preces stāvokli, iemeslu pārdošanai un citu noderīgu informāciju",
+      "listing.field.price": "Cena",
+      "listing.field.priceType": "Cenas veids",
+      "listing.priceType.FIXED": "Fiksēta",
+      "listing.priceType.NEGOTIABLE": "Iespējama vienošanās",
+      "listing.priceType.FREE": "Par brīvu",
+      "listing.priceType.EXCHANGE": "Apmaiņa",
+      "listing.field.condition": "Stāvoklis",
+      "listing.field.conditionPlaceholder": "Nav norādīts",
+      "listing.condition.NEW": "Jauns",
+      "listing.condition.LIKE_NEW": "Kā jauns",
+      "listing.condition.GOOD": "Labs",
+      "listing.condition.USED": "Lietots",
+      "listing.field.city": "Pilsēta",
+      "listing.field.cityPlaceholder": "Piemēram: Rīga",
+      "listing.field.phone": "Tālrunis",
+      "listing.field.phonePlaceholder": "+371 20000000",
+      "listing.field.showPhone": "Rādīt tālruni sludinājumā",
+      "listing.submit": "Publicēt",
+      "listing.submitting": "Publicē…",
+      "listing.error.TITLE_REQUIRED": "Ievadi nosaukumu.",
+      "listing.error.TITLE_TOO_LONG": "Nosaukums ir pārāk garš (maks. 120 rakstzīmes).",
+      "listing.error.DESCRIPTION_TOO_LONG": "Apraksts ir pārāk garš.",
+      "listing.error.CATEGORY_INVALID": "Izvēlies kategoriju.",
+      "listing.error.PRICE_TYPE_INVALID": "Nepareizs cenas veids.",
+      "listing.error.PRICE_INVALID": "Ievadi derīgu cenu.",
+      "listing.error.CONDITION_INVALID": "Nepareizs stāvokļa lauks.",
+      "listing.error.PHONE_REQUIRED_WHEN_SHOWN": "Ievadi tālruņa numuru vai izslēdz tā rādīšanu.",
+      "listing.error.PHONE_INVALID": "Pārbaudi tālruņa numuru.",
+      "listing.error.request_failed": "Kaut kas nogāja greizi. Mēģini vēlreiz.",
+      "listing.success": "Sludinājums publicēts!",
+      "listing.card.negotiable": "Vienošanās",
+      "listing.card.free": "Par brīvu",
+      "listing.card.exchange": "Apmaiņa",
+
+      "myListings.empty.title": "Vēl nav neviena sludinājuma",
+      "myListings.empty.sub": "Publicē savu pirmo sludinājumu — tas parādīsies šeit",
+      "myListings.status.ACTIVE": "Aktīvs",
+      "myListings.status.PAUSED": "Apturēts",
+      "myListings.status.SOLD": "Pārdots",
+      "myListings.action.edit": "Rediģēt",
+      "myListings.action.pause": "Apturēt",
+      "myListings.action.resume": "Publicēt",
+      "myListings.action.sold": "Atzīmēt kā pārdotu",
+      "myListings.action.delete": "Dzēst",
+      "myListings.confirmDelete": "Vai tiešām dzēst šo sludinājumu? To nevarēs atjaunot.",
+      "myListings.confirmSold": "Atzīmēt šo sludinājumu kā pārdotu?",
+      "myListings.views": "skatījumi",
+
+      "search.noResults.title": "Nekas netika atrasts",
+      "search.noResults.sub": "Pamēģini mainīt meklēšanas vārdus vai filtrus",
+      "search.filters.title": "Filtri",
+      "search.filters.category": "Kategorija",
+      "search.filters.allCategories": "Visas kategorijas",
+      "search.filters.priceMin": "Cena no",
+      "search.filters.priceMax": "Cena līdz",
+      "search.filters.condition": "Stāvoklis",
+      "search.filters.city": "Pilsēta",
+      "search.filters.apply": "Piemērot",
+      "search.filters.reset": "Notīrīt"
     },
     ru: {
       "app.title": "Dzintars — объявления в Латвии",
@@ -1379,7 +1947,78 @@ img, svg { display: block; max-width: 100%; }
       "auth.error.invalid_login": "Проверьте почту или телефон.",
       "auth.error.user_already_exists": "Такой пользователь уже есть. Попробуйте войти.",
       "auth.error.invalid_credentials": "Неверная почта/телефон или пароль.",
-      "auth.error.request_failed": "Что-то пошло не так. Попробуйте ещё раз."
+      "auth.error.request_failed": "Что-то пошло не так. Попробуйте ещё раз.",
+
+      "listing.empty.title": "Пока нет ни одного объявления",
+      "listing.empty.sub": "Станьте первым, кто опубликует!",
+      "listing.create.cta": "Разместить объявление",
+      "listing.create.title": "Новое объявление",
+      "listing.create.subtitle": "Заполните основную информацию о товаре",
+      "listing.field.category": "Категория",
+      "listing.field.categoryPlaceholder": "Выберите категорию",
+      "listing.field.title": "Название",
+      "listing.field.titlePlaceholder": "Например: iPhone 13, 128GB",
+      "listing.field.description": "Описание",
+      "listing.field.descriptionPlaceholder": "Расскажите о состоянии товара, причине продажи и другой полезной информации",
+      "listing.field.price": "Цена",
+      "listing.field.priceType": "Тип цены",
+      "listing.priceType.FIXED": "Фиксированная",
+      "listing.priceType.NEGOTIABLE": "Возможен торг",
+      "listing.priceType.FREE": "Бесплатно",
+      "listing.priceType.EXCHANGE": "Обмен",
+      "listing.field.condition": "Состояние",
+      "listing.field.conditionPlaceholder": "Не указано",
+      "listing.condition.NEW": "Новое",
+      "listing.condition.LIKE_NEW": "Как новое",
+      "listing.condition.GOOD": "Хорошее",
+      "listing.condition.USED": "Б/у",
+      "listing.field.city": "Город",
+      "listing.field.cityPlaceholder": "Например: Рига",
+      "listing.field.phone": "Телефон",
+      "listing.field.phonePlaceholder": "+371 20000000",
+      "listing.field.showPhone": "Показывать телефон в объявлении",
+      "listing.submit": "Опубликовать",
+      "listing.submitting": "Публикация…",
+      "listing.error.TITLE_REQUIRED": "Введите название.",
+      "listing.error.TITLE_TOO_LONG": "Название слишком длинное (макс. 120 символов).",
+      "listing.error.DESCRIPTION_TOO_LONG": "Описание слишком длинное.",
+      "listing.error.CATEGORY_INVALID": "Выберите категорию.",
+      "listing.error.PRICE_TYPE_INVALID": "Некорректный тип цены.",
+      "listing.error.PRICE_INVALID": "Введите корректную цену.",
+      "listing.error.CONDITION_INVALID": "Некорректное состояние товара.",
+      "listing.error.PHONE_REQUIRED_WHEN_SHOWN": "Введите номер телефона или отключите его показ.",
+      "listing.error.PHONE_INVALID": "Проверьте номер телефона.",
+      "listing.error.request_failed": "Что-то пошло не так. Попробуйте ещё раз.",
+      "listing.success": "Объявление опубликовано!",
+      "listing.card.negotiable": "Торг",
+      "listing.card.free": "Бесплатно",
+      "listing.card.exchange": "Обмен",
+
+      "myListings.empty.title": "Пока нет ни одного объявления",
+      "myListings.empty.sub": "Опубликуйте своё первое объявление — оно появится здесь",
+      "myListings.status.ACTIVE": "Активно",
+      "myListings.status.PAUSED": "Скрыто",
+      "myListings.status.SOLD": "Продано",
+      "myListings.action.edit": "Редактировать",
+      "myListings.action.pause": "Скрыть",
+      "myListings.action.resume": "Опубликовать",
+      "myListings.action.sold": "Отметить проданным",
+      "myListings.action.delete": "Удалить",
+      "myListings.confirmDelete": "Точно удалить это объявление? Отменить будет нельзя.",
+      "myListings.confirmSold": "Отметить это объявление как проданное?",
+      "myListings.views": "просмотров",
+
+      "search.noResults.title": "Ничего не найдено",
+      "search.noResults.sub": "Попробуйте изменить запрос или фильтры",
+      "search.filters.title": "Фильтры",
+      "search.filters.category": "Категория",
+      "search.filters.allCategories": "Все категории",
+      "search.filters.priceMin": "Цена от",
+      "search.filters.priceMax": "Цена до",
+      "search.filters.condition": "Состояние",
+      "search.filters.city": "Город",
+      "search.filters.apply": "Применить",
+      "search.filters.reset": "Сбросить"
     },
     en: {
       "app.title": "Dzintars — classifieds in Latvia",
@@ -1439,7 +2078,78 @@ img, svg { display: block; max-width: 100%; }
       "auth.error.invalid_login": "Check your email or phone.",
       "auth.error.user_already_exists": "This account already exists. Try signing in instead.",
       "auth.error.invalid_credentials": "Wrong email/phone or password.",
-      "auth.error.request_failed": "Something went wrong. Please try again."
+      "auth.error.request_failed": "Something went wrong. Please try again.",
+
+      "listing.empty.title": "No listings yet",
+      "listing.empty.sub": "Be the first to post one!",
+      "listing.create.cta": "Post a listing",
+      "listing.create.title": "New listing",
+      "listing.create.subtitle": "Fill in the basic info about your item",
+      "listing.field.category": "Category",
+      "listing.field.categoryPlaceholder": "Choose a category",
+      "listing.field.title": "Title",
+      "listing.field.titlePlaceholder": "E.g. iPhone 13, 128GB",
+      "listing.field.description": "Description",
+      "listing.field.descriptionPlaceholder": "Tell buyers about the item's condition, reason for selling, and anything else useful",
+      "listing.field.price": "Price",
+      "listing.field.priceType": "Price type",
+      "listing.priceType.FIXED": "Fixed",
+      "listing.priceType.NEGOTIABLE": "Negotiable",
+      "listing.priceType.FREE": "Free",
+      "listing.priceType.EXCHANGE": "Exchange",
+      "listing.field.condition": "Condition",
+      "listing.field.conditionPlaceholder": "Not specified",
+      "listing.condition.NEW": "New",
+      "listing.condition.LIKE_NEW": "Like new",
+      "listing.condition.GOOD": "Good",
+      "listing.condition.USED": "Used",
+      "listing.field.city": "City",
+      "listing.field.cityPlaceholder": "E.g. Riga",
+      "listing.field.phone": "Phone",
+      "listing.field.phonePlaceholder": "+371 20000000",
+      "listing.field.showPhone": "Show phone number on listing",
+      "listing.submit": "Publish",
+      "listing.submitting": "Publishing…",
+      "listing.error.TITLE_REQUIRED": "Enter a title.",
+      "listing.error.TITLE_TOO_LONG": "Title is too long (max 120 characters).",
+      "listing.error.DESCRIPTION_TOO_LONG": "Description is too long.",
+      "listing.error.CATEGORY_INVALID": "Choose a category.",
+      "listing.error.PRICE_TYPE_INVALID": "Invalid price type.",
+      "listing.error.PRICE_INVALID": "Enter a valid price.",
+      "listing.error.CONDITION_INVALID": "Invalid condition.",
+      "listing.error.PHONE_REQUIRED_WHEN_SHOWN": "Enter a phone number or turn off showing it.",
+      "listing.error.PHONE_INVALID": "Check the phone number.",
+      "listing.error.request_failed": "Something went wrong. Please try again.",
+      "listing.success": "Listing published!",
+      "listing.card.negotiable": "Negotiable",
+      "listing.card.free": "Free",
+      "listing.card.exchange": "Exchange",
+
+      "myListings.empty.title": "No listings yet",
+      "myListings.empty.sub": "Post your first listing — it will show up here",
+      "myListings.status.ACTIVE": "Active",
+      "myListings.status.PAUSED": "Paused",
+      "myListings.status.SOLD": "Sold",
+      "myListings.action.edit": "Edit",
+      "myListings.action.pause": "Pause",
+      "myListings.action.resume": "Publish",
+      "myListings.action.sold": "Mark as sold",
+      "myListings.action.delete": "Delete",
+      "myListings.confirmDelete": "Delete this listing? This can't be undone.",
+      "myListings.confirmSold": "Mark this listing as sold?",
+      "myListings.views": "views",
+
+      "search.noResults.title": "No results found",
+      "search.noResults.sub": "Try different keywords or filters",
+      "search.filters.title": "Filters",
+      "search.filters.category": "Category",
+      "search.filters.allCategories": "All categories",
+      "search.filters.priceMin": "Price from",
+      "search.filters.priceMax": "Price to",
+      "search.filters.condition": "Condition",
+      "search.filters.city": "City",
+      "search.filters.apply": "Apply",
+      "search.filters.reset": "Reset"
     }
   };
 
@@ -1494,6 +2204,15 @@ img, svg { display: block; max-width: 100%; }
 (function () {
   "use strict";
 
+  // Локальная обёртка над глобальным i18n — тот же паттерн, что и в
+  // остальных script-блоках этого файла (см. auth-sheet ниже).
+  function t(key) {
+    return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.t(key) : key;
+  }
+  function getLang() {
+    return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.getLang() : "lv";
+  }
+
   // Placeholder icon shown inside every empty listing photo slot.
   var PHOTO_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
     '<rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/>' +
@@ -1511,15 +2230,13 @@ img, svg { display: block; max-width: 100%; }
       'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>' +
     '</svg>';
 
-  var LISTING_COUNT = 8; // fixed grid size for this static placeholder feed
+  var LISTING_COUNT = 8; // fixed grid size for the loading skeleton only
 
-  function buildCard() {
+  function buildSkeletonCard() {
     var article = document.createElement("article");
     article.className = "listing-card is-empty";
     article.innerHTML =
-      '<div class="listing-photo">' + PHOTO_ICON +
-        '<button type="button" class="listing-fav" data-listing-id="" aria-label="Pievienot izlasei">' + FAV_ICON + '</button>' +
-      '</div>' +
+      '<div class="listing-photo">' + PHOTO_ICON + '</div>' +
       '<div class="listing-body">' +
         '<div class="listing-title"></div>' +
         '<div class="listing-price"></div>' +
@@ -1528,15 +2245,163 @@ img, svg { display: block; max-width: 100%; }
     return article;
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
+  // Форматирует цену объявления под текущий язык: FIXED/NEGOTIABLE — число
+  // + "€" + (при необходимости) пометка "Торг"; FREE/EXCHANGE — просто
+  // переведённая метка без числа.
+  function formatListingPrice(listing) {
+    if (listing.price_type === "FREE") return t("listing.card.free");
+    if (listing.price_type === "EXCHANGE") return t("listing.card.exchange");
+    var amount = listing.price === null || listing.price === undefined ? "" : Number(listing.price).toLocaleString(getLang() === "ru" ? "ru-RU" : getLang() === "en" ? "en-US" : "lv-LV", { maximumFractionDigits: 2 });
+    var priceStr = amount + " €";
+    if (listing.price_type === "NEGOTIABLE") {
+      priceStr += " · " + t("listing.card.negotiable");
+    }
+    return priceStr;
+  }
+
+  // Реальная карточка объявления — та же разметка, что и у плейсхолдера
+  // (buildSkeletonCard), но БЕЗ класса is-empty (иначе CSS спрячет
+  // .listing-fav и покажет серые полоски вместо текста) и с заполненными
+  // данными + data-listing-id, чтобы уже существующий делегированный
+  // обработчик избранного (см. ниже по файлу) сразу заработал.
+  function buildListingCard(listing) {
+    var article = document.createElement("article");
+    article.className = "listing-card";
+    article.setAttribute("data-listing-id", listing.id);
+    article.style.cursor = "pointer";
+
+    var photo = document.createElement("div");
+    photo.className = "listing-photo";
+    photo.innerHTML = PHOTO_ICON;
+
+    var favBtn = document.createElement("button");
+    favBtn.type = "button";
+    favBtn.className = "listing-fav";
+    favBtn.setAttribute("data-listing-id", String(listing.id));
+    favBtn.setAttribute("aria-label", "Pievienot izlasei");
+    favBtn.innerHTML = FAV_ICON;
+    photo.appendChild(favBtn);
+
+    var body = document.createElement("div");
+    body.className = "listing-body";
+
+    var titleEl = document.createElement("div");
+    titleEl.className = "listing-title";
+    titleEl.textContent = listing.title;
+
+    var priceEl = document.createElement("div");
+    priceEl.className = "listing-price";
+    priceEl.textContent = formatListingPrice(listing);
+
+    var locationEl = document.createElement("div");
+    locationEl.className = "listing-location";
+    locationEl.textContent = listing.city || "";
+
+    body.appendChild(titleEl);
+    body.appendChild(priceEl);
+    body.appendChild(locationEl);
+
+    article.appendChild(photo);
+    article.appendChild(body);
+
+    // Клик по карточке (не по сердечку) — открывает объявление. Version 1
+    // ещё не имеет отдельной страницы объявления, поэтому пока просто
+    // показываем детали через alert-замену — конкретика страницы объявления
+    // вне рамок Version 1 по ТЗ; когда появится реальная страница, здесь
+    // достаточно будет заменить это на переход по ссылке.
+    article.addEventListener("click", function () {
+      window.dispatchEvent(new CustomEvent("dz:listing-card-click", { detail: { id: listing.id } }));
+    });
+
+    return article;
+  }
+
+  function renderEmptyFeedState(grid) {
+    grid.innerHTML = "";
+    var wrap = document.createElement("div");
+    wrap.className = "empty-state";
+    wrap.style.gridColumn = "1 / -1";
+    wrap.innerHTML =
+      '<h1 class="empty-state-title">' + escapeHtml(t("listing.empty.title")) + '</h1>' +
+      '<p class="empty-state-sub">' + escapeHtml(t("listing.empty.sub")) + '</p>';
+    grid.appendChild(wrap);
+  }
+
+  function renderNoResultsState(grid) {
+    grid.innerHTML = "";
+    var wrap = document.createElement("div");
+    wrap.className = "empty-state";
+    wrap.style.gridColumn = "1 / -1";
+    wrap.innerHTML =
+      '<h1 class="empty-state-title">' + escapeHtml(t("search.noResults.title")) + '</h1>' +
+      '<p class="empty-state-sub">' + escapeHtml(t("search.noResults.sub")) + '</p>';
+    grid.appendChild(wrap);
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement("div");
+    div.textContent = str == null ? "" : String(str);
+    return div.innerHTML;
+  }
+
+  // Текущие активные фильтры для главной ленты — заполняются из
+  // search-input и filter-sheet (см. DzListingFilters ниже).
+  var currentFeedFilters = {};
+
+  function loadFeed() {
     var grid = document.getElementById("listing-grid");
-    if (!grid) return;
+    if (!grid || !window.DzApi) return;
+
+    grid.innerHTML = "";
     for (var i = 0; i < LISTING_COUNT; i++) {
-      grid.appendChild(buildCard());
+      grid.appendChild(buildSkeletonCard());
     }
 
+    var hasActiveFilters = Object.keys(currentFeedFilters).some(function (k) {
+      return currentFeedFilters[k] !== undefined && currentFeedFilters[k] !== null && currentFeedFilters[k] !== "";
+    });
+
+    window.DzApi.getListings(currentFeedFilters)
+      .then(function (data) {
+        grid.innerHTML = "";
+        var listings = data.listings || [];
+        if (listings.length === 0) {
+          if (hasActiveFilters) renderNoResultsState(grid);
+          else renderEmptyFeedState(grid);
+          return;
+        }
+        listings.forEach(function (listing) {
+          grid.appendChild(buildListingCard(listing));
+        });
+      })
+      .catch(function () {
+        // Сеть недоступна / бэкенд не отвечает — не оставляем скелетоны
+        // висеть вечно, показываем нейтральное сообщение вместо них.
+        renderNoResultsState(grid);
+      });
+  }
+
+  window.DzListingFeed = {
+    reload: loadFeed,
+    setFilters: function (filters) {
+      currentFeedFilters = filters || {};
+      loadFeed();
+    },
+    getFilters: function () {
+      return currentFeedFilters;
+    },
+  };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    loadFeed();
+
     // Один делегированный обработчик на весь grid: работает для карточек,
-    // которые есть сейчас, и для любых, что появятся здесь позже.
+    // которые есть сейчас, и для любых, что появятся здесь позже (важно,
+    // т.к. loadFeed() полностью перестраивает содержимое grid при каждом
+    // запросе — обработчик на самих карточках пришлось бы навешивать
+    // заново после каждой перерисовки, а так достаточно один раз).
+    var grid = document.getElementById("listing-grid");
+    if (!grid) return;
     grid.addEventListener("click", function (e) {
       var btn = e.target.closest(".listing-fav");
       if (!btn) return;
@@ -1552,8 +2417,8 @@ img, svg { display: block; max-width: 100%; }
       }
 
       if (!listingId) {
-        // Залогинен, но это плейсхолдер без реального id объявления —
-        // пока данных нет, делать нечего (по договорённости — no-op).
+        // Плейсхолдер-скелетон без реального id объявления (идёт пока
+        // грузится лента) — данных ещё нет, делать нечего.
         return;
       }
 
@@ -1619,6 +2484,12 @@ img, svg { display: block; max-width: 100%; }
     var stickySearch = document.querySelector(".sticky-search");
     if (stickySearch) {
       stickySearch.classList.toggle("is-scrolled", targetId !== "search");
+    }
+
+    // Открыли "Мои объявления" — обновляем список, если пользователь
+    // залогинен (гостю всё равно показан статичный empty-state).
+    if (targetId === "listings" && window.DzApi && window.DzApi.isLoggedIn() && window.DzMyListings) {
+      window.DzMyListings.refresh();
     }
   };
 })();
@@ -1709,6 +2580,19 @@ img, svg { display: block; max-width: 100%; }
     document.querySelectorAll(".js-logged-in-text").forEach(function (el) {
       el.hidden = true;
     });
+
+    // Вкладка "Мои объявления" имеет три состояния (гость / залогинен без
+    // объявлений / залогинен со списком), поэтому управляется отдельно от
+    // общего js-guest-only/js-logged-in переключателя выше.
+    var listingsGuest = document.getElementById("listings-guest-state");
+    var listingsEmpty = document.getElementById("listings-logged-empty-state");
+    var listingsList = document.getElementById("mylistings-list");
+    if (listingsGuest) listingsGuest.hidden = false;
+    if (listingsEmpty) listingsEmpty.hidden = true;
+    if (listingsList) listingsList.hidden = true;
+
+    var fab = document.getElementById("post-fab");
+    if (fab) fab.hidden = true;
   }
 
   function applyLoggedInUI(user) {
@@ -1740,6 +2624,19 @@ img, svg { display: block; max-width: 100%; }
     document.querySelectorAll(".js-logged-in-text").forEach(function (el) {
       el.hidden = false;
     });
+
+    var listingsGuest = document.getElementById("listings-guest-state");
+    if (listingsGuest) listingsGuest.hidden = true;
+
+    var fab = document.getElementById("post-fab");
+    if (fab) fab.hidden = false;
+
+    // Подгружаем свои объявления сразу после входа, чтобы вкладка "Мои
+    // объявления" уже была готова, когда пользователь на неё перейдёт —
+    // без этого первый заход показал бы пустое состояние на секунду.
+    if (window.DzMyListings && typeof window.DzMyListings.refresh === "function") {
+      window.DzMyListings.refresh();
+    }
   }
 
   function handleLogoutClick() {
@@ -1867,5 +2764,558 @@ img, svg { display: block; max-width: 100%; }
   });
 })();
 </script>
+
+<script>
+(function () {
+  "use strict";
+
+  function t(key) {
+    return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.t(key) : key;
+  }
+
+  // ---------------------------------------------------------------------
+  // Категории — загружаются один раз, используются и формой создания
+  // объявления, и панелью фильтров. Оба <select> заполняются из одного
+  // и того же ответа API, чтобы не дублировать список категорий (раздел
+  // 7.2 ТЗ прямо предупреждает не выдумывать категории заново).
+  // ---------------------------------------------------------------------
+
+  var categoriesCache = null;
+
+  function loadCategoriesInto(selectEl) {
+    if (!selectEl) return Promise.resolve();
+    if (categoriesCache) {
+      appendCategoryOptions(selectEl, categoriesCache);
+      return Promise.resolve();
+    }
+    if (!window.DzApi) return Promise.resolve();
+    return window.DzApi.getCategories().then(function (categories) {
+      categoriesCache = categories;
+      appendCategoryOptions(selectEl, categories);
+    }).catch(function () {
+      // Категории не загрузились — <select> остаётся с одним placeholder-
+      // пунктом ("Выбери категорию"/"Все категории"), форма создания
+      // объявления в этом случае просто не даст выбрать категорию и
+      // провалит клиентскую валидацию раньше отправки на сервер.
+    });
+  }
+
+  function appendCategoryOptions(selectEl, categories) {
+    var lang = (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.getLang() : "lv";
+    var nameKey = lang === "ru" ? "name_ru" : lang === "en" ? "name_en" : "name_lv";
+    (categories || []).forEach(function (cat) {
+      var opt = document.createElement("option");
+      opt.value = cat.slug;
+      opt.textContent = cat[nameKey] || cat.name_lv;
+      selectEl.appendChild(opt);
+    });
+  }
+
+  function refreshCategorySelectLabels() {
+    // При смене языка уже вставленные <option> категорий не обновятся
+    // сами по себе (они не имеют data-i18n — их текст пришёл из API, а не
+    // из словаря), поэтому просто перезаполняем оба select заново из кэша.
+    if (!categoriesCache) return;
+    [document.getElementById("listing-field-category"), document.getElementById("filter-category")].forEach(function (sel) {
+      if (!sel) return;
+      var currentValue = sel.value;
+      // Убираем все опции, кроме первой (placeholder, управляется data-i18n).
+      while (sel.options.length > 1) sel.remove(1);
+      appendCategoryOptions(sel, categoriesCache);
+      sel.value = currentValue;
+    });
+  }
+  window.addEventListener("dz:lang-changed", refreshCategorySelectLabels);
+
+  document.addEventListener("DOMContentLoaded", function () {
+    loadCategoriesInto(document.getElementById("listing-field-category"));
+    loadCategoriesInto(document.getElementById("filter-category"));
+  });
+
+  // ---------------------------------------------------------------------
+  // Форма создания / редактирования объявления
+  // ---------------------------------------------------------------------
+
+  function getListingFormEls() {
+    return {
+      overlay: document.getElementById("listing-sheet-overlay"),
+      sheet: document.getElementById("listing-sheet"),
+      form: document.getElementById("listing-form"),
+      idField: document.getElementById("listing-form-id"),
+      titleEl: document.getElementById("listing-sheet-title"),
+      subtitleEl: document.querySelector(".listing-form-subtitle"),
+      errorEl: document.getElementById("listing-form-error"),
+      successEl: document.getElementById("listing-form-success"),
+      submitBtn: document.getElementById("listing-form-submit"),
+      priceRow: document.getElementById("listing-price-row"),
+      priceTypeSelect: document.getElementById("listing-field-price-type"),
+      showPhoneCheckbox: document.getElementById("listing-field-show-phone"),
+      phoneInput: document.getElementById("listing-field-phone"),
+    };
+  }
+
+  function resetListingForm() {
+    var els = getListingFormEls();
+    if (!els.form) return;
+    els.form.reset();
+    els.idField.value = "";
+    els.errorEl.hidden = true;
+    els.errorEl.textContent = "";
+    els.successEl.hidden = true;
+    updatePriceRowVisibility();
+  }
+
+  // FREE — цена не нужна, прячем поле, чтобы не путать (сервер её тоже
+  // игнорирует для FREE — см. validateListingInput на бэкенде).
+  function updatePriceRowVisibility() {
+    var els = getListingFormEls();
+    if (!els.priceRow || !els.priceTypeSelect) return;
+    els.priceRow.style.display = els.priceTypeSelect.value === "FREE" ? "none" : "";
+  }
+
+  // Открывает форму в режиме СОЗДАНИЯ (по умолчанию) — сбрасывает все
+  // поля. Если передан listing, форма переключается в режим
+  // РЕДАКТИРОВАНИЯ и предзаполняется его текущими значениями.
+  window.openListingSheet = function (listing) {
+    var els = getListingFormEls();
+    if (!els.overlay || !els.sheet) return;
+
+    resetListingForm();
+
+    if (listing) {
+      els.idField.value = listing.id;
+      els.titleEl.textContent = t("myListings.action.edit");
+      els.titleEl.setAttribute("data-i18n", ""); // отключаем авто-перевод, текст задан явно выше
+      if (els.subtitleEl) els.subtitleEl.style.display = "none";
+      document.getElementById("listing-field-category").value = listing.category_slug || "";
+      document.getElementById("listing-field-title").value = listing.title || "";
+      document.getElementById("listing-field-description").value = listing.description || "";
+      document.getElementById("listing-field-price-type").value = listing.price_type || "FIXED";
+      document.getElementById("listing-field-price").value = listing.price === null || listing.price === undefined ? "" : listing.price;
+      document.getElementById("listing-field-condition").value = listing.condition || "";
+      document.getElementById("listing-field-city").value = listing.city || "";
+      document.getElementById("listing-field-phone").value = listing.phone || "";
+      document.getElementById("listing-field-show-phone").checked = !!listing.show_phone;
+      els.submitBtn.textContent = t("myListings.action.edit");
+    } else {
+      els.titleEl.textContent = t("listing.create.title");
+      els.titleEl.setAttribute("data-i18n", "listing.create.title");
+      if (els.subtitleEl) els.subtitleEl.style.display = "";
+      els.submitBtn.textContent = t("listing.submit");
+    }
+
+    updatePriceRowVisibility();
+
+    els.overlay.classList.add("is-open");
+    els.sheet.classList.add("is-open");
+    document.body.style.overflow = "hidden";
+
+    // Автофокус на первое поле — то же поведение, что у auth-sheet.
+    setTimeout(function () {
+      var categorySelect = document.getElementById("listing-field-category");
+      if (categorySelect) categorySelect.focus();
+    }, 260);
+  };
+
+  window.closeListingSheet = function () {
+    var els = getListingFormEls();
+    if (!els.overlay || !els.sheet) return;
+    els.overlay.classList.remove("is-open");
+    els.sheet.classList.remove("is-open");
+    document.body.style.overflow = "";
+  };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var priceTypeSelect = document.getElementById("listing-field-price-type");
+    if (priceTypeSelect) {
+      priceTypeSelect.addEventListener("change", updatePriceRowVisibility);
+    }
+
+    // "Показывать телефон" — если включили галочку, а поле телефона
+    // пустое, сразу ставим фокус туда (упреждаем ошибку валидации, а не
+    // просто показываем её после отправки).
+    var showPhoneCb = document.getElementById("listing-field-show-phone");
+    var phoneInput = document.getElementById("listing-field-phone");
+    if (showPhoneCb && phoneInput) {
+      showPhoneCb.addEventListener("change", function () {
+        if (showPhoneCb.checked && !phoneInput.value.trim()) {
+          phoneInput.focus();
+        }
+      });
+    }
+
+    var form = document.getElementById("listing-form");
+    if (!form) return;
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var els = getListingFormEls();
+
+      els.errorEl.hidden = true;
+      els.errorEl.textContent = "";
+      els.successEl.hidden = true;
+
+      var categoryVal = document.getElementById("listing-field-category").value;
+      var titleVal = document.getElementById("listing-field-title").value.trim();
+      var descriptionVal = document.getElementById("listing-field-description").value.trim();
+      var priceTypeVal = document.getElementById("listing-field-price-type").value;
+      var priceVal = document.getElementById("listing-field-price").value;
+      var conditionVal = document.getElementById("listing-field-condition").value;
+      var cityVal = document.getElementById("listing-field-city").value.trim();
+      var phoneVal = document.getElementById("listing-field-phone").value.trim();
+      var showPhoneVal = document.getElementById("listing-field-show-phone").checked;
+
+      // Лёгкая проверка на клиенте перед отправкой — экономит round-trip
+      // на самых частых ошибках; окончательная валидация всё равно на
+      // бэкенде (validateListingInput), т.к. фронту доверять нельзя.
+      if (!titleVal) {
+        els.errorEl.textContent = t("listing.error.TITLE_REQUIRED");
+        els.errorEl.hidden = false;
+        document.getElementById("listing-field-title").focus();
+        return;
+      }
+      if (!categoryVal) {
+        els.errorEl.textContent = t("listing.error.CATEGORY_INVALID");
+        els.errorEl.hidden = false;
+        document.getElementById("listing-field-category").focus();
+        return;
+      }
+
+      var payload = {
+        category: categoryVal,
+        title: titleVal,
+        description: descriptionVal,
+        price_type: priceTypeVal,
+        condition: conditionVal || null,
+        city: cityVal || null,
+        show_phone: showPhoneVal,
+        phone: phoneVal || null,
+      };
+      if (priceTypeVal !== "FREE") {
+        payload.price = priceVal === "" ? null : Number(priceVal);
+      }
+
+      var editingId = els.idField.value;
+      var isEditing = !!editingId;
+
+      els.submitBtn.disabled = true;
+      els.submitBtn.classList.remove("is-ready");
+      els.submitBtn.classList.add("is-loading");
+      els.submitBtn.textContent = t("listing.submitting");
+
+      var request = isEditing
+        ? window.DzApi.updateListing(editingId, payload)
+        : window.DzApi.createListing(payload);
+
+      request
+        .then(function () {
+          els.successEl.hidden = false;
+          els.successEl.textContent = t("listing.success");
+
+          // Обновляем и ленту, и "Мои объявления" — новое/изменённое
+          // объявление должно сразу быть видно в обоих местах.
+          if (window.DzListingFeed) window.DzListingFeed.reload();
+          if (window.DzMyListings) window.DzMyListings.refresh();
+
+          setTimeout(function () {
+            window.closeListingSheet();
+          }, 900);
+        })
+        .catch(function (err) {
+          var namespace = "listing.error.";
+          var message = window.DzApi.errorMessage(err, namespace);
+          els.errorEl.textContent = message;
+          els.errorEl.hidden = false;
+        })
+        .finally(function () {
+          els.submitBtn.disabled = false;
+          els.submitBtn.classList.remove("is-loading");
+          els.submitBtn.classList.add("is-ready");
+          els.submitBtn.textContent = isEditing ? t("myListings.action.edit") : t("listing.submit");
+        });
+    });
+  });
+
+  // Esc закрывает открытую форму — то же поведение, что ожидается от
+  // auth-sheet (проверено: там та же логика привязана к document).
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    var sheet = document.getElementById("listing-sheet");
+    if (sheet && sheet.classList.contains("is-open")) window.closeListingSheet();
+    var filterSheet = document.getElementById("filter-sheet");
+    if (filterSheet && filterSheet.classList.contains("is-open")) window.closeFilterSheet();
+  });
+})();
+</script>
+
+<script>
+(function () {
+  "use strict";
+
+  function t(key) {
+    return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.t(key) : key;
+  }
+
+  // ---------------------------------------------------------------------
+  // Панель фильтров поиска — управляет и полем поиска в шапке, и
+  // filter-sheet (категория/цена/состояние/город), и передаёт итоговый
+  // набор параметров в DzListingFeed.setFilters().
+  // ---------------------------------------------------------------------
+
+  function getFilterEls() {
+    return {
+      overlay: document.getElementById("filter-sheet-overlay"),
+      sheet: document.getElementById("filter-sheet"),
+      searchInput: document.getElementById("search-input"),
+      filterBtn: document.getElementById("search-filter-btn"),
+      category: document.getElementById("filter-category"),
+      priceMin: document.getElementById("filter-price-min"),
+      priceMax: document.getElementById("filter-price-max"),
+      condition: document.getElementById("filter-condition"),
+      city: document.getElementById("filter-city"),
+      applyBtn: document.getElementById("filter-apply-btn"),
+      resetBtn: document.getElementById("filter-reset-btn"),
+    };
+  }
+
+  window.openFilterSheet = function () {
+    var els = getFilterEls();
+    if (!els.overlay || !els.sheet) return;
+    els.overlay.classList.add("is-open");
+    els.sheet.classList.add("is-open");
+    document.body.style.overflow = "hidden";
+  };
+
+  window.closeFilterSheet = function () {
+    var els = getFilterEls();
+    if (!els.overlay || !els.sheet) return;
+    els.overlay.classList.remove("is-open");
+    els.sheet.classList.remove("is-open");
+    document.body.style.overflow = "";
+  };
+
+  // Собирает текущее состояние всех полей (панель фильтров + строка
+  // поиска) в один объект для GET /api/listings.
+  function collectFilters() {
+    var els = getFilterEls();
+    var filters = {};
+    if (els.searchInput && els.searchInput.value.trim()) filters.q = els.searchInput.value.trim();
+    if (els.category && els.category.value) filters.category = els.category.value;
+    if (els.priceMin && els.priceMin.value !== "") filters.price_min = els.priceMin.value;
+    if (els.priceMax && els.priceMax.value !== "") filters.price_max = els.priceMax.value;
+    if (els.condition && els.condition.value) filters.condition = els.condition.value;
+    if (els.city && els.city.value.trim()) filters.city = els.city.value.trim();
+    return filters;
+  }
+
+  function applyFiltersAndReload() {
+    if (window.DzListingFeed) window.DzListingFeed.setFilters(collectFilters());
+    updateFilterButtonBadge();
+  }
+
+  function updateFilterButtonBadge() {
+    var els = getFilterEls();
+    if (!els.filterBtn) return;
+    var f = collectFilters();
+    var hasPanelFilters = !!(f.category || f.price_min || f.price_max || f.condition || f.city);
+    els.filterBtn.classList.toggle("has-active-filters", hasPanelFilters);
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var els = getFilterEls();
+
+    if (els.filterBtn) {
+      els.filterBtn.addEventListener("click", window.openFilterSheet);
+    }
+
+    if (els.applyBtn) {
+      els.applyBtn.addEventListener("click", function () {
+        applyFiltersAndReload();
+        window.closeFilterSheet();
+      });
+    }
+
+    if (els.resetBtn) {
+      els.resetBtn.addEventListener("click", function () {
+        if (els.category) els.category.value = "";
+        if (els.priceMin) els.priceMin.value = "";
+        if (els.priceMax) els.priceMax.value = "";
+        if (els.condition) els.condition.value = "";
+        if (els.city) els.city.value = "";
+        applyFiltersAndReload();
+      });
+    }
+
+    // Поиск по тексту — с небольшой задержкой (debounce), чтобы не
+    // отправлять запрос на каждое нажатие клавиши.
+    if (els.searchInput) {
+      var debounceTimer = null;
+      els.searchInput.addEventListener("input", function () {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(applyFiltersAndReload, 400);
+      });
+      els.searchInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          clearTimeout(debounceTimer);
+          applyFiltersAndReload();
+        }
+      });
+    }
+  });
+})();
+</script>
+
+<script>
+(function () {
+  "use strict";
+
+  function t(key) {
+    return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.t(key) : key;
+  }
+
+  // ---------------------------------------------------------------------
+  // "Мои объявления" — вкладка listings для залогиненного пользователя.
+  // Показывает все свои объявления (кроме DELETED) с действиями
+  // редактировать/скрыть/опубликовать/продано/удалить.
+  // ---------------------------------------------------------------------
+
+  var EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+
+  function escapeHtml(str) {
+    var div = document.createElement("div");
+    div.textContent = str == null ? "" : String(str);
+    return div.innerHTML;
+  }
+
+  function formatPrice(listing) {
+    if (listing.price_type === "FREE") return t("listing.card.free");
+    if (listing.price_type === "EXCHANGE") return t("listing.card.exchange");
+    if (listing.price === null || listing.price === undefined) return "—";
+    var lang = (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.getLang() : "lv";
+    var amount = Number(listing.price).toLocaleString(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "lv-LV", { maximumFractionDigits: 2 });
+    return amount + " €" + (listing.price_type === "NEGOTIABLE" ? " · " + t("listing.card.negotiable") : "");
+  }
+
+  function buildMyListingCard(listing) {
+    var card = document.createElement("div");
+    card.className = "mylistings-card";
+
+    var photo = document.createElement("div");
+    photo.className = "mylistings-card-photo";
+    photo.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="8.5" cy="10" r="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M3 16L8 12L12 15L16 11L21 16" stroke="currentColor" stroke-width="1.6"/></svg>';
+
+    var body = document.createElement("div");
+    body.className = "mylistings-card-body";
+
+    var top = document.createElement("div");
+    top.className = "mylistings-card-top";
+    var titleEl = document.createElement("div");
+    titleEl.className = "mylistings-card-title";
+    titleEl.textContent = listing.title;
+    var statusPill = document.createElement("span");
+    statusPill.className = "mylistings-status-pill status-" + listing.status;
+    statusPill.textContent = t("myListings.status." + listing.status) || listing.status;
+    top.appendChild(titleEl);
+    top.appendChild(statusPill);
+
+    var priceEl = document.createElement("div");
+    priceEl.className = "mylistings-card-price";
+    priceEl.textContent = formatPrice(listing);
+
+    var metaEl = document.createElement("div");
+    metaEl.className = "mylistings-card-meta";
+    var metaParts = [];
+    if (listing.city) metaParts.push(listing.city);
+    metaParts.push((listing.views_count || 0) + " " + t("myListings.views"));
+    metaEl.textContent = metaParts.join(" · ");
+
+    var actions = document.createElement("div");
+    actions.className = "mylistings-card-actions";
+    actions.appendChild(buildActionBtn(t("myListings.action.edit"), false, function () {
+      window.openListingSheet(Object.assign({}, listing, { category_slug: listing.category_slug || "" }));
+    }));
+
+    if (listing.status === "ACTIVE") {
+      actions.appendChild(buildActionBtn(t("myListings.action.pause"), false, function () {
+        window.DzApi.pauseListing(listing.id).then(function () {
+          refreshMyListings();
+          if (window.DzListingFeed) window.DzListingFeed.reload();
+        });
+      }));
+      actions.appendChild(buildActionBtn(t("myListings.action.sold"), true, function () {
+        if (!confirm(t("myListings.confirmSold"))) return;
+        window.DzApi.markListingSold(listing.id).then(function () {
+          refreshMyListings();
+          if (window.DzListingFeed) window.DzListingFeed.reload();
+        });
+      }));
+    } else if (listing.status === "PAUSED") {
+      actions.appendChild(buildActionBtn(t("myListings.action.resume"), true, function () {
+        window.DzApi.resumeListing(listing.id).then(function () {
+          refreshMyListings();
+          if (window.DzListingFeed) window.DzListingFeed.reload();
+        });
+      }));
+    }
+
+    var deleteBtn = buildActionBtn(t("myListings.action.delete"), false, function () {
+      if (!confirm(t("myListings.confirmDelete"))) return;
+      window.DzApi.deleteListing(listing.id).then(function () {
+        refreshMyListings();
+        if (window.DzListingFeed) window.DzListingFeed.reload();
+      });
+    });
+    deleteBtn.classList.add("is-danger");
+    actions.appendChild(deleteBtn);
+
+    body.appendChild(top);
+    body.appendChild(priceEl);
+    body.appendChild(metaEl);
+    body.appendChild(actions);
+
+    card.appendChild(photo);
+    card.appendChild(body);
+    return card;
+  }
+
+  function buildActionBtn(label, isPrimary, onClick) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "mylistings-action-btn" + (isPrimary ? " is-primary" : "");
+    btn.textContent = label;
+    btn.addEventListener("click", onClick);
+    return btn;
+  }
+
+  function refreshMyListings() {
+    var listEl = document.getElementById("mylistings-list");
+    var emptyEl = document.getElementById("listings-logged-empty-state");
+    var guestEl = document.getElementById("listings-guest-state");
+    if (!listEl || !window.DzApi || !window.DzApi.isLoggedIn()) return;
+
+    guestEl.hidden = true;
+
+    window.DzApi.getMyListings().then(function (listings) {
+      if (!listings || listings.length === 0) {
+        listEl.hidden = true;
+        emptyEl.hidden = false;
+        return;
+      }
+      emptyEl.hidden = true;
+      listEl.hidden = false;
+      listEl.innerHTML = "";
+      listings.forEach(function (listing) {
+        listEl.appendChild(buildMyListingCard(listing));
+      });
+    }).catch(function () {
+      // Не удалось загрузить — оставляем как было, не перетираем
+      // валидные данные ошибочным пустым состоянием.
+    });
+  }
+
+  window.DzMyListings = { refresh: refreshMyListings };
+})();
+</script>
 </body>
-</html>
+   </html>
