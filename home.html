@@ -451,6 +451,13 @@ img, svg { display: block; max-width: 100%; }
 }
 
 .listing-photo svg { width: 34px; height: 34px; color: var(--text-400); opacity: 0.7; }
+.listing-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .listing-fav {
   position: absolute;
@@ -834,6 +841,86 @@ textarea.sheet-input {
 }
 .listing-form-success[hidden] { display: none; }
 
+/* Version 3 — блок загрузки фото внутри формы создания/редактирования
+   объявления (раздел 5.1 ТЗ). Миниатюры того же размера, что и в "Мои
+   объявления" (.mylistings-card-photo, 76x76) — визуальная консистентность
+   между формой и карточками. */
+.listing-photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-1);
+}
+.listing-photo-thumb {
+  width: 76px;
+  height: 76px;
+  position: relative;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: repeating-linear-gradient(135deg, #EDEAE2, #EDEAE2 8px, #E4E0D5 8px, #E4E0D5 16px);
+}
+.listing-photo-thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.listing-photo-thumb.is-uploading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  border: 2px solid rgba(13,59,67,0.2);
+  border-top-color: var(--ink-900);
+  animation: auth-spin 0.7s linear infinite;
+}
+.listing-photo-thumb.is-error {
+  background: rgba(184,76,66,0.1);
+}
+.listing-photo-thumb-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(17,24,39,0.55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+  font-size: 15px;
+  padding: 0;
+}
+.listing-photo-add-btn {
+  width: 76px;
+  height: 76px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--line-200);
+  background: var(--paper-50);
+  color: var(--text-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.listing-photo-add-btn svg { width: 22px; height: 22px; }
+.listing-photo-add-btn[hidden] { display: none; }
+.listing-photo-hint {
+  font-size: var(--fs-12);
+  color: var(--text-400);
+  margin: 0 0 var(--sp-4);
+}
+
 /* ===================== Listing-detail sheet ===================== */
 /* Открывается по клику на карточку объявления в ленте/избранном/"моих
    объявлениях" — тот же механизм bottom-sheet, что и у .listing-sheet
@@ -872,6 +959,34 @@ textarea.sheet-input {
   margin-bottom: var(--sp-4);
 }
 .detail-photo-placeholder svg { width: 64px; height: 64px; }
+
+/* Version 3 — когда у объявления есть фото, вместо одной иконки-заглушки
+   показываем горизонтальный scroll-snap трек (свайп на мобильном, без
+   всякого JS-слайдера/фреймворка — раздел 3.5 ТЗ). Заглушка выше остаётся
+   как есть и используется, когда фото нет вообще. */
+.detail-photo-gallery {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  gap: 0;
+  border-radius: 20px;
+  margin-bottom: var(--sp-4);
+  scrollbar-width: none;
+}
+.detail-photo-gallery::-webkit-scrollbar { display: none; }
+.detail-photo-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  aspect-ratio: 4 / 3;
+  background: var(--surface-200, #EEECE8);
+}
+.detail-photo-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 .detail-title {
   font-size: var(--fs-h1);
   line-height: var(--lh-h1);
@@ -992,13 +1107,22 @@ textarea.sheet-input {
   width: 76px;
   height: 76px;
   flex-shrink: 0;
+  position: relative;
   border-radius: var(--radius-sm);
   background: repeating-linear-gradient(135deg, #EDEAE2, #EDEAE2 8px, #E4E0D5 8px, #E4E0D5 16px);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 .mylistings-card-photo svg { width: 26px; height: 26px; color: var(--text-400); opacity: 0.7; }
+.mylistings-card-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .mylistings-card-body {
   flex: 1;
@@ -2073,6 +2197,13 @@ textarea.sheet-input {
         <input type="hidden" id="listing-form-id" value="">
 
         <div class="listing-form-row">
+          <label class="sheet-field-label" data-i18n="listing.field.photos">Fotoattēli</label>
+          <div class="listing-photo-grid" id="listing-photo-grid"></div>
+          <p class="listing-photo-hint" data-i18n="listing.field.photosHint">Līdz 7 fotoattēliem</p>
+          <input type="file" id="listing-photo-input" accept="image/*" capture="environment" multiple hidden>
+        </div>
+
+        <div class="listing-form-row">
           <label class="sheet-field-label" for="listing-field-category" data-i18n="listing.field.category">Kategorija</label>
           <select class="filter-select" id="listing-field-category" name="category" required>
             <option value="" data-i18n="listing.field.categoryPlaceholder">Izvēlies kategoriju</option>
@@ -2330,6 +2461,10 @@ textarea.sheet-input {
       "listing.priceType.NEGOTIABLE": "Iespējama vienošanās",
       "listing.priceType.FREE": "Par brīvu",
       "listing.priceType.EXCHANGE": "Apmaiņa",
+      "listing.field.photos": "Fotoattēli",
+      "listing.field.photosHint": "Līdz 7 fotoattēliem",
+      "listing.photo.add": "Pievienot foto",
+      "listing.photo.remove": "Noņemt foto",
       "listing.field.condition": "Stāvoklis",
       "listing.field.conditionPlaceholder": "Nav norādīts",
       "listing.condition.NEW": "Jauns",
@@ -2352,10 +2487,22 @@ textarea.sheet-input {
       "listing.error.CONDITION_INVALID": "Nepareizs stāvokļa lauks.",
       "listing.error.PHONE_REQUIRED_WHEN_SHOWN": "Ievadi tālruņa numuru vai izslēdz tā rādīšanu.",
       "listing.error.PHONE_INVALID": "Pārbaudi tālruņa numuru.",
+      "listing.error.PHOTOS_INVALID": "Problēma ar fotoattēliem. Mēģini vēlreiz.",
+      "listing.error.TOO_MANY_PHOTOS": "Maksimums 7 fotoattēli.",
+      "listing.error.PHOTOS_UPLOADING": "Uzgaidi, kamēr fotoattēli pabeidz augšupielādi.",
       "listing.error.request_failed": "Kaut kas nogāja greizi. Mēģini vēlreiz.",
       "listing.error.forbidden": "Tev nav tiesību rediģēt šo sludinājumu.",
       "listing.error.not_found": "Sludinājums nav atrasts.",
       "listing.error.unauthorized": "Vispirms ieej savā kontā.",
+      "photo.error.invalid_file_type": "Šis failu formāts nav atbalstīts.",
+      "photo.error.file_too_large": "Fails ir pārāk liels (maks. 5MB).",
+      "photo.error.file_invalid": "Neizdevās nolasīt failu.",
+      "photo.error.file_required": "Fails nav atrasts.",
+      "photo.error.imgur_not_configured": "Fotoattēlu augšupielāde pagaidām nav pieejama.",
+      "photo.error.imgur_unreachable": "Neizdevās sazināties ar fotoattēlu serveri.",
+      "photo.error.imgur_upload_failed": "Neizdevās augšupielādēt fotoattēlu.",
+      "photo.error.unauthorized": "Vispirms ieej savā kontā.",
+      "photo.error.request_failed": "Neizdevās augšupielādēt fotoattēlu. Mēģini vēlreiz.",
       "detail.loading": "Ielādē…",
       "detail.error": "Neizdevās ielādēt sludinājumu.",
       "detail.contact": "Rakstīt",
@@ -2492,6 +2639,10 @@ textarea.sheet-input {
       "listing.priceType.NEGOTIABLE": "Возможен торг",
       "listing.priceType.FREE": "Бесплатно",
       "listing.priceType.EXCHANGE": "Обмен",
+      "listing.field.photos": "Фото",
+      "listing.field.photosHint": "До 7 фотографий",
+      "listing.photo.add": "Добавить фото",
+      "listing.photo.remove": "Удалить фото",
       "listing.field.condition": "Состояние",
       "listing.field.conditionPlaceholder": "Не указано",
       "listing.condition.NEW": "Новое",
@@ -2514,10 +2665,22 @@ textarea.sheet-input {
       "listing.error.CONDITION_INVALID": "Некорректное состояние товара.",
       "listing.error.PHONE_REQUIRED_WHEN_SHOWN": "Введите номер телефона или отключите его показ.",
       "listing.error.PHONE_INVALID": "Проверьте номер телефона.",
+      "listing.error.PHOTOS_INVALID": "Проблема с фотографиями. Попробуйте ещё раз.",
+      "listing.error.TOO_MANY_PHOTOS": "Максимум 7 фотографий.",
+      "listing.error.PHOTOS_UPLOADING": "Дождитесь, пока фотографии загрузятся.",
       "listing.error.request_failed": "Что-то пошло не так. Попробуйте ещё раз.",
       "listing.error.forbidden": "У вас нет прав редактировать это объявление.",
       "listing.error.not_found": "Объявление не найдено.",
       "listing.error.unauthorized": "Сначала войдите в аккаунт.",
+      "photo.error.invalid_file_type": "Этот формат файла не поддерживается.",
+      "photo.error.file_too_large": "Файл слишком большой (макс. 5MB).",
+      "photo.error.file_invalid": "Не удалось прочитать файл.",
+      "photo.error.file_required": "Файл не найден.",
+      "photo.error.imgur_not_configured": "Загрузка фото временно недоступна.",
+      "photo.error.imgur_unreachable": "Не удалось связаться с сервером фотографий.",
+      "photo.error.imgur_upload_failed": "Не удалось загрузить фотографию.",
+      "photo.error.unauthorized": "Сначала войдите в аккаунт.",
+      "photo.error.request_failed": "Не удалось загрузить фотографию. Попробуйте ещё раз.",
       "detail.loading": "Загрузка…",
       "detail.error": "Не удалось загрузить объявление.",
       "detail.contact": "Написать",
@@ -2654,6 +2817,10 @@ textarea.sheet-input {
       "listing.priceType.NEGOTIABLE": "Negotiable",
       "listing.priceType.FREE": "Free",
       "listing.priceType.EXCHANGE": "Exchange",
+      "listing.field.photos": "Photos",
+      "listing.field.photosHint": "Up to 7 photos",
+      "listing.photo.add": "Add photo",
+      "listing.photo.remove": "Remove photo",
       "listing.field.condition": "Condition",
       "listing.field.conditionPlaceholder": "Not specified",
       "listing.condition.NEW": "New",
@@ -2676,10 +2843,22 @@ textarea.sheet-input {
       "listing.error.CONDITION_INVALID": "Invalid condition.",
       "listing.error.PHONE_REQUIRED_WHEN_SHOWN": "Enter a phone number or turn off showing it.",
       "listing.error.PHONE_INVALID": "Check the phone number.",
+      "listing.error.PHOTOS_INVALID": "There's a problem with the photos. Please try again.",
+      "listing.error.TOO_MANY_PHOTOS": "Maximum 7 photos.",
+      "listing.error.PHOTOS_UPLOADING": "Wait for the photos to finish uploading.",
       "listing.error.request_failed": "Something went wrong. Please try again.",
       "listing.error.forbidden": "You don't have permission to edit this listing.",
       "listing.error.not_found": "Listing not found.",
       "listing.error.unauthorized": "Please sign in first.",
+      "photo.error.invalid_file_type": "This file type isn't supported.",
+      "photo.error.file_too_large": "File is too large (max 5MB).",
+      "photo.error.file_invalid": "Couldn't read the file.",
+      "photo.error.file_required": "File not found.",
+      "photo.error.imgur_not_configured": "Photo upload isn't available right now.",
+      "photo.error.imgur_unreachable": "Couldn't reach the photo server.",
+      "photo.error.imgur_upload_failed": "Couldn't upload the photo.",
+      "photo.error.unauthorized": "Please sign in first.",
+      "photo.error.request_failed": "Couldn't upload the photo. Please try again.",
       "detail.loading": "Loading…",
       "detail.error": "Couldn't load this listing.",
       "detail.contact": "Message",
@@ -2860,7 +3039,9 @@ textarea.sheet-input {
 
     var photo = document.createElement("div");
     photo.className = "listing-photo";
-    photo.innerHTML = PHOTO_ICON;
+    photo.innerHTML = (listing.photos && listing.photos.length)
+      ? '<img src="' + escapeHtml(listing.photos[0].url) + '" alt="" loading="lazy">'
+      : PHOTO_ICON;
 
     var favBtn = document.createElement("button");
     favBtn.type = "button";
@@ -3488,7 +3669,113 @@ textarea.sheet-input {
       priceTypeSelect: document.getElementById("listing-field-price-type"),
       showPhoneCheckbox: document.getElementById("listing-field-show-phone"),
       phoneInput: document.getElementById("listing-field-phone"),
+      photoGrid: document.getElementById("listing-photo-grid"),
+      photoInput: document.getElementById("listing-photo-input"),
     };
+  }
+
+  // ---------------------------------------------------------------------
+  // Фото (Version 3) — состояние формы держим отдельным массивом объектов
+  // { tempId, url, status } (status: 'uploading'|'done'|'error'), а не
+  // просто массивом ссылок, чтобы можно было показать прогресс/ошибку по
+  // каждому файлу и убрать фото до того, как публикуется объявление
+  // (раздел 3.2 ТЗ). tempId нужен, чтобы асинхронный ответ на upload не
+  // перезаписал не тот элемент, если пользователь успел что-то убрать,
+  // пока файл ещё грузился.
+  var currentPhotos = [];
+  var photoTempIdCounter = 0;
+
+  var PHOTO_ADD_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+
+  function renderPhotoGrid() {
+    var els = getListingFormEls();
+    if (!els.photoGrid) return;
+    els.photoGrid.innerHTML = "";
+
+    currentPhotos.forEach(function (photo) {
+      var thumb = document.createElement("div");
+      thumb.className = "listing-photo-thumb" + (photo.status === "uploading" ? " is-uploading" : "") + (photo.status === "error" ? " is-error" : "");
+      if (photo.status === "error") {
+        thumb.title = t("photo.error." + photo.errorCode);
+      }
+      if (photo.status === "done" && photo.url) {
+        var img = document.createElement("img");
+        img.src = photo.url;
+        img.alt = "";
+        thumb.appendChild(img);
+      }
+      var removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "listing-photo-thumb-remove";
+      removeBtn.setAttribute("aria-label", t("listing.photo.remove"));
+      removeBtn.textContent = "\u00D7";
+      removeBtn.addEventListener("click", function () {
+        currentPhotos = currentPhotos.filter(function (p) { return p.tempId !== photo.tempId; });
+        renderPhotoGrid();
+      });
+      thumb.appendChild(removeBtn);
+      els.photoGrid.appendChild(thumb);
+    });
+
+    var addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "listing-photo-add-btn";
+    addBtn.innerHTML = PHOTO_ADD_ICON;
+    addBtn.setAttribute("aria-label", t("listing.photo.add"));
+    if (currentPhotos.length >= 7) addBtn.hidden = true;
+    addBtn.addEventListener("click", function () {
+      if (els.photoInput) els.photoInput.click();
+    });
+    els.photoGrid.appendChild(addBtn);
+  }
+
+  // Клиентская проверка перед отправкой на backend — экономит round-trip на
+  // самых частых ошибках (см. тот же принцип в обработчике submit ниже).
+  // Финальная проверка типа/размера всё равно на backend (handleUploadPhoto).
+  var PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+  var PHOTO_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+  function addPhotoFiles(fileList) {
+    var els = getListingFormEls();
+    var slotsLeft = 7 - currentPhotos.length;
+    var files = Array.prototype.slice.call(fileList).slice(0, Math.max(0, slotsLeft));
+
+    files.forEach(function (file) {
+      var tempId = "p" + (++photoTempIdCounter);
+
+      if (PHOTO_ALLOWED_TYPES.indexOf(file.type) === -1) {
+        currentPhotos.push({ tempId: tempId, url: null, status: "error", errorCode: "invalid_file_type" });
+        renderPhotoGrid();
+        return;
+      }
+      if (file.size > PHOTO_MAX_BYTES) {
+        currentPhotos.push({ tempId: tempId, url: null, status: "error", errorCode: "file_too_large" });
+        renderPhotoGrid();
+        return;
+      }
+
+      currentPhotos.push({ tempId: tempId, url: null, status: "uploading" });
+      renderPhotoGrid();
+
+      window.DzApi.uploadPhoto(file)
+        .then(function (url) {
+          var entry = currentPhotos.filter(function (p) { return p.tempId === tempId; })[0];
+          if (!entry) return; // пользователь успел убрать превью, пока файл грузился
+          entry.url = url;
+          entry.status = "done";
+          renderPhotoGrid();
+        })
+        .catch(function (err) {
+          var entry = currentPhotos.filter(function (p) { return p.tempId === tempId; })[0];
+          if (!entry) return;
+          entry.status = "error";
+          entry.errorCode = (err && err.code) || "request_failed";
+          renderPhotoGrid();
+        });
+    });
+
+    if (els.photoInput) els.photoInput.value = ""; // разрешает выбрать тот же файл повторно
   }
 
   function resetListingForm() {
@@ -3499,6 +3786,8 @@ textarea.sheet-input {
     els.errorEl.hidden = true;
     els.errorEl.textContent = "";
     els.successEl.hidden = true;
+    currentPhotos = [];
+    renderPhotoGrid();
     updatePriceRowVisibility();
   }
 
@@ -3533,6 +3822,13 @@ textarea.sheet-input {
       document.getElementById("listing-field-city").value = listing.city || "";
       document.getElementById("listing-field-phone").value = listing.phone || "";
       document.getElementById("listing-field-show-phone").checked = !!listing.show_phone;
+      // Уже загруженные фото — сразу в статусе "done", доп. загрузка не
+      // нужна, ссылки уже есть с прошлого сохранения (listing.photos с
+      // backend, отсортированы по sort_order — см. serializeListing).
+      currentPhotos = (listing.photos || []).map(function (p) {
+        return { tempId: "existing" + (++photoTempIdCounter), url: p.url, status: "done" };
+      });
+      renderPhotoGrid();
       els.submitBtn.textContent = t("myListings.action.edit");
     } else {
       els.titleEl.textContent = t("listing.create.title");
@@ -3581,6 +3877,16 @@ textarea.sheet-input {
       });
     }
 
+    var photoInput = document.getElementById("listing-photo-input");
+    if (photoInput) {
+      photoInput.addEventListener("change", function () {
+        if (photoInput.files && photoInput.files.length) {
+          addPhotoFiles(photoInput.files);
+        }
+      });
+    }
+    renderPhotoGrid(); // изначальная отрисовка кнопки "+" при первой загрузке страницы
+
     var form = document.getElementById("listing-form");
     if (!form) return;
 
@@ -3617,6 +3923,11 @@ textarea.sheet-input {
         document.getElementById("listing-field-category").focus();
         return;
       }
+      if (currentPhotos.some(function (p) { return p.status === "uploading"; })) {
+        els.errorEl.textContent = t("listing.error.PHOTOS_UPLOADING");
+        els.errorEl.hidden = false;
+        return;
+      }
 
       var payload = {
         category: categoryVal,
@@ -3627,6 +3938,7 @@ textarea.sheet-input {
         city: cityVal || null,
         show_phone: showPhoneVal,
         phone: phoneVal || null,
+        photos: currentPhotos.filter(function (p) { return p.status === "done"; }).map(function (p) { return p.url; }),
       };
       if (priceTypeVal !== "FREE") {
         payload.price = priceVal === "" ? null : Number(priceVal);
@@ -3867,7 +4179,9 @@ textarea.sheet-input {
 
     var photo = document.createElement("div");
     photo.className = "mylistings-card-photo";
-    photo.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="8.5" cy="10" r="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M3 16L8 12L12 15L16 11L21 16" stroke="currentColor" stroke-width="1.6"/></svg>';
+    photo.innerHTML = (listing.photos && listing.photos.length)
+      ? '<img src="' + escapeHtml(listing.photos[0].url) + '" alt="" loading="lazy">'
+      : '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="8.5" cy="10" r="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M3 16L8 12L12 15L16 11L21 16" stroke="currentColor" stroke-width="1.6"/></svg>';
 
     var body = document.createElement("div");
     body.className = "mylistings-card-body";
@@ -4487,6 +4801,12 @@ textarea.sheet-input {
   var FAV_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 20.5C12 20.5 3.5 15.5 3.5 9.5C3.5 6.5 5.8 4.5 8.5 4.5C10 4.5 11.2 5.2 12 6.3C12.8 5.2 14 4.5 15.5 4.5C18.2 4.5 20.5 6.5 20.5 9.5C20.5 15.5 12 20.5 12 20.5Z" stroke="currentColor" stroke-width="1.6"/></svg>';
   var PHOTO_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="8.5" cy="10" r="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M3 16L8 12L12 15L16 11L21 16" stroke="currentColor" stroke-width="1.6"/></svg>';
 
+  function escapeHtml(str) {
+    var div = document.createElement("div");
+    div.textContent = str == null ? "" : String(str);
+    return div.innerHTML;
+  }
+
   function formatPrice(listing) {
     if (listing.price_type === "FREE") return t("listing.card.free");
     if (listing.price_type === "EXCHANGE") return t("listing.card.exchange");
@@ -4503,7 +4823,9 @@ textarea.sheet-input {
 
     var photo = document.createElement("div");
     photo.className = "listing-photo";
-    photo.innerHTML = PHOTO_ICON;
+    photo.innerHTML = (listing.photos && listing.photos.length)
+      ? '<img src="' + escapeHtml(listing.photos[0].url) + '" alt="" loading="lazy">'
+      : PHOTO_ICON;
 
     var favBtn = document.createElement("button");
     favBtn.type = "button";
@@ -4667,7 +4989,15 @@ textarea.sheet-input {
     metaChips.push((listing.views_count || 0) + " " + escapeHtml(t("myListings.views") || "views"));
 
     var html = '';
-    html += '<div class="detail-photo-placeholder">' + PHOTO_ICON + '</div>';
+    if (listing.photos && listing.photos.length) {
+      html += '<div class="detail-photo-gallery">';
+      html += listing.photos.map(function (p) {
+        return '<div class="detail-photo-slide"><img src="' + escapeHtml(p.url) + '" alt=""></div>';
+      }).join('');
+      html += '</div>';
+    } else {
+      html += '<div class="detail-photo-placeholder">' + PHOTO_ICON + '</div>';
+    }
     html += '<h1 class="detail-title">' + escapeHtml(listing.title) + '</h1>';
     html += '<div class="detail-price">' + escapeHtml(formatPrice(listing)) + '</div>';
     html += '<div class="detail-meta-row">' + metaChips.map(function (c) { return '<span class="detail-meta-chip">' + c + '</span>'; }).join('') + '</div>';
@@ -4775,4 +5105,4 @@ textarea.sheet-input {
 })();
 </script>
 </body>
-           </html>
+   </html>
