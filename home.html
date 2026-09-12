@@ -2200,7 +2200,7 @@ textarea.sheet-input {
           <label class="sheet-field-label" data-i18n="listing.field.photos">Fotoattēli</label>
           <div class="listing-photo-grid" id="listing-photo-grid"></div>
           <p class="listing-photo-hint" data-i18n="listing.field.photosHint">Līdz 7 fotoattēliem</p>
-          <input type="file" id="listing-photo-input" accept="image/*" capture="environment" multiple hidden>
+          <input type="file" id="listing-photo-input" accept="image/*" multiple hidden>
         </div>
 
         <div class="listing-form-row">
@@ -2495,7 +2495,7 @@ textarea.sheet-input {
       "listing.error.not_found": "Sludinājums nav atrasts.",
       "listing.error.unauthorized": "Vispirms ieej savā kontā.",
       "photo.error.invalid_file_type": "Šis failu formāts nav atbalstīts.",
-      "photo.error.file_too_large": "Fails ir pārāk liels (maks. 5MB).",
+      "photo.error.file_too_large": "Fails ir pārāk liels (maks. 8MB).",
       "photo.error.file_invalid": "Neizdevās nolasīt failu.",
       "photo.error.file_required": "Fails nav atrasts.",
       "photo.error.imgur_not_configured": "Fotoattēlu augšupielāde pagaidām nav pieejama.",
@@ -2673,7 +2673,7 @@ textarea.sheet-input {
       "listing.error.not_found": "Объявление не найдено.",
       "listing.error.unauthorized": "Сначала войдите в аккаунт.",
       "photo.error.invalid_file_type": "Этот формат файла не поддерживается.",
-      "photo.error.file_too_large": "Файл слишком большой (макс. 5MB).",
+      "photo.error.file_too_large": "Файл слишком большой (макс. 8MB).",
       "photo.error.file_invalid": "Не удалось прочитать файл.",
       "photo.error.file_required": "Файл не найден.",
       "photo.error.imgur_not_configured": "Загрузка фото временно недоступна.",
@@ -2851,7 +2851,7 @@ textarea.sheet-input {
       "listing.error.not_found": "Listing not found.",
       "listing.error.unauthorized": "Please sign in first.",
       "photo.error.invalid_file_type": "This file type isn't supported.",
-      "photo.error.file_too_large": "File is too large (max 5MB).",
+      "photo.error.file_too_large": "File is too large (max 8MB).",
       "photo.error.file_invalid": "Couldn't read the file.",
       "photo.error.file_required": "File not found.",
       "photo.error.imgur_not_configured": "Photo upload isn't available right now.",
@@ -3733,8 +3733,21 @@ textarea.sheet-input {
   // Клиентская проверка перед отправкой на backend — экономит round-trip на
   // самых частых ошибках (см. тот же принцип в обработчике submit ниже).
   // Финальная проверка типа/размера всё равно на backend (handleUploadPhoto).
-  var PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+  // 8MB — телефонные камеры регулярно выдают JPEG на 6-10MB за кадр, 5MB
+  // слишком часто отбраковывал обычные фото (см. index.js, MAX_PHOTO_BYTES).
+  var PHOTO_MAX_BYTES = 8 * 1024 * 1024;
   var PHOTO_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+  // title-тултип на карточке виден только при наведении мышью — на
+  // тач-экранах его физически невозможно увидеть, поэтому причину ошибки
+  // дублируем в тот же баннер, что форма уже использует для остальных
+  // ошибок валидации (els.errorEl) — так она видна в любом случае.
+  function showPhotoError(code) {
+    var els = getListingFormEls();
+    if (!els.errorEl) return;
+    els.errorEl.textContent = t("photo.error." + code);
+    els.errorEl.hidden = false;
+  }
 
   function addPhotoFiles(fileList) {
     var els = getListingFormEls();
@@ -3747,11 +3760,13 @@ textarea.sheet-input {
       if (PHOTO_ALLOWED_TYPES.indexOf(file.type) === -1) {
         currentPhotos.push({ tempId: tempId, url: null, status: "error", errorCode: "invalid_file_type" });
         renderPhotoGrid();
+        showPhotoError("invalid_file_type");
         return;
       }
       if (file.size > PHOTO_MAX_BYTES) {
         currentPhotos.push({ tempId: tempId, url: null, status: "error", errorCode: "file_too_large" });
         renderPhotoGrid();
+        showPhotoError("file_too_large");
         return;
       }
 
@@ -3772,6 +3787,7 @@ textarea.sheet-input {
           entry.status = "error";
           entry.errorCode = (err && err.code) || "request_failed";
           renderPhotoGrid();
+          showPhotoError(entry.errorCode);
         });
     });
 
@@ -5105,4 +5121,4 @@ textarea.sheet-input {
 })();
 </script>
 </body>
-   </html>
+     </html>
