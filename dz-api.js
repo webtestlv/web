@@ -247,6 +247,48 @@
   }
 
   // ---------------------------------------------------------------------
+  // Фото объявлений (Version 3) — прокси через imgur
+  // ---------------------------------------------------------------------
+
+  // Читает File как base64 и отрезает префикс "data:...;base64," — backend
+  // (handleUploadPhoto) ожидает чистую base64-строку в JSON-теле, так проще
+  // переиспользовать общий request() без отдельного низкоуровневого
+  // fetch-пути под multipart.
+  function fileToBase64(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        var result = reader.result || "";
+        var commaIdx = result.indexOf(",");
+        resolve(commaIdx === -1 ? result : result.slice(commaIdx + 1));
+      };
+      reader.onerror = function () {
+        reject(new Error("file_read_failed"));
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Возвращает Promise<string> — прямую ссылку imgur на загруженный файл.
+  // Ничего не сохраняет сама — вызывающий код (форма создания объявления)
+  // сам собирает массив ссылок и шлёт его в createListing/updateListing как
+  // поле photos.
+  function uploadPhoto(file) {
+    return fileToBase64(file).then(function (dataBase64) {
+      return request("/api/upload-photo", {
+        method: "POST",
+        body: {
+          filename: file.name,
+          contentType: file.type,
+          dataBase64: dataBase64,
+        },
+      });
+    }).then(function (data) {
+      return data.url;
+    });
+  }
+
+  // ---------------------------------------------------------------------
   // Мессенджер (Version 2)
   // ---------------------------------------------------------------------
 
@@ -341,6 +383,8 @@
     resumeListing: resumeListing,
     markListingSold: markListingSold,
     getMyListings: getMyListings,
+    // Version 3 — фото объявлений
+    uploadPhoto: uploadPhoto,
     // Version 2 — мессенджер
     createConversation: createConversation,
     getConversations: getConversations,
