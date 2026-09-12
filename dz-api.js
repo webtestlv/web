@@ -246,6 +246,62 @@
     });
   }
 
+  // ---------------------------------------------------------------------
+  // Мессенджер (Version 2)
+  // ---------------------------------------------------------------------
+
+  function createConversation(listingId) {
+    return request("/api/conversations", {
+      method: "POST",
+      body: { listing_id: listingId },
+    }).then(function (data) {
+      return data.conversation;
+    });
+  }
+
+  // filters сейчас поддерживает только { listing_id } — фильтр диалогов
+  // по конкретному объявлению (нужен для "Продано -> выбрать покупателя"
+  // в Version 4), не путать с фильтрами объявлений в getListings.
+  function getConversations(filters) {
+    return request("/api/conversations" + buildQuery(filters)).then(function (data) {
+      return data.conversations;
+    });
+  }
+
+  // Этот же вызов помечает чужие непрочитанные сообщения как прочитанные
+  // на сервере (см. комментарий в handleGetMessages воркера) — отдельного
+  // markAsRead-метода на клиенте намеренно нет.
+  function getMessages(conversationId) {
+    return request("/api/conversations/" + encodeURIComponent(conversationId) + "/messages").then(function (data) {
+      return data.messages;
+    });
+  }
+
+  function sendMessage(conversationId, text) {
+    return request("/api/conversations/" + encodeURIComponent(conversationId) + "/messages", {
+      method: "POST",
+      body: { text: text },
+    }).then(function (data) {
+      return data.message;
+    });
+  }
+
+  function editMessage(conversationId, messageId, text) {
+    return request(
+      "/api/conversations/" + encodeURIComponent(conversationId) + "/messages/" + encodeURIComponent(messageId),
+      { method: "PATCH", body: { text: text } }
+    ).then(function (data) {
+      return data.message;
+    });
+  }
+
+  function deleteMessage(conversationId, messageId) {
+    return request(
+      "/api/conversations/" + encodeURIComponent(conversationId) + "/messages/" + encodeURIComponent(messageId),
+      { method: "DELETE" }
+    );
+  }
+
   // Переводит понятный код ошибки от сервера в текст на нужном языке.
   // Использует словарь Dzintars.i18n, если он уже подключён на странице.
   // namespace по умолчанию "auth.error." (обратная совместимость с уже
@@ -285,5 +341,12 @@
     resumeListing: resumeListing,
     markListingSold: markListingSold,
     getMyListings: getMyListings,
+    // Version 2 — мессенджер
+    createConversation: createConversation,
+    getConversations: getConversations,
+    getMessages: getMessages,
+    sendMessage: sendMessage,
+    editMessage: editMessage,
+    deleteMessage: deleteMessage,
   };
 })();
