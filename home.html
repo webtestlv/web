@@ -1084,6 +1084,321 @@ textarea.sheet-input {
   font-size: var(--fs-body);
 }
 
+/* ===================== "Messages" tab — conversation list ===================== */
+/* Список диалогов повторяет структуру .mylistings-card (фото-плейсхолдер +
+   тело + мета), просто с другим содержимым тела — см. раздел 9 ТЗ про
+   переиспользование существующих паттернов вместо изобретения новых. */
+.conv-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+
+.conv-card {
+  background: var(--paper-0);
+  border: 1px solid var(--line-100);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: var(--sp-3);
+  display: flex;
+  gap: var(--sp-3);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+.conv-card.has-unread {
+  border-color: var(--ink-900);
+}
+
+.conv-card-photo {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: var(--radius-pill);
+  background: repeating-linear-gradient(135deg, #EDEAE2, #EDEAE2 8px, #E4E0D5 8px, #E4E0D5 16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.conv-card-photo svg { width: 20px; height: 20px; color: var(--text-400); opacity: 0.7; }
+
+.conv-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.conv-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.conv-card-title {
+  font-size: var(--fs-13);
+  font-weight: 600;
+  color: var(--text-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conv-card-time {
+  flex-shrink: 0;
+  font-size: var(--fs-11);
+  color: var(--text-400);
+  white-space: nowrap;
+}
+
+.conv-card-preview {
+  font-size: var(--fs-12);
+  color: var(--text-600);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+.conv-card.has-unread .conv-card-preview {
+  color: var(--text-900);
+  font-weight: 600;
+}
+.conv-card-preview.is-deleted {
+  font-style: italic;
+  color: var(--text-400);
+  font-weight: 400 !important;
+}
+
+.conv-card-unread-badge {
+  flex-shrink: 0;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--ink-900);
+  color: var(--text-inverse);
+  font-size: var(--fs-11);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+/* ===================== Chat sheet (bottom-sheet поверх detail-sheet) ===================== */
+/* Тот же bottom-sheet паттерн, что и .auth-sheet/.detail-sheet — просто
+   выше по z-index, т.к. может открыться ПОВЕРХ уже открытого detail-sheet
+   (кнопка "Написать продавцу" находится внутри detail-sheet). */
+.chat-sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  width: 100%;
+  max-width: var(--max-w);
+  transform: translate(-50%, 100%);
+  background: var(--paper-0);
+  border-radius: 28px 28px 0 0;
+  z-index: 95;
+  height: 88vh;
+  height: 88svh;
+  display: flex;
+  flex-direction: column;
+  transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.chat-sheet.is-open {
+  transform: translate(-50%, 0);
+}
+
+.chat-sheet-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5) var(--sp-3);
+  border-bottom: 1px solid var(--line-100);
+}
+.chat-sheet-back {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-100);
+  background: var(--paper-0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.chat-sheet-back svg { width: 18px; height: 18px; }
+.chat-sheet-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-subhead);
+  font-weight: 600;
+  color: var(--text-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-4) var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.chat-bubble-row {
+  display: flex;
+  max-width: 100%;
+}
+.chat-bubble-row.is-own { justify-content: flex-end; }
+.chat-bubble-row.is-other { justify-content: flex-start; }
+
+.chat-bubble {
+  max-width: 78%;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+  position: relative;
+}
+.is-own .chat-bubble {
+  background: var(--ink-900);
+  color: var(--text-inverse);
+  border-bottom-right-radius: 4px;
+}
+.is-other .chat-bubble {
+  background: var(--surface-200, #EEECE8);
+  color: var(--text-900);
+  border-bottom-left-radius: 4px;
+}
+.chat-bubble.is-deleted {
+  font-style: italic;
+  opacity: 0.65;
+}
+
+.chat-bubble-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 10px;
+  opacity: 0.7;
+}
+.is-own .chat-bubble-meta { justify-content: flex-end; }
+.chat-bubble-meta .chat-edited-tag {
+  font-style: italic;
+}
+.chat-bubble-meta svg { width: 13px; height: 13px; }
+.chat-read-tick { color: currentColor; opacity: 0.6; }
+.chat-read-tick.is-read { color: var(--ink-700, #185863); opacity: 1; }
+.is-other .chat-read-tick { display: none; } /* галочки прочтения — только на своих сообщениях */
+
+/* Долгое нажатие/клик по своему пузырю открывает мини-меню
+   Редактировать/Удалить — простая всплывающая пилюля рядом с сообщением. */
+.chat-bubble-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: var(--paper-0);
+  border: 1px solid var(--line-100);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pop, var(--shadow-card));
+  overflow: hidden;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+}
+.chat-bubble-menu button {
+  border: none;
+  background: none;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-13);
+  color: var(--text-900);
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.chat-bubble-menu button.is-danger { color: var(--danger-600); }
+.chat-bubble-menu button + button { border-top: 1px solid var(--line-100); }
+
+.chat-sheet-composer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-5);
+  padding-bottom: calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--line-100);
+}
+.chat-composer-input {
+  flex: 1;
+  min-height: 40px;
+  max-height: 120px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--line-100);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-body);
+  font-family: inherit;
+  color: var(--text-900);
+  background: var(--paper-0);
+  resize: none;
+}
+.chat-composer-input:focus { outline: none; border-color: var(--ink-900); }
+.chat-composer-send {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: var(--ink-900);
+  color: var(--text-inverse);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.chat-composer-send:disabled { opacity: 0.4; cursor: default; }
+.chat-composer-send svg { width: 18px; height: 18px; }
+.chat-composer-editing-banner {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: 6px var(--sp-5);
+  background: var(--paper-50);
+  font-size: var(--fs-12);
+  color: var(--text-600);
+  border-top: 1px solid var(--line-100);
+}
+.chat-composer-editing-banner button {
+  border: none;
+  background: none;
+  color: var(--text-900);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: var(--fs-12);
+}
+
+.chat-sheet-loading,
+.chat-sheet-empty {
+  margin: auto;
+  text-align: center;
+  color: var(--text-400);
+  font-size: var(--fs-body);
+  padding: var(--sp-6);
+}
+
 
 /* ===================== Auth Bottom Sheet ===================== */
 .sheet-overlay {
@@ -1538,7 +1853,7 @@ textarea.sheet-input {
     </div>
 
     <div class="tab-panel" data-panel="messages">
-      <div class="empty-state">
+      <div class="empty-state" id="messages-guest-state">
         <div class="empty-state-illustration" aria-hidden="true">
           <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -1556,10 +1871,26 @@ textarea.sheet-input {
           </svg>
         </div>
         <h1 class="empty-state-title" data-i18n="empty.messages.title">Sazinieties ar pārdevējiem un pircējiem tiešā čatā</h1>
-        <p class="empty-state-sub js-guest-only-text" data-i18n="empty.messages.sub">Visas sarunas vienuviet, drošā un ērtā veidā</p>
-        <p class="empty-state-sub js-logged-in-text" id="messages-logged-in-sub" hidden data-i18n="empty.messages.subLoggedIn">Pagaidām sarunu nav</p>
-        <button class="empty-state-cta js-guest-only-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
+        <p class="empty-state-sub" data-i18n="empty.messages.sub">Visas sarunas vienuviet, drošā un ērtā veidā</p>
+        <button class="empty-state-cta" type="button" onclick="openAuthSheet()" data-i18n="empty.cta">Ienākt profilā</button>
       </div>
+
+      <!-- Залогинен, но диалогов ещё нет. -->
+      <div class="empty-state" id="messages-logged-empty-state" hidden>
+        <div class="empty-state-illustration" aria-hidden="true">
+          <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="70" cy="122" rx="34" ry="8" fill="#0D3B43" opacity="0.1"/>
+            <path d="M35 40C35 33 41 27 48 27H92C99 27 105 33 105 40V72C105 79 99 85 92 85H60L44 98V85H48C41 85 35 79 35 72V40Z" fill="url(#chatBody)"/>
+            <rect x="50" y="45" width="42" height="6" rx="3" fill="#FFFFFF" opacity="0.85"/>
+            <rect x="50" y="58" width="28" height="6" rx="3" fill="#FFFFFF" opacity="0.55"/>
+            <ellipse cx="60" cy="40" rx="10" ry="6" fill="#FFFFFF" opacity="0.2"/>
+          </svg>
+        </div>
+        <h1 class="empty-state-title" data-i18n="empty.messages.subLoggedIn">Pagaidām sarunu nav</h1>
+      </div>
+
+      <!-- Залогинен, есть диалоги — реальный список, рендерится JS. -->
+      <div class="conv-list" id="conv-list" hidden></div>
     </div>
 
     <div class="tab-panel" data-panel="profile">
@@ -1873,6 +2204,34 @@ textarea.sheet-input {
     </div>
   </div>
 
+  <!-- ===================== Chat sheet (Version 2) ===================== -->
+  <!-- Открывается ПОВЕРХ всего остального (z-index выше detail-sheet) двумя
+       путями: кнопка "Написать" внутри detail-sheet, или клик по строке
+       диалога во вкладке "Ziņas". См. DzChat в script-блоке ниже. -->
+  <div class="sheet-overlay" id="chat-sheet-overlay" onclick="window.DzChat && window.DzChat.close()"></div>
+
+  <div class="chat-sheet" id="chat-sheet" role="dialog" aria-modal="true" aria-labelledby="chat-sheet-title">
+    <div class="chat-sheet-header">
+      <button type="button" class="chat-sheet-back" onclick="window.DzChat && window.DzChat.close()" aria-label="Back">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 5L8 12L15 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="chat-sheet-title" id="chat-sheet-title">&nbsp;</div>
+    </div>
+    <div class="chat-sheet-body" id="chat-sheet-body">
+      <!-- Заполняется в JS через renderMessages() -->
+    </div>
+    <div class="chat-composer-editing-banner" id="chat-editing-banner" hidden>
+      <span data-i18n="chat.editingBanner">Rediģē ziņu</span>
+      <button type="button" id="chat-editing-cancel" data-i18n="chat.editingCancel">Atcelt</button>
+    </div>
+    <div class="chat-sheet-composer">
+      <textarea class="chat-composer-input" id="chat-composer-input" rows="1" data-i18n-placeholder="chat.placeholder" placeholder="Rakstiet ziņu..."></textarea>
+      <button type="button" class="chat-composer-send" id="chat-composer-send" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12L20 4L14 20L11 13L4 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+
   <!-- ===================== Floating "post listing" button ===================== -->
   <!-- Скрыта для гостя (см. applyGuestUI/applyLoggedInUI), видна везде,
        кроме случаев когда сама форма создания уже открыта поверх. -->
@@ -1999,7 +2358,8 @@ textarea.sheet-input {
       "listing.error.unauthorized": "Vispirms ieej savā kontā.",
       "detail.loading": "Ielādē…",
       "detail.error": "Neizdevās ielādēt sludinājumu.",
-      "detail.contact": "Zvanīt",
+      "detail.contact": "Rakstīt",
+      "detail.call": "Zvanīt",
       "detail.showPhone": "Rādīt tālruni",
       "detail.ownerNote": "Šis ir tavs sludinājums — to var rediģēt sadaļā \"Mani sludinājumi\".",
       "detail.noPhone": "Pārdevējs nav norādījis tālruni.",
@@ -2007,6 +2367,27 @@ textarea.sheet-input {
       "listing.card.negotiable": "Vienošanās",
       "listing.card.free": "Par brīvu",
       "listing.card.exchange": "Apmaiņa",
+
+      "chat.unknownListing": "Sludinājums",
+      "chat.loading": "Ielādē saraksti…",
+      "chat.error": "Neizdevās ielādēt saraksti.",
+      "chat.noMessagesYet": "Vēl nav neviena ziņojuma",
+      "chat.messageDeleted": "Ziņojums dzēsts",
+      "chat.edited": "rediģēts",
+      "chat.placeholder": "Rakstiet ziņu...",
+      "chat.editingBanner": "Rediģē ziņu",
+      "chat.editingCancel": "Atcelt",
+      "chat.action.edit": "Rediģēt",
+      "chat.action.delete": "Dzēst",
+      "chat.confirmDelete": "Dzēst šo ziņojumu?",
+      "chat.error.TEXT_REQUIRED": "Ievadi ziņas tekstu.",
+      "chat.error.TEXT_TOO_LONG": "Ziņa ir pārāk gara (maks. 2000 rakstzīmes).",
+      "chat.error.EDIT_WINDOW_EXPIRED": "Ziņu var rediģēt tikai 15 minūšu laikā pēc nosūtīšanas.",
+      "chat.error.CANNOT_MESSAGE_OWN_LISTING": "Nevar rakstīt sev par savu sludinājumu.",
+      "chat.error.not_found": "Saruna nav atrasta.",
+      "chat.error.forbidden": "Nav tiesību veikt šo darbību.",
+      "chat.error.unauthorized": "Vispirms ieej savā kontā.",
+      "chat.error.request_failed": "Kaut kas nogāja greizi. Mēģini vēlreiz.",
 
       "myListings.empty.title": "Vēl nav neviena sludinājuma",
       "myListings.empty.sub": "Publicē savu pirmo sludinājumu — tas parādīsies šeit",
@@ -2139,7 +2520,8 @@ textarea.sheet-input {
       "listing.error.unauthorized": "Сначала войдите в аккаунт.",
       "detail.loading": "Загрузка…",
       "detail.error": "Не удалось загрузить объявление.",
-      "detail.contact": "Позвонить",
+      "detail.contact": "Написать",
+      "detail.call": "Позвонить",
       "detail.showPhone": "Показать телефон",
       "detail.ownerNote": "Это ваше объявление — редактировать его можно в разделе \"Мои объявления\".",
       "detail.noPhone": "Продавец не указал телефон.",
@@ -2147,6 +2529,27 @@ textarea.sheet-input {
       "listing.card.negotiable": "Торг",
       "listing.card.free": "Бесплатно",
       "listing.card.exchange": "Обмен",
+
+      "chat.unknownListing": "Объявление",
+      "chat.loading": "Загрузка переписки…",
+      "chat.error": "Не удалось загрузить переписку.",
+      "chat.noMessagesYet": "Пока нет ни одного сообщения",
+      "chat.messageDeleted": "Сообщение удалено",
+      "chat.edited": "изменено",
+      "chat.placeholder": "Напишите сообщение...",
+      "chat.editingBanner": "Редактирование сообщения",
+      "chat.editingCancel": "Отменить",
+      "chat.action.edit": "Редактировать",
+      "chat.action.delete": "Удалить",
+      "chat.confirmDelete": "Удалить это сообщение?",
+      "chat.error.TEXT_REQUIRED": "Введите текст сообщения.",
+      "chat.error.TEXT_TOO_LONG": "Сообщение слишком длинное (макс. 2000 символов).",
+      "chat.error.EDIT_WINDOW_EXPIRED": "Сообщение можно редактировать только в течение 15 минут после отправки.",
+      "chat.error.CANNOT_MESSAGE_OWN_LISTING": "Нельзя написать самому себе по своему объявлению.",
+      "chat.error.not_found": "Диалог не найден.",
+      "chat.error.forbidden": "Нет прав для этого действия.",
+      "chat.error.unauthorized": "Сначала войдите в аккаунт.",
+      "chat.error.request_failed": "Что-то пошло не так. Попробуйте ещё раз.",
 
       "myListings.empty.title": "Пока нет ни одного объявления",
       "myListings.empty.sub": "Опубликуйте своё первое объявление — оно появится здесь",
@@ -2279,7 +2682,8 @@ textarea.sheet-input {
       "listing.error.unauthorized": "Please sign in first.",
       "detail.loading": "Loading…",
       "detail.error": "Couldn't load this listing.",
-      "detail.contact": "Call",
+      "detail.contact": "Message",
+      "detail.call": "Call",
       "detail.showPhone": "Show phone",
       "detail.ownerNote": "This is your listing — you can edit it from \"My listings\".",
       "detail.noPhone": "The seller didn't add a phone number.",
@@ -2287,6 +2691,27 @@ textarea.sheet-input {
       "listing.card.negotiable": "Negotiable",
       "listing.card.free": "Free",
       "listing.card.exchange": "Exchange",
+
+      "chat.unknownListing": "Listing",
+      "chat.loading": "Loading conversation…",
+      "chat.error": "Couldn't load the conversation.",
+      "chat.noMessagesYet": "No messages yet",
+      "chat.messageDeleted": "Message deleted",
+      "chat.edited": "edited",
+      "chat.placeholder": "Write a message...",
+      "chat.editingBanner": "Editing message",
+      "chat.editingCancel": "Cancel",
+      "chat.action.edit": "Edit",
+      "chat.action.delete": "Delete",
+      "chat.confirmDelete": "Delete this message?",
+      "chat.error.TEXT_REQUIRED": "Enter a message.",
+      "chat.error.TEXT_TOO_LONG": "Message is too long (max 2000 characters).",
+      "chat.error.EDIT_WINDOW_EXPIRED": "Messages can only be edited within 15 minutes of sending.",
+      "chat.error.CANNOT_MESSAGE_OWN_LISTING": "You can't message yourself about your own listing.",
+      "chat.error.not_found": "Conversation not found.",
+      "chat.error.forbidden": "You don't have permission to do that.",
+      "chat.error.unauthorized": "Please sign in first.",
+      "chat.error.request_failed": "Something went wrong. Please try again.",
 
       "myListings.empty.title": "No listings yet",
       "myListings.empty.sub": "Post your first listing — it will show up here",
@@ -2683,6 +3108,9 @@ textarea.sheet-input {
     if (targetId === "favorites" && window.DzApi && window.DzApi.isLoggedIn() && window.DzFavorites) {
       window.DzFavorites.refresh();
     }
+    if (targetId === "messages" && window.DzApi && window.DzApi.isLoggedIn() && window.DzConversations) {
+      window.DzConversations.refresh();
+    }
   };
 })();
 
@@ -2783,6 +3211,15 @@ textarea.sheet-input {
     if (listingsEmpty) listingsEmpty.hidden = true;
     if (listingsList) listingsList.hidden = true;
 
+    // Вкладка "Ziņas" — та же трёхстостояночная логика, что и у "Мои
+    // объявления" чуть выше (гость / залогинен-пусто / список диалогов).
+    var messagesGuest = document.getElementById("messages-guest-state");
+    var messagesEmpty = document.getElementById("messages-logged-empty-state");
+    var convList = document.getElementById("conv-list");
+    if (messagesGuest) messagesGuest.hidden = false;
+    if (messagesEmpty) messagesEmpty.hidden = true;
+    if (convList) convList.hidden = true;
+
     var fab = document.getElementById("post-fab");
     if (fab) fab.hidden = true;
   }
@@ -2803,10 +3240,12 @@ textarea.sheet-input {
     var loginLabel = document.getElementById("profile-logged-in-login");
     if (loginLabel && user) loginLabel.textContent = user.login;
 
-    // На панелях favorites/listings/messages данных пока нет (это
-    // статичные плейсхолдеры), но раз пользователь уже вошёл, кнопка
-    // "войти в профиль" и гостевой текст на них были бы дезориентирующими —
-    // прячем их и показываем нейтральный "пока пусто" текст вместо них.
+    // На панели favorites данных пока нет (статичный плейсхолдер), но раз
+    // пользователь уже вошёл, кнопка "войти в профиль" и гостевой текст на
+    // ней были бы дезориентирующими — прячем их и показываем нейтральный
+    // "пока пусто" текст вместо них. ("listings"/"messages" имеют свои
+    // отдельные трёхстостояночные переключатели чуть ниже — они не
+    // участвуют в этом общем js-guest-only/js-logged-in переключателе.)
     document.querySelectorAll(".js-guest-only-cta").forEach(function (btn) {
       btn.hidden = true;
     });
@@ -2820,14 +3259,20 @@ textarea.sheet-input {
     var listingsGuest = document.getElementById("listings-guest-state");
     if (listingsGuest) listingsGuest.hidden = true;
 
+    var messagesGuest = document.getElementById("messages-guest-state");
+    if (messagesGuest) messagesGuest.hidden = true;
+
     var fab = document.getElementById("post-fab");
     if (fab) fab.hidden = false;
 
-    // Подгружаем свои объявления сразу после входа, чтобы вкладка "Мои
-    // объявления" уже была готова, когда пользователь на неё перейдёт —
-    // без этого первый заход показал бы пустое состояние на секунду.
+    // Подгружаем свои объявления и диалоги сразу после входа, чтобы обе
+    // вкладки уже были готовы, когда пользователь на них перейдёт — без
+    // этого первый заход показал бы пустое состояние на секунду.
     if (window.DzMyListings && typeof window.DzMyListings.refresh === "function") {
       window.DzMyListings.refresh();
+    }
+    if (window.DzConversations && typeof window.DzConversations.refresh === "function") {
+      window.DzConversations.refresh();
     }
   }
 
@@ -3541,6 +3986,500 @@ textarea.sheet-input {
 (function () {
   "use strict";
 
+  // =========================================================================
+  // Version 2 — мессенджер.
+  // Два модуля в одном script-блоке (они тесно связаны — список открывает
+  // чат, чат обновляет unread в списке):
+  //   DzConversations — список диалогов во вкладке "Ziņas"
+  //   DzChat          — bottom-sheet с перепиской (открывается либо из
+  //                      списка, либо кнопкой "Написать продавцу" в
+  //                      detail-sheet — см. правку в блоке DzListingDetail)
+  // =========================================================================
+
+  function t(key) {
+    return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.t(key) : key;
+  }
+  function getLang() {
+    return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.getLang() : "lv";
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement("div");
+    div.textContent = str == null ? "" : String(str);
+    return div.innerHTML;
+  }
+
+  var CHAT_ICON_SMALL = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11.5C4 7.4 7.6 4 12 4C16.4 4 20 7.4 20 11.5C20 15.6 16.4 19 12 19C10.9 19 9.9 18.8 9 18.4L5.2 19.7C4.6 19.9 4 19.4 4.2 18.8L5.3 16C4.5 14.7 4 13.2 4 11.5Z" stroke="currentColor" stroke-width="1.6"/></svg>';
+
+  // Относительное время для строки диалога ("только что", "14:32", "Вт",
+  // дата) — тот же принцип, что и в большинстве мессенджеров: чем свежее,
+  // тем короче формат. Не над-инженерим точность дальше дня недели/даты.
+  function formatConvTime(iso) {
+    if (!iso) return "";
+    var date = new Date(iso.replace(" ", "T") + (iso.indexOf("Z") === -1 ? "Z" : ""));
+    if (isNaN(date.getTime())) return "";
+    var now = new Date();
+    var diffMs = now - date;
+    var sameDay = date.toDateString() === now.toDateString();
+    var lang = getLang() === "ru" ? "ru-RU" : getLang() === "en" ? "en-US" : "lv-LV";
+    if (sameDay) {
+      return date.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
+    }
+    var diffDays = Math.floor(diffMs / 86400000);
+    if (diffDays < 7) {
+      return date.toLocaleDateString(lang, { weekday: "short" });
+    }
+    return date.toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
+  }
+
+  function formatBubbleTime(iso) {
+    if (!iso) return "";
+    var date = new Date(iso.replace(" ", "T") + (iso.indexOf("Z") === -1 ? "Z" : ""));
+    if (isNaN(date.getTime())) return "";
+    var lang = getLang() === "ru" ? "ru-RU" : getLang() === "en" ? "en-US" : "lv-LV";
+    return date.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
+  }
+
+  // ===========================================================================
+  // DzConversations — список диалогов во вкладке "Ziņas"
+  // ===========================================================================
+
+  function buildConvCard(conv) {
+    var card = document.createElement("button");
+    card.type = "button";
+    card.className = "conv-card" + (conv.unread_count > 0 ? " has-unread" : "");
+    card.setAttribute("data-conversation-id", conv.id);
+
+    var photo = document.createElement("div");
+    photo.className = "conv-card-photo";
+    photo.innerHTML = CHAT_ICON_SMALL;
+
+    var body = document.createElement("div");
+    body.className = "conv-card-body";
+
+    var top = document.createElement("div");
+    top.className = "conv-card-top";
+    var titleEl = document.createElement("div");
+    titleEl.className = "conv-card-title";
+    titleEl.textContent = conv.listing_title || t("chat.unknownListing");
+    var timeEl = document.createElement("span");
+    timeEl.className = "conv-card-time";
+    timeEl.textContent = formatConvTime(conv.last_message_at || conv.created_at);
+    top.appendChild(titleEl);
+    top.appendChild(timeEl);
+
+    var previewRow = document.createElement("div");
+    previewRow.style.display = "flex";
+    previewRow.style.alignItems = "center";
+    previewRow.style.justifyContent = "space-between";
+    previewRow.style.gap = "var(--sp-2)";
+
+    var previewEl = document.createElement("div");
+    var lastMsg = conv.last_message;
+    var isDeleted = lastMsg && lastMsg.deleted_at;
+    previewEl.className = "conv-card-preview" + (isDeleted ? " is-deleted" : "");
+    if (!lastMsg) {
+      previewEl.textContent = t("chat.noMessagesYet");
+    } else if (isDeleted) {
+      previewEl.textContent = t("chat.messageDeleted");
+    } else {
+      previewEl.textContent = lastMsg.text;
+    }
+
+    previewRow.appendChild(previewEl);
+    if (conv.unread_count > 0) {
+      var badge = document.createElement("span");
+      badge.className = "conv-card-unread-badge";
+      badge.textContent = conv.unread_count > 9 ? "9+" : String(conv.unread_count);
+      previewRow.appendChild(badge);
+    }
+
+    body.appendChild(top);
+    body.appendChild(previewRow);
+
+    card.appendChild(photo);
+    card.appendChild(body);
+
+    card.addEventListener("click", function () {
+      window.DzChat.open(conv.id, { listingTitle: conv.listing_title });
+    });
+
+    return card;
+  }
+
+  function refreshConversations() {
+    var listEl = document.getElementById("conv-list");
+    var emptyEl = document.getElementById("messages-logged-empty-state");
+    var guestEl = document.getElementById("messages-guest-state");
+    if (!listEl || !window.DzApi || !window.DzApi.isLoggedIn()) return;
+
+    if (guestEl) guestEl.hidden = true;
+
+    window.DzApi.getConversations().then(function (conversations) {
+      if (!conversations || conversations.length === 0) {
+        listEl.hidden = true;
+        if (emptyEl) emptyEl.hidden = false;
+        return;
+      }
+      if (emptyEl) emptyEl.hidden = true;
+      listEl.hidden = false;
+      listEl.innerHTML = "";
+      conversations.forEach(function (conv) {
+        listEl.appendChild(buildConvCard(conv));
+      });
+    }).catch(function () {
+      // Не удалось загрузить — оставляем как было, не перетираем валидные
+      // данные ошибочным пустым состоянием (тот же принцип, что и в
+      // refreshMyListings).
+    });
+  }
+
+  window.DzConversations = { refresh: refreshConversations };
+
+  // ===========================================================================
+  // DzChat — bottom-sheet с перепиской
+  // ===========================================================================
+
+  var POLL_INTERVAL_MS = 4000;
+  var EDIT_WINDOW_MS = 15 * 60 * 1000;
+
+  var state = {
+    conversationId: null,
+    listingTitle: null,
+    pollTimer: null,
+    editingMessageId: null,
+    openMenuMessageId: null,
+  };
+
+  function getEls() {
+    return {
+      overlay: document.getElementById("chat-sheet-overlay"),
+      sheet: document.getElementById("chat-sheet"),
+      title: document.getElementById("chat-sheet-title"),
+      body: document.getElementById("chat-sheet-body"),
+      input: document.getElementById("chat-composer-input"),
+      sendBtn: document.getElementById("chat-composer-send"),
+      editingBanner: document.getElementById("chat-editing-banner"),
+      editingCancel: document.getElementById("chat-editing-cancel"),
+    };
+  }
+
+  function open(conversationId, opts) {
+    opts = opts || {};
+    var els = getEls();
+    if (!els.overlay || !els.sheet) return;
+
+    state.conversationId = String(conversationId);
+    state.listingTitle = opts.listingTitle || null;
+    state.editingMessageId = null;
+    state.openMenuMessageId = null;
+
+    els.title.textContent = state.listingTitle || t("chat.unknownListing");
+    els.body.innerHTML = '<div class="chat-sheet-loading">' + escapeHtml(t("chat.loading")) + '</div>';
+    hideEditingBanner();
+    if (els.input) els.input.value = "";
+
+    // Если чат открыт поверх уже открытого detail-sheet (кнопка "Написать"),
+    // у detail-sheet свой overlay с тем же затемнением — не даём двум
+    // полупрозрачным слоям сложиться в более тёмный, чем нужно, фон.
+    // Сам detail-sheet при этом никуда не девается, просто остаётся визуально
+    // под chat-sheet без собственного overlay поверх себя.
+    var detailOverlay = document.getElementById("detail-sheet-overlay");
+    if (detailOverlay) detailOverlay.classList.remove("is-open");
+
+    els.overlay.classList.add("is-open");
+    els.sheet.classList.add("is-open");
+    document.body.style.overflow = "hidden";
+
+    loadMessages();
+    startPolling();
+  }
+
+  function close() {
+    var els = getEls();
+    if (!els.overlay || !els.sheet) return;
+    els.overlay.classList.remove("is-open");
+    els.sheet.classList.remove("is-open");
+    stopPolling();
+    state.conversationId = null;
+    state.editingMessageId = null;
+    state.openMenuMessageId = null;
+
+    // Если под чатом всё ещё открыт detail-sheet, возвращаем его overlay
+    // обратно (мы сняли его в open(), см. комментарий там) и НЕ снимаем
+    // блокировку скролла страницы — она всё ещё нужна detail-sheet'у.
+    // Иначе он бы разблокировался преждевременно, хотя detail-sheet ещё виден.
+    var detailSheet = document.getElementById("detail-sheet");
+    var detailOverlay = document.getElementById("detail-sheet-overlay");
+    var detailStillOpen = detailSheet && detailSheet.classList.contains("is-open");
+    if (detailStillOpen && detailOverlay) {
+      detailOverlay.classList.add("is-open");
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    // Список диалогов мог измениться (unread обнулился при открытии чата) —
+    // обновляем его, чтобы бейджик пропал сразу по возврату к списку.
+    if (window.DzConversations) window.DzConversations.refresh();
+  }
+
+  function startPolling() {
+    stopPolling();
+    state.pollTimer = setInterval(function () {
+      if (!state.conversationId) return;
+      loadMessages({ silent: true });
+    }, POLL_INTERVAL_MS);
+  }
+
+  function stopPolling() {
+    if (state.pollTimer) {
+      clearInterval(state.pollTimer);
+      state.pollTimer = null;
+    }
+  }
+
+  function loadMessages(opts) {
+    opts = opts || {};
+    if (!state.conversationId || !window.DzApi) return;
+    var convId = state.conversationId;
+
+    window.DzApi.getMessages(convId).then(function (messages) {
+      if (state.conversationId !== convId) return; // закрыли/сменили, пока грузилось
+      renderMessages(messages);
+    }).catch(function () {
+      if (state.conversationId !== convId) return;
+      if (!opts.silent) {
+        var els = getEls();
+        els.body.innerHTML = '<div class="chat-sheet-empty">' + escapeHtml(t("chat.error")) + '</div>';
+      }
+      // При тихом (polling) сбое — молча пробуем ещё раз через
+      // POLL_INTERVAL_MS, не показываем ошибку поверх уже видимой истории.
+    });
+  }
+
+  function renderMessages(messages) {
+    var els = getEls();
+    var me = (window.DzApi && window.DzApi.getCachedUser) ? window.DzApi.getCachedUser() : null;
+    var myId = me ? me.id : null;
+
+    // Сохраняем позицию скролла: если пользователь уже прочитал историю и
+    // просто ждёт новых сообщений (тихий polling), не дёргаем его вьюпорт
+    // на каждый цикл — скроллим вниз только если он и так был внизу, или
+    // если это первая загрузка.
+    var wasAtBottom = els.body.scrollHeight - els.body.scrollTop - els.body.clientHeight < 40;
+    var isFirstRender = els.body.querySelector(".chat-sheet-loading, .chat-sheet-empty") !== null || els.body.children.length === 0;
+
+    if (!messages || messages.length === 0) {
+      els.body.innerHTML = '<div class="chat-sheet-empty">' + escapeHtml(t("chat.noMessagesYet")) + '</div>';
+      return;
+    }
+
+    els.body.innerHTML = "";
+    messages.forEach(function (msg) {
+      els.body.appendChild(buildBubble(msg, myId));
+    });
+
+    if (isFirstRender || wasAtBottom) {
+      els.body.scrollTop = els.body.scrollHeight;
+    }
+  }
+
+  function buildBubble(msg, myId) {
+    var isOwn = msg.sender_id === myId;
+    var row = document.createElement("div");
+    row.className = "chat-bubble-row " + (isOwn ? "is-own" : "is-other");
+
+    var bubble = document.createElement("div");
+    bubble.className = "chat-bubble" + (msg.deleted_at ? " is-deleted" : "");
+    bubble.setAttribute("data-message-id", msg.id);
+
+    var textEl = document.createElement("div");
+    textEl.textContent = msg.deleted_at ? t("chat.messageDeleted") : msg.text;
+    bubble.appendChild(textEl);
+
+    var meta = document.createElement("div");
+    meta.className = "chat-bubble-meta";
+    var metaParts = [];
+    if (msg.edited_at && !msg.deleted_at) {
+      var editedTag = document.createElement("span");
+      editedTag.className = "chat-edited-tag";
+      editedTag.textContent = t("chat.edited");
+      meta.appendChild(editedTag);
+    }
+    var timeEl = document.createElement("span");
+    timeEl.textContent = formatBubbleTime(msg.created_at);
+    meta.appendChild(timeEl);
+    if (isOwn) {
+      var tick = document.createElement("span");
+      tick.className = "chat-read-tick" + (msg.read_at ? " is-read" : "");
+      tick.innerHTML = msg.read_at
+        ? '<svg viewBox="0 0 24 24" fill="none"><path d="M2 12L8 18L14 10M11 14L17 18L22 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none"><path d="M5 13L10 18L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      meta.appendChild(tick);
+    }
+    bubble.appendChild(meta);
+
+    // Редактировать/удалить — только свои и только не удалённые уже
+    // сообщения; окно 15 минут проверяем и на фронте (для UX — не
+    // показываем пункт "Редактировать", если он всё равно будет отклонён
+    // сервером), но финальная проверка всегда на backend (см. handleEditMessage).
+    if (isOwn && !msg.deleted_at) {
+      var createdMs = new Date(msg.created_at.replace(" ", "T") + (msg.created_at.indexOf("Z") === -1 ? "Z" : "")).getTime();
+      var withinEditWindow = (Date.now() - createdMs) < EDIT_WINDOW_MS;
+
+      bubble.addEventListener("click", function (e) {
+        e.stopPropagation();
+        toggleBubbleMenu(bubble, msg, withinEditWindow);
+      });
+    }
+
+    row.appendChild(bubble);
+    return row;
+  }
+
+  function toggleBubbleMenu(bubble, msg, withinEditWindow) {
+    closeAnyOpenMenu();
+
+    var menu = document.createElement("div");
+    menu.className = "chat-bubble-menu";
+
+    if (withinEditWindow) {
+      var editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.textContent = t("chat.action.edit");
+      editBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        startEditing(msg);
+        closeAnyOpenMenu();
+      });
+      menu.appendChild(editBtn);
+    }
+
+    var deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "is-danger";
+    deleteBtn.textContent = t("chat.action.delete");
+    deleteBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      closeAnyOpenMenu();
+      if (!confirm(t("chat.confirmDelete"))) return;
+      window.DzApi.deleteMessage(state.conversationId, msg.id).then(function () {
+        loadMessages();
+      });
+    });
+    menu.appendChild(deleteBtn);
+
+    bubble.appendChild(menu);
+    state.openMenuMessageId = msg.id;
+
+    // Закрыть меню по клику куда угодно ещё.
+    setTimeout(function () {
+      document.addEventListener("click", closeAnyOpenMenuOnce);
+    }, 0);
+  }
+
+  function closeAnyOpenMenuOnce() {
+    closeAnyOpenMenu();
+    document.removeEventListener("click", closeAnyOpenMenuOnce);
+  }
+
+  function closeAnyOpenMenu() {
+    var existing = document.querySelector(".chat-bubble-menu");
+    if (existing) existing.remove();
+    state.openMenuMessageId = null;
+  }
+
+  function startEditing(msg) {
+    var els = getEls();
+    state.editingMessageId = msg.id;
+    els.input.value = msg.text;
+    els.input.focus();
+    showEditingBanner();
+  }
+
+  function showEditingBanner() {
+    var els = getEls();
+    if (els.editingBanner) els.editingBanner.hidden = false;
+  }
+  function hideEditingBanner() {
+    var els = getEls();
+    if (els.editingBanner) els.editingBanner.hidden = true;
+  }
+
+  function cancelEditing() {
+    var els = getEls();
+    state.editingMessageId = null;
+    if (els.input) els.input.value = "";
+    hideEditingBanner();
+  }
+
+  function handleSend() {
+    var els = getEls();
+    if (!els.input || !state.conversationId) return;
+    var text = els.input.value.trim();
+    if (!text) return;
+
+    els.sendBtn.disabled = true;
+
+    var action = state.editingMessageId
+      ? window.DzApi.editMessage(state.conversationId, state.editingMessageId, text)
+      : window.DzApi.sendMessage(state.conversationId, text);
+
+    action.then(function () {
+      els.input.value = "";
+      autoGrowInput();
+      if (state.editingMessageId) cancelEditing();
+      loadMessages();
+    }).catch(function (err) {
+      alert(window.DzApi.errorMessage(err, "chat.error."));
+    }).finally(function () {
+      els.sendBtn.disabled = false;
+    });
+  }
+
+  function autoGrowInput() {
+    var els = getEls();
+    if (!els.input) return;
+    els.input.style.height = "auto";
+    els.input.style.height = Math.min(els.input.scrollHeight, 120) + "px";
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var els = getEls();
+    if (els.sendBtn) {
+      els.sendBtn.addEventListener("click", handleSend);
+    }
+    if (els.input) {
+      els.input.addEventListener("input", autoGrowInput);
+      els.input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          handleSend();
+        }
+      });
+    }
+    if (els.editingCancel) {
+      els.editingCancel.addEventListener("click", cancelEditing);
+    }
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    var els = getEls();
+    if (els.sheet && els.sheet.classList.contains("is-open")) close();
+  });
+
+  window.DzChat = {
+    open: open,
+    close: close,
+  };
+})();
+</script>
+
+<script>
+(function () {
+  "use strict";
+
   function t(key) {
     return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.t(key) : key;
   }
@@ -3667,6 +4606,7 @@ textarea.sheet-input {
 
   var PHOTO_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="8.5" cy="10" r="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M3 16L8 12L12 15L16 11L21 16" stroke="currentColor" stroke-width="1.6"/></svg>';
   var FAV_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 20.5C12 20.5 3.5 15.5 3.5 9.5C3.5 6.5 5.8 4.5 8.5 4.5C10 4.5 11.2 5.2 12 6.3C12.8 5.2 14 4.5 15.5 4.5C18.2 4.5 20.5 6.5 20.5 9.5C20.5 15.5 12 20.5 12 20.5Z" stroke="currentColor" stroke-width="1.6"/></svg>';
+  var CALL_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.6 10.8C7.9 13.4 10.1 15.5 12.7 16.9L14.7 14.9C15 14.6 15.4 14.5 15.8 14.6C17 15 18.3 15.2 19.6 15.2C20.2 15.2 20.7 15.7 20.7 16.3V19.7C20.7 20.3 20.2 20.8 19.6 20.8C10.5 20.8 3.2 13.5 3.2 4.4C3.2 3.8 3.7 3.3 4.3 3.3H7.7C8.3 3.3 8.8 3.8 8.8 4.4C8.8 5.7 9 7 9.4 8.2C9.5 8.6 9.4 9 9.1 9.3L6.6 10.8Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
 
   function getEls() {
     return {
@@ -3738,6 +4678,9 @@ textarea.sheet-input {
     html += '<div class="detail-actions">';
     if (!isOwner) {
       html += '<button type="button" class="detail-btn-fav' + (isSaved ? ' is-saved' : '') + '" id="detail-fav-btn">' + FAV_ICON + '</button>';
+      if (listing.show_phone && listing.phone) {
+        html += '<button type="button" class="detail-btn-fav" id="detail-call-btn" aria-label="' + escapeHtml(t("detail.call")) + '">' + CALL_ICON + '</button>';
+      }
       html += '<button type="button" class="detail-btn-contact" id="detail-contact-btn">' + escapeHtml(t("detail.contact")) + '</button>';
     }
     html += '</div>';
@@ -3769,14 +4712,35 @@ textarea.sheet-input {
             .finally(function () { favBtn.disabled = false; });
         });
       }
+      var callBtn = document.getElementById("detail-call-btn");
+      if (callBtn) {
+        callBtn.addEventListener("click", function () {
+          window.location.href = "tel:" + listing.phone;
+        });
+      }
+      // "Написать продавцу" (раздел 5.5/2.3 ТЗ) — создаёт/получает диалог
+      // через POST /api/conversations и сразу открывает чат поверх этого
+      // же sheet'а. Гостя сперва отправляем логиниться (тот же паттерн,
+      // что и у кнопки избранного чуть выше).
       var contactBtn = document.getElementById("detail-contact-btn");
       if (contactBtn) {
         contactBtn.addEventListener("click", function () {
-          if (listing.show_phone && listing.phone) {
-            window.location.href = "tel:" + listing.phone;
-          } else {
-            alert(t("detail.noPhone"));
+          if (!window.DzApi.isLoggedIn()) {
+            close();
+            if (window.openAuthSheet) window.openAuthSheet();
+            return;
           }
+          contactBtn.disabled = true;
+          window.DzApi.createConversation(listing.id)
+            .then(function (conv) {
+              if (window.DzChat) {
+                window.DzChat.open(conv.id, { listingTitle: listing.title });
+              }
+            })
+            .catch(function (err) {
+              alert(window.DzApi.errorMessage(err, "chat.error."));
+            })
+            .finally(function () { contactBtn.disabled = false; });
         });
       }
     }
@@ -3791,6 +4755,12 @@ textarea.sheet-input {
 
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
+    // Если поверх detail-sheet сейчас открыт chat-sheet, Escape должен
+    // закрыть только его (см. отдельный обработчик в блоке DzChat) — иначе
+    // одно нажатие закрыло бы сразу оба слоя, что не то, чего ожидает
+    // пользователь (обычно Escape снимает один верхний слой за раз).
+    var chatSheet = document.getElementById("chat-sheet");
+    if (chatSheet && chatSheet.classList.contains("is-open")) return;
     var els = getEls();
     if (els.sheet && els.sheet.classList.contains("is-open")) close();
   });
@@ -3805,4 +4775,4 @@ textarea.sheet-input {
 })();
 </script>
 </body>
-   </html>
+           </html>
