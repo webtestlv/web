@@ -218,8 +218,11 @@
     });
   }
 
-  function markListingSold(id) {
-    return request("/api/listings/" + encodeURIComponent(id) + "/sold", { method: "POST" }).then(function (data) {
+  function markListingSold(id, buyerId) {
+    return request("/api/listings/" + encodeURIComponent(id) + "/sold", {
+      method: "POST",
+      body: { buyer_id: buyerId },
+    }).then(function (data) {
       return data.listing;
     });
   }
@@ -344,6 +347,85 @@
     );
   }
 
+  // ---------------------------------------------------------------------
+  // Сделки и репутация (Version 4)
+  // ---------------------------------------------------------------------
+
+  function confirmTransaction(id) {
+    return request("/api/transactions/" + encodeURIComponent(id) + "/confirm", { method: "POST" }).then(function (data) {
+      return data.transaction;
+    });
+  }
+
+  function disputeTransaction(id) {
+    return request("/api/transactions/" + encodeURIComponent(id) + "/dispute", { method: "POST" }).then(function (data) {
+      return data.transaction;
+    });
+  }
+
+  function submitReview(transactionId, payload) {
+    return request("/api/transactions/" + encodeURIComponent(transactionId) + "/review", {
+      method: "POST",
+      body: payload,
+    }).then(function (data) {
+      return data.review;
+    });
+  }
+
+  // Публичный эндпоинт (без auth) — request() просто не приложит токен,
+  // если пользователь не залогинен, это ок и для гостя.
+  function getUserProfile(userId) {
+    return request("/api/users/" + encodeURIComponent(userId) + "/profile").then(function (data) {
+      return data.profile;
+    });
+  }
+
+  function reportReview(reviewId, payload) {
+    return request("/api/reviews/" + encodeURIComponent(reviewId) + "/report", {
+      method: "POST",
+      body: payload,
+    });
+  }
+
+  function getMyTransactions() {
+    return request("/api/my/transactions").then(function (data) {
+      return data.transactions;
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Категорийные поля (ТЗ №2)
+  // ---------------------------------------------------------------------
+
+  function getCategoryFields(slug) {
+    return request("/api/categories/" + encodeURIComponent(slug) + "/fields").then(function (data) {
+      return data.fields;
+    });
+  }
+
+  function getFieldOptions(slug, fieldName, parentValue) {
+    return request(
+      "/api/categories/" + encodeURIComponent(slug) + "/fields/" + encodeURIComponent(fieldName) + "/options" +
+        buildQuery({ parent_value: parentValue })
+    ).then(function (data) {
+      return data.options;
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Профиль компании (раздел 3.9 ТЗ №2)
+  // ---------------------------------------------------------------------
+
+  function getCompanyProfile() {
+    return request("/api/me/company").then(function (data) { return data.company; });
+  }
+
+  function upsertCompanyProfile(payload) {
+    return request("/api/me/company", { method: "PUT", body: payload }).then(function (data) {
+      return data.company;
+    });
+  }
+
   // Переводит понятный код ошибки от сервера в текст на нужном языке.
   // Использует словарь Dzintars.i18n, если он уже подключён на странице.
   // namespace по умолчанию "auth.error." (обратная совместимость с уже
@@ -392,5 +474,18 @@
     sendMessage: sendMessage,
     editMessage: editMessage,
     deleteMessage: deleteMessage,
+    // Version 4 — сделки и репутация
+    confirmTransaction: confirmTransaction,
+    disputeTransaction: disputeTransaction,
+    submitReview: submitReview,
+    getUserProfile: getUserProfile,
+    reportReview: reportReview,
+    getMyTransactions: getMyTransactions,
+    // ТЗ №2 — категорийные поля
+    getCategoryFields: getCategoryFields,
+    getFieldOptions: getFieldOptions,
+    // Раздел 3.9 — профиль компании
+    getCompanyProfile: getCompanyProfile,
+    upsertCompanyProfile: upsertCompanyProfile,
   };
 })();
