@@ -1911,6 +1911,51 @@ textarea.sheet-input {
   background: none; border: none; color: var(--text-400); font-size: var(--fs-12);
   font-family: var(--font-ui); text-decoration: underline; cursor: pointer; padding: 0;
 }
+
+/* ============== ТЗ №2 — категорийные поля (Автомобили, пилот) ============== */
+.dynfields-loading { color: var(--text-600); font-size: var(--fs-13); padding: var(--sp-2) 0; }
+.dynfield-boolean-row { display: flex; align-items: center; }
+.dynfield-boolean-label {
+  display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-13);
+  color: var(--text-900); cursor: pointer;
+}
+.dynfield-multiselect { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.dynfield-chip-label {
+  display: flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-12);
+  color: var(--text-600); border: 1px solid var(--line-100); border-radius: var(--radius-pill);
+  padding: var(--sp-1) var(--sp-3); cursor: pointer;
+}
+.dynfields-toggle {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  color: var(--ink-700); font-size: var(--fs-13); font-family: var(--font-ui);
+  text-decoration: underline; cursor: pointer; padding: var(--sp-2) 0; margin-bottom: var(--sp-2);
+}
+.listing-card-fields { font-size: var(--fs-12); color: var(--text-600); margin-top: var(--sp-1); }
+.detail-fields-list { margin: var(--sp-4) 0; }
+.detail-field-row {
+  display: flex; justify-content: space-between; font-size: var(--fs-13);
+  color: var(--text-900); padding: var(--sp-2) 0; border-bottom: 1px solid var(--line-100);
+}
+.detail-field-row span:first-child { color: var(--text-600); }
+
+/* ===================== Карточка профиля (звёзды/оценка крупно) ===================== */
+.profile-header-card {
+  display: flex; align-items: center; gap: var(--sp-4);
+  padding: var(--sp-4) 0 var(--sp-5); margin-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--line-100);
+}
+.profile-header-avatar {
+  flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%;
+  background: var(--ink-900); color: var(--text-inverse);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--fs-20); font-weight: 600;
+}
+.profile-header-main { min-width: 0; }
+.profile-header-rating-row { display: flex; align-items: baseline; gap: var(--sp-2); }
+.profile-header-rating-number { font-size: var(--fs-28); font-weight: 700; color: var(--ink-900); line-height: 1; }
+.profile-header-stars { font-size: var(--fs-20); color: var(--amber-500); letter-spacing: 2px; }
+.profile-header-count { font-size: var(--fs-13); color: var(--text-600); margin-top: var(--sp-1); }
+.profile-header-no-rating { font-size: var(--fs-14); color: var(--text-600); }
 </style>
 </head>
 <body>
@@ -2340,6 +2385,17 @@ textarea.sheet-input {
           </select>
         </div>
 
+        <!-- ТЗ №2 (раздел 1-2): категорийные поля рендерятся сюда динамически
+             из GET /api/categories/:slug/fields — см. DzCategoryFields в
+             конце файла. Пусто/скрыто для категорий без своих полей. -->
+        <div id="dynamic-fields-container"></div>
+
+        <!-- Раздел 3.2 ТЗ №2: опции зависят от категории, см. DEAL_TYPE_OPTIONS_BY_CATEGORY в скрипте внизу файла -->
+        <div class="listing-form-row">
+          <label class="sheet-field-label" for="listing-field-deal-type" data-i18n="listing.field.dealType">Darījuma veids</label>
+          <select class="filter-select" id="listing-field-deal-type" name="deal_type"></select>
+        </div>
+
         <div class="listing-form-row">
           <label class="sheet-field-label" for="listing-field-title" data-i18n="listing.field.title">Nosaukums</label>
           <input class="sheet-input" style="margin-bottom:0;" type="text" id="listing-field-title" name="title" maxlength="120" data-i18n-placeholder="listing.field.titlePlaceholder" placeholder="Piemēram: iPhone 13, 128GB" required>
@@ -2356,7 +2412,9 @@ textarea.sheet-input {
             <select class="filter-select" id="listing-field-price-type" name="price_type">
               <option value="FIXED" data-i18n="listing.priceType.FIXED">Fiksēta</option>
               <option value="NEGOTIABLE" data-i18n="listing.priceType.NEGOTIABLE">Iespējama vienošanās</option>
+              <option value="FROM" data-i18n="listing.priceType.FROM">No €...</option>
               <option value="FREE" data-i18n="listing.priceType.FREE">Par brīvu</option>
+              <option value="BY_AGREEMENT" data-i18n="listing.priceType.BY_AGREEMENT">Pēc vienošanās</option>
               <option value="EXCHANGE" data-i18n="listing.priceType.EXCHANGE">Apmaiņa</option>
             </select>
           </div>
@@ -2383,14 +2441,92 @@ textarea.sheet-input {
           </div>
         </div>
 
+        <div class="listing-form-row-split">
+          <div class="listing-form-row">
+            <label class="sheet-field-label" for="listing-field-district" data-i18n="listing.field.district">Rajons</label>
+            <input class="filter-input" type="text" id="listing-field-district" name="district" maxlength="100">
+          </div>
+          <div class="listing-form-checkbox-row" style="align-self:flex-end;">
+            <input type="checkbox" id="listing-field-show-on-map" name="show_on_map">
+            <label for="listing-field-show-on-map" data-i18n="listing.field.showOnMap">Rādīt kartē</label>
+          </div>
+        </div>
+        <div id="listing-map-picker-row" class="listing-form-row" hidden>
+          <label class="sheet-field-label" data-i18n="listing.field.mapPicker">Atrašanās vietas koordinātas</label>
+          <button type="button" class="mylistings-action-btn" id="listing-use-location-btn" data-i18n="listing.field.useMyLocation">Izmantot manu atrašanās vietu</button>
+          <p class="sheet-subtitle" id="listing-location-status"></p>
+          <input type="hidden" id="listing-field-latitude">
+          <input type="hidden" id="listing-field-longitude">
+        </div>
+
+        <!-- Раздел 3.3 ТЗ №2: способ связи. Чат всегда включён и не показан
+             как переключатель — единственный гарантированный канал. -->
         <div class="listing-form-row">
           <label class="sheet-field-label" for="listing-field-phone" data-i18n="listing.field.phone">Tālrunis</label>
           <input class="sheet-input" style="margin-bottom:0;" type="tel" id="listing-field-phone" name="phone" data-i18n-placeholder="listing.field.phonePlaceholder" placeholder="+371 20000000">
         </div>
-
         <div class="listing-form-checkbox-row">
           <input type="checkbox" id="listing-field-show-phone" name="show_phone">
           <label for="listing-field-show-phone" data-i18n="listing.field.showPhone">Rādīt tālruni sludinājumā</label>
+        </div>
+
+        <div class="listing-form-checkbox-row">
+          <input type="checkbox" id="listing-field-show-email" name="show_email">
+          <label for="listing-field-show-email" data-i18n="listing.field.showEmail">Rādīt e-pastu sludinājumā</label>
+        </div>
+        <div class="listing-form-row" id="listing-email-row" hidden>
+          <input class="sheet-input" style="margin-bottom:0;" type="email" id="listing-field-contact-email" name="contact_email" placeholder="epasts@piemers.lv">
+        </div>
+
+        <!-- Раздел 3.8 ТЗ №2 -->
+        <div class="listing-form-checkbox-row">
+          <input type="checkbox" id="listing-field-allow-exchange" name="allow_exchange">
+          <label for="listing-field-allow-exchange" data-i18n="listing.field.allowExchange">Iespējama apmaiņa</label>
+        </div>
+        <div class="listing-form-row" id="listing-exchange-for-row" hidden>
+          <input class="sheet-input" style="margin-bottom:0;" type="text" id="listing-field-exchange-for" name="exchange_for" maxlength="300" data-i18n-placeholder="listing.field.exchangeForPlaceholder" placeholder="Uz ko vēlies apmainīt?">
+        </div>
+        <div class="listing-form-checkbox-row">
+          <input type="checkbox" id="listing-field-is-urgent" name="is_urgent">
+          <label for="listing-field-is-urgent" data-i18n="listing.field.isUrgent">Steidzami (redzams tikai meklēšanas filtrā, ne sludinājumā)</label>
+        </div>
+
+        <!-- Раздел 3.9 ТЗ №2 -->
+        <div class="listing-form-row">
+          <label class="sheet-field-label" data-i18n="listing.field.sellerType">Pārdevēja tips</label>
+          <div class="auth-mode-switch" id="listing-seller-type-switch">
+            <button type="button" class="auth-mode-btn is-active" data-value="PRIVATE" data-i18n="listing.sellerType.PRIVATE">Privātpersona</button>
+            <button type="button" class="auth-mode-btn" data-value="COMPANY" data-i18n="listing.sellerType.COMPANY">Uzņēmums</button>
+          </div>
+          <input type="hidden" id="listing-field-seller-type" value="PRIVATE">
+        </div>
+        <div id="listing-company-fields" hidden>
+          <div class="listing-form-row">
+            <label class="sheet-field-label" for="listing-field-company-name" data-i18n="listing.field.companyName">Uzņēmuma nosaukums</label>
+            <input class="sheet-input" style="margin-bottom:0;" type="text" id="listing-field-company-name" maxlength="200">
+          </div>
+          <div class="listing-form-row-split">
+            <div class="listing-form-row">
+              <label class="sheet-field-label" for="listing-field-company-reg" data-i18n="listing.field.companyReg">Reģ. numurs</label>
+              <input class="filter-input" type="text" id="listing-field-company-reg" maxlength="100">
+            </div>
+            <div class="listing-form-row">
+              <label class="sheet-field-label" for="listing-field-company-website" data-i18n="listing.field.companyWebsite">Mājaslapa</label>
+              <input class="filter-input" type="text" id="listing-field-company-website" maxlength="300">
+            </div>
+          </div>
+          <div class="listing-form-row">
+            <label class="sheet-field-label" for="listing-field-company-address" data-i18n="listing.field.companyAddress">Adrese</label>
+            <input class="sheet-input" style="margin-bottom:0;" type="text" id="listing-field-company-address" maxlength="300">
+          </div>
+          <div class="listing-form-row">
+            <label class="sheet-field-label" for="listing-field-company-contacts" data-i18n="listing.field.companyContacts">Papildu kontakti</label>
+            <input class="sheet-input" style="margin-bottom:0;" type="text" id="listing-field-company-contacts" maxlength="300">
+          </div>
+          <div class="listing-form-row">
+            <label class="sheet-field-label" for="listing-field-company-logo" data-i18n="listing.field.companyLogo">Logo saite (URL)</label>
+            <input class="sheet-input" style="margin-bottom:0;" type="text" id="listing-field-company-logo" maxlength="500" placeholder="https://...">
+          </div>
         </div>
 
         <p class="listing-form-error" id="listing-form-error" role="alert" hidden></p>
@@ -2417,6 +2553,10 @@ textarea.sheet-input {
         </select>
       </div>
 
+      <!-- Раздел 4.2 ТЗ №2: is_filterable поля выбранной категории, см.
+           DzCategoryFields.renderSearchFilters внизу файла -->
+      <div id="filter-category-fields-container"></div>
+
       <div class="filter-row-split">
         <div class="filter-row">
           <label class="sheet-field-label" for="filter-price-min" data-i18n="search.filters.priceMin">Cena no</label>
@@ -2442,6 +2582,11 @@ textarea.sheet-input {
       <div class="filter-row">
         <label class="sheet-field-label" for="filter-city" data-i18n="search.filters.city">Pilsēta</label>
         <input class="filter-input" type="text" id="filter-city" maxlength="100" data-i18n-placeholder="listing.field.cityPlaceholder" placeholder="Piemēram: Rīga">
+      </div>
+
+      <div class="filter-row filter-checkbox-row">
+        <input type="checkbox" id="filter-urgent">
+        <label for="filter-urgent" data-i18n="search.filters.urgent">Tikai steidzami</label>
       </div>
 
       <div class="filter-actions">
@@ -3973,6 +4118,8 @@ textarea.sheet-input {
     currentPhotos = [];
     renderPhotoGrid();
     updatePriceRowVisibility();
+    if (window.DzCategoryFields) window.DzCategoryFields.clear();
+    if (window.DzListingFlow) window.DzListingFlow.reset();
   }
 
   // FREE — цена не нужна, прячем поле, чтобы не путать (сервер её тоже
@@ -3980,7 +4127,8 @@ textarea.sheet-input {
   function updatePriceRowVisibility() {
     var els = getListingFormEls();
     if (!els.priceRow || !els.priceTypeSelect) return;
-    els.priceRow.style.display = els.priceTypeSelect.value === "FREE" ? "none" : "";
+    var v = els.priceTypeSelect.value;
+    els.priceRow.style.display = (v === "FREE" || v === "BY_AGREEMENT") ? "none" : "";
   }
 
   // Открывает форму в режиме СОЗДАНИЯ (по умолчанию) — сбрасывает все
@@ -3998,6 +4146,8 @@ textarea.sheet-input {
       els.titleEl.setAttribute("data-i18n", ""); // отключаем авто-перевод, текст задан явно выше
       if (els.subtitleEl) els.subtitleEl.style.display = "none";
       document.getElementById("listing-field-category").value = listing.category_slug || "";
+      if (window.DzCategoryFields) window.DzCategoryFields.render(listing.category_slug, listing.field_values || {});
+      if (window.DzListingFlow) window.DzListingFlow.prefill(listing);
       document.getElementById("listing-field-title").value = listing.title || "";
       document.getElementById("listing-field-description").value = listing.description || "";
       document.getElementById("listing-field-price-type").value = listing.price_type || "FIXED";
@@ -4091,6 +4241,17 @@ textarea.sheet-input {
       var cityVal = document.getElementById("listing-field-city").value.trim();
       var phoneVal = document.getElementById("listing-field-phone").value.trim();
       var showPhoneVal = document.getElementById("listing-field-show-phone").checked;
+      var dealTypeVal = document.getElementById("listing-field-deal-type").value;
+      var districtVal = document.getElementById("listing-field-district").value.trim();
+      var showOnMapVal = document.getElementById("listing-field-show-on-map").checked;
+      var latitudeVal = document.getElementById("listing-field-latitude").value;
+      var longitudeVal = document.getElementById("listing-field-longitude").value;
+      var showEmailVal = document.getElementById("listing-field-show-email").checked;
+      var contactEmailVal = document.getElementById("listing-field-contact-email").value.trim();
+      var allowExchangeVal = document.getElementById("listing-field-allow-exchange").checked;
+      var exchangeForVal = document.getElementById("listing-field-exchange-for").value.trim();
+      var isUrgentVal = document.getElementById("listing-field-is-urgent").checked;
+      var sellerTypeVal = document.getElementById("listing-field-seller-type").value;
 
       // Лёгкая проверка на клиенте перед отправкой — экономит round-trip
       // на самых частых ошибках; окончательная валидация всё равно на
@@ -4123,9 +4284,37 @@ textarea.sheet-input {
         show_phone: showPhoneVal,
         phone: phoneVal || null,
         photos: currentPhotos.filter(function (p) { return p.status === "done"; }).map(function (p) { return p.url; }),
+        field_values: window.DzCategoryFields ? window.DzCategoryFields.collect() : {},
+        deal_type: dealTypeVal,
+        district: districtVal || null,
+        show_on_map: showOnMapVal,
+        show_email: showEmailVal,
+        contact_email: contactEmailVal || null,
+        allow_exchange: allowExchangeVal,
+        exchange_for: exchangeForVal || null,
+        is_urgent: isUrgentVal,
+        seller_type: sellerTypeVal,
       };
-      if (priceTypeVal !== "FREE") {
+      if (priceTypeVal !== "FREE" && priceTypeVal !== "BY_AGREEMENT") {
         payload.price = priceVal === "" ? null : Number(priceVal);
+      }
+      if (showOnMapVal) {
+        payload.latitude = latitudeVal === "" ? null : Number(latitudeVal);
+        payload.longitude = longitudeVal === "" ? null : Number(longitudeVal);
+      }
+      // Профиль компании — отдельная сущность per-пользователь (не per-
+      // объявление, раздел 3.9 ТЗ №2), сохраняем отдельным вызовом ДО
+      // отправки самого объявления, чтобы не терять данные при ошибке
+      // валидации листинга.
+      if (sellerTypeVal === "COMPANY" && window.DzApi && window.DzApi.upsertCompanyProfile) {
+        window.DzApi.upsertCompanyProfile({
+          company_name: document.getElementById("listing-field-company-name").value.trim(),
+          reg_number: document.getElementById("listing-field-company-reg").value.trim(),
+          website: document.getElementById("listing-field-company-website").value.trim(),
+          address: document.getElementById("listing-field-company-address").value.trim(),
+          contacts: document.getElementById("listing-field-company-contacts").value.trim(),
+          logo_url: document.getElementById("listing-field-company-logo").value.trim(),
+        }).catch(function () { /* не блокируем публикацию объявления из-за этого */ });
       }
 
       var editingId = els.idField.value;
@@ -4206,10 +4395,20 @@ textarea.sheet-input {
       priceMax: document.getElementById("filter-price-max"),
       condition: document.getElementById("filter-condition"),
       city: document.getElementById("filter-city"),
+      urgent: document.getElementById("filter-urgent"),
       applyBtn: document.getElementById("filter-apply-btn"),
       resetBtn: document.getElementById("filter-reset-btn"),
     };
   }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var filterCategorySelect = document.getElementById("filter-category");
+    if (filterCategorySelect) {
+      filterCategorySelect.addEventListener("change", function () {
+        if (window.DzCategoryFields) window.DzCategoryFields.renderSearchFilters(filterCategorySelect.value);
+      });
+    }
+  });
 
   window.openFilterSheet = function () {
     var els = getFilterEls();
@@ -4238,6 +4437,8 @@ textarea.sheet-input {
     if (els.priceMax && els.priceMax.value !== "") filters.price_max = els.priceMax.value;
     if (els.condition && els.condition.value) filters.condition = els.condition.value;
     if (els.city && els.city.value.trim()) filters.city = els.city.value.trim();
+    if (els.urgent && els.urgent.checked) filters.is_urgent = "1";
+    if (window.DzCategoryFields) Object.assign(filters, window.DzCategoryFields.collectSearchFilters());
     return filters;
   }
 
@@ -4275,6 +4476,8 @@ textarea.sheet-input {
         if (els.priceMax) els.priceMax.value = "";
         if (els.condition) els.condition.value = "";
         if (els.city) els.city.value = "";
+        if (els.urgent) els.urgent.checked = false;
+        if (window.DzCategoryFields) window.DzCategoryFields.renderSearchFilters("");
         applyFiltersAndReload();
       });
     }
@@ -5035,6 +5238,15 @@ textarea.sheet-input {
     body.appendChild(priceEl);
     body.appendChild(locationEl);
 
+    // ТЗ №2 (раздел 4.3) — сводка из 1-2 категорийных полей на карточке.
+    var cardSummary = (window.DzCategoryFields ? window.DzCategoryFields.cardSummary(listing) : "");
+    if (cardSummary) {
+      var summaryEl = document.createElement("div");
+      summaryEl.className = "listing-card-fields";
+      summaryEl.textContent = cardSummary;
+      body.appendChild(summaryEl);
+    }
+
     article.appendChild(photo);
     article.appendChild(body);
 
@@ -5201,6 +5413,10 @@ textarea.sheet-input {
     if (listing.description) {
       html += '<div class="detail-description">' + escapeHtml(listing.description) + '</div>';
     }
+    // ТЗ №2: список категорийных полей — контейнер, дорисовывается отдельно
+    // (см. вызов DzCategoryFields.renderDetailList ниже), т.к. нужен fetch
+    // названий полей категории, а не только значений, уже лежащих в listing.
+    html += '<div class="detail-fields-list" id="detail-fields-list"></div>';
 
     html += '<div class="detail-actions">';
     if (!isOwner) {
@@ -5217,6 +5433,8 @@ textarea.sheet-input {
 
     var els2 = getEls();
     els2.body.innerHTML = html;
+    if (window.DzCategoryFields) window.DzCategoryFields.renderDetailList(listing);
+    if (window.DzListingFlow) window.DzListingFlow.renderDetailMap(listing);
 
     // Стрелки/точки рендерятся только когда фото больше одного (см. html
     // выше) — поэтому просто проверяем, нашлась ли галерея вообще.
@@ -5369,6 +5587,7 @@ textarea.sheet-input {
       "mydeals.asSeller": "Kā pārdevējs",
       "mydeals.asBuyer": "Kā pircējs",
       "mydeals.noRatingYet": "Vēl nav vērtējumu",
+      "mydeals.reviewsCount": "atsauksmes",
       "mydeals.viewMyProfile": "Skatīt, kā mani redz citi",
       "mydeals.confirm": "Apstiprināt",
       "mydeals.dispute": "Apstrīdēt",
@@ -5414,6 +5633,7 @@ textarea.sheet-input {
       "mydeals.asSeller": "Как продавец",
       "mydeals.asBuyer": "Как покупатель",
       "mydeals.noRatingYet": "Пока нет оценок",
+      "mydeals.reviewsCount": "отзывов",
       "mydeals.viewMyProfile": "Посмотреть, как меня видят другие",
       "mydeals.confirm": "Подтвердить",
       "mydeals.dispute": "Оспорить",
@@ -5459,6 +5679,7 @@ textarea.sheet-input {
       "mydeals.asSeller": "As seller",
       "mydeals.asBuyer": "As buyer",
       "mydeals.noRatingYet": "No ratings yet",
+      "mydeals.reviewsCount": "reviews",
       "mydeals.viewMyProfile": "See how others see me",
       "mydeals.confirm": "Confirm",
       "mydeals.dispute": "Dispute",
@@ -5761,9 +5982,33 @@ textarea.sheet-input {
       document.body.style.overflow = "";
     }
 
+    function buildProfileHeaderHtml(profile) {
+      var totalCount = (profile.rating_as_seller_count || 0) + (profile.rating_as_buyer_count || 0);
+      var overall = null;
+      if (totalCount > 0) {
+        var sum = (profile.rating_as_seller || 0) * (profile.rating_as_seller_count || 0) +
+          (profile.rating_as_buyer || 0) * (profile.rating_as_buyer_count || 0);
+        overall = sum / totalCount;
+      }
+      var html = '<div class="profile-header-card">';
+      html += '<div class="profile-header-avatar">' + escapeHtml("?") + "</div>";
+      html += '<div class="profile-header-main">';
+      if (overall !== null) {
+        html += '<div class="profile-header-rating-row">';
+        html += '<span class="profile-header-rating-number">' + overall.toFixed(1) + "</span>";
+        html += '<span class="profile-header-stars">' + starsPlain(overall) + "</span>";
+        html += "</div>";
+        html += '<div class="profile-header-count">' + totalCount + " " + escapeHtml(t("mydeals.reviewsCount")) + "</div>";
+      } else {
+        html += '<div class="profile-header-no-rating">' + escapeHtml(t("mydeals.noRatingYet")) + "</div>";
+      }
+      html += "</div></div>";
+      return html;
+    }
+
     function render(profile) {
       var els = getEls();
-      var html = "";
+      var html = buildProfileHeaderHtml(profile);
       html += '<div class="mydeals-rating-row"><span>' + escapeHtml(t("mydeals.asSeller")) + "</span><span>" +
         (profile.rating_as_seller !== null
           ? starsHtml(profile.rating_as_seller) + " (" + profile.rating_as_seller_count + ")"
@@ -5850,7 +6095,9 @@ textarea.sheet-input {
       var buyerPart = profile.rating_as_buyer !== null
         ? starsHtml(profile.rating_as_buyer) + " (" + profile.rating_as_buyer_count + ")"
         : escapeHtml(t("mydeals.noRatingYet"));
+
       el.innerHTML =
+        buildProfileHeaderHtml(profile, me) +
         '<div class="mydeals-rating-row"><span>' + escapeHtml(t("mydeals.asSeller")) + "</span><span>" + sellerPart + "</span></div>" +
         '<div class="mydeals-rating-row"><span>' + escapeHtml(t("mydeals.asBuyer")) + "</span><span>" + buyerPart + "</span></div>" +
         '<button type="button" class="mydeals-view-profile-link" id="mydeals-view-profile">' + escapeHtml(t("mydeals.viewMyProfile")) + "</button>";
@@ -5861,6 +6108,38 @@ textarea.sheet-input {
           if (me && window.DzPublicProfile) window.DzPublicProfile.open(me.id);
         });
       }
+    }
+
+    // Карточка сверху "Моих сделок": инициал вместо аватара (своих фото
+    // профиля в системе нет и не планировалось в этом ТЗ), общая оценка —
+    // средневзвешенная по (seller_count + buyer_count), а не среднее двух
+    // средних (иначе 5.0 по одному отзыву как продавец исказил бы общую
+    // цифру сильнее, чем должен).
+    function buildProfileHeaderHtml(profile, me) {
+      var totalCount = (profile.rating_as_seller_count || 0) + (profile.rating_as_buyer_count || 0);
+      var overall = null;
+      if (totalCount > 0) {
+        var sum = (profile.rating_as_seller || 0) * (profile.rating_as_seller_count || 0) +
+          (profile.rating_as_buyer || 0) * (profile.rating_as_buyer_count || 0);
+        overall = sum / totalCount;
+      }
+      var initial = "?";
+      if (me && me.login) initial = me.login.trim().charAt(0).toUpperCase();
+
+      var html = '<div class="profile-header-card">';
+      html += '<div class="profile-header-avatar">' + escapeHtml(initial) + "</div>";
+      html += '<div class="profile-header-main">';
+      if (overall !== null) {
+        html += '<div class="profile-header-rating-row">';
+        html += '<span class="profile-header-rating-number">' + overall.toFixed(1) + "</span>";
+        html += '<span class="profile-header-stars">' + starsPlain(overall) + "</span>";
+        html += "</div>";
+        html += '<div class="profile-header-count">' + totalCount + " " + escapeHtml(t("mydeals.reviewsCount")) + "</div>";
+      } else {
+        html += '<div class="profile-header-no-rating">' + escapeHtml(t("mydeals.noRatingYet")) + "</div>";
+      }
+      html += "</div></div>";
+      return html;
     }
 
     function renderList(el, transactions) {
@@ -5940,6 +6219,661 @@ textarea.sheet-input {
   });
 })();
 </script>
+<script>
+// =============================================================================
+// ТЗ №2 — категорийные поля. Пилот на ОДНОЙ категории (Автомобили/cars), как
+// требует раздел 6 ТЗ №2 — остальные 15 категорий из раздела 2 добавляются
+// следующим шагом, после подтверждения, что этот путь работает целиком.
+//
+// Требует от dz-api.js (см. также список после Version 4 — см. предыдущее
+// сообщение) ДВА новых метода:
+//   DzApi.getCategoryFields(slug)                    -> GET /api/categories/:slug/fields
+//   DzApi.getFieldOptions(slug, fieldName, parentVal) -> GET /api/categories/:slug/fields/:fieldName/options?parent_value=...
+// Оба — простые GET без авторизации (публичные эндпоинты).
+// =============================================================================
+
+(function () {
+  "use strict";
+
+  var DICT_FIELDS = {
+    lv: {
+      "dynfields.loading": "Ielādē...",
+      "dynfields.showMore": "Rādīt vairāk raksturlielumu",
+      "dynfields.showLess": "Rādīt mazāk",
+      "search.filters.any": "Jebkurš",
+      "search.filters.from": "no",
+      "search.filters.to": "līdz",
+    },
+    ru: {
+      "dynfields.loading": "Загрузка...",
+      "dynfields.showMore": "Показать больше характеристик",
+      "dynfields.showLess": "Свернуть",
+      "search.filters.any": "Любой",
+      "search.filters.from": "от",
+      "search.filters.to": "до",
+    },
+    en: {
+      "dynfields.loading": "Loading...",
+      "dynfields.showMore": "Show more characteristics",
+      "dynfields.showLess": "Show less",
+      "search.filters.any": "Any",
+      "search.filters.from": "from",
+      "search.filters.to": "to",
+    },
+  };
+  (function mergeDict() {
+    if (window.Dzintars && window.Dzintars.i18n && window.Dzintars.i18n.dict) {
+      var dict = window.Dzintars.i18n.dict;
+      for (var lang in DICT_FIELDS) if (dict[lang]) Object.assign(dict[lang], DICT_FIELDS[lang]);
+    } else {
+      document.addEventListener("DOMContentLoaded", mergeDict);
+    }
+  })();
+
+  function t(key) {
+    return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.t(key) : key;
+  }
+  function lang() {
+    return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.getLang() : "lv";
+  }
+  function escapeHtml(s) {
+    return String(s === null || s === undefined ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function fieldLabel(field) {
+    return field["label_" + lang()] || field.label_lv || field.name;
+  }
+
+  // Карточка ленты: 1-2 значения для беглого просмотра (раздел 4.3 ТЗ №2).
+  // Явная конфигурация per-категория — проще и надёжнее, чем угадывать
+  // "самые важные" поля по каким-то эвристикам; расширяется по мере
+  // добавления следующих категорий из раздела 2.
+  var CARD_SUMMARY_FIELDS = { cars: ["year", "mileage"] };
+
+  var currentCategorySlug = null;
+  var currentFieldDefs = [];
+  var showAdvanced = false;
+
+  function containerEl() {
+    return document.getElementById("dynamic-fields-container");
+  }
+
+  function clear() {
+    currentCategorySlug = null;
+    currentFieldDefs = [];
+    showAdvanced = false;
+    var el = containerEl();
+    if (el) el.innerHTML = "";
+  }
+
+  // Вызывается и по ручному выбору категории (create), и явно из
+  // openListingSheet при редактировании (см. точечную правку выше по файлу).
+  function render(categorySlug, prefillValues) {
+    currentCategorySlug = categorySlug || null;
+    var el = containerEl();
+    if (!el) return;
+    if (!categorySlug) { el.innerHTML = ""; currentFieldDefs = []; return; }
+    if (!window.DzApi || !window.DzApi.getCategoryFields) return;
+
+    el.innerHTML = '<p class="dynfields-loading">' + escapeHtml(t("dynfields.loading")) + "</p>";
+    window.DzApi.getCategoryFields(categorySlug)
+      .then(function (fields) {
+        currentFieldDefs = fields || [];
+        showAdvanced = false;
+        renderFields(prefillValues || {});
+      })
+      .catch(function () {
+        currentFieldDefs = [];
+        el.innerHTML = "";
+      });
+  }
+
+  function renderFields(prefill) {
+    var el = containerEl();
+    if (!el) return;
+    var basicHtml = "";
+    var advancedHtml = "";
+    currentFieldDefs.forEach(function (field) {
+      var html = renderOneField(field, prefill[field.name]);
+      if (field.is_advanced) advancedHtml += html;
+      else basicHtml += html;
+    });
+
+    var html = basicHtml;
+    if (advancedHtml) {
+      html += '<button type="button" class="dynfields-toggle" id="dynfields-toggle">' +
+        escapeHtml(t("dynfields.showMore")) + "</button>";
+      html += '<div class="dynfields-advanced" id="dynfields-advanced" hidden>' + advancedHtml + "</div>";
+    }
+    el.innerHTML = html;
+
+    var toggleBtn = document.getElementById("dynfields-toggle");
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", function () {
+        showAdvanced = !showAdvanced;
+        var adv = document.getElementById("dynfields-advanced");
+        if (adv) adv.hidden = !showAdvanced;
+        toggleBtn.textContent = t(showAdvanced ? "dynfields.showLess" : "dynfields.showMore");
+      });
+    }
+    wireDependentFields();
+  }
+
+  function renderOneField(field, value) {
+    var label = escapeHtml(fieldLabel(field)) + (field.unit ? " (" + escapeHtml(field.unit) + ")" : "");
+    var isDependent = !!field.depends_on_field_id;
+    var html = '<div class="listing-form-row dynfield-row' + (field.type === "boolean" ? " dynfield-boolean-row" : "") + '" data-field-row="' + field.name + '">';
+
+    if (field.type === "boolean") {
+      html += '<label class="dynfield-boolean-label"><input type="checkbox" data-field-name="' + field.name +
+        '" data-field-type="boolean"' + (value ? " checked" : "") + "> " + label + "</label>";
+    } else {
+      html += '<label class="sheet-field-label">' + label + "</label>";
+      if (field.type === "select") {
+        html += '<select class="filter-select" data-field-name="' + field.name + '" data-field-type="select"' +
+          (isDependent ? ' data-depends-on-field="' + field.depends_on_field_id + '" disabled' : "") + ">";
+        html += '<option value="">\u2014</option>';
+        (field.options || []).forEach(function (opt) {
+          html += '<option value="' + escapeHtml(opt) + '"' + (value === opt ? " selected" : "") + ">" + escapeHtml(opt) + "</option>";
+        });
+        html += "</select>";
+      } else if (field.type === "multiselect") {
+        var selected = Array.isArray(value) ? value : [];
+        html += '<div class="dynfield-multiselect" data-field-name="' + field.name + '" data-field-type="multiselect">';
+        (field.options || []).forEach(function (opt) {
+          html += '<label class="dynfield-chip-label"><input type="checkbox" data-multi-value="' + escapeHtml(opt) + '"' +
+            (selected.indexOf(opt) !== -1 ? " checked" : "") + "> " + escapeHtml(opt) + "</label>";
+        });
+        html += "</div>";
+      } else if (field.type === "number") {
+        html += '<input class="sheet-input" style="margin-bottom:0;" type="number" data-field-name="' + field.name +
+          '" data-field-type="number" value="' + (value === undefined || value === null ? "" : escapeHtml(String(value))) + '">';
+      } else if (field.type === "date") {
+        html += '<input class="sheet-input" style="margin-bottom:0;" type="date" data-field-name="' + field.name +
+          '" data-field-type="date" value="' + (value ? escapeHtml(String(value)) : "") + '">';
+      } else {
+        html += '<input class="sheet-input" style="margin-bottom:0;" type="text" data-field-name="' + field.name +
+          '" data-field-type="text" value="' + (value ? escapeHtml(String(value)) : "") + '">';
+      }
+    }
+    html += "</div>";
+    return html;
+  }
+
+  // MVP только "Марка -> Модель" (раздел 1.4 ТЗ №2). Если под конкретный
+  // бренд на бэкенде нет списка моделей — select тихо заменяется на
+  // свободный текстовый ввод (см. DEPENDENT_FIELD_OPTIONS в index.js).
+  function wireDependentFields() {
+    currentFieldDefs.forEach(function (field) {
+      if (!field.depends_on_field_id) return;
+      var parentDef = currentFieldDefs.find(function (f) { return f.id === field.depends_on_field_id; });
+      if (!parentDef) return;
+      var parentEl = document.querySelector('[data-field-name="' + parentDef.name + '"]');
+      var childEl = document.querySelector('[data-field-name="' + field.name + '"]');
+      if (!parentEl || !childEl) return;
+
+      parentEl.addEventListener("change", function () {
+        var parentValue = parentEl.value;
+        childEl.disabled = true;
+        childEl.innerHTML = '<option value="">\u2014</option>';
+        if (!parentValue || !window.DzApi || !window.DzApi.getFieldOptions) return;
+        window.DzApi.getFieldOptions(currentCategorySlug, field.name, parentValue).then(function (options) {
+          options = options || [];
+          if (!options.length) {
+            var input = document.createElement("input");
+            input.className = "sheet-input";
+            input.style.marginBottom = "0";
+            input.type = "text";
+            input.setAttribute("data-field-name", field.name);
+            input.setAttribute("data-field-type", "text");
+            childEl.replaceWith(input);
+            childEl = input;
+            return;
+          }
+          childEl.disabled = false;
+          options.forEach(function (opt) {
+            var o = document.createElement("option");
+            o.value = opt;
+            o.textContent = opt;
+            childEl.appendChild(o);
+          });
+        });
+      });
+    });
+  }
+
+  function collect() {
+    var out = {};
+    currentFieldDefs.forEach(function (field) {
+      var el = document.querySelector('[data-field-name="' + field.name + '"]');
+      if (!el) return;
+      if (field.type === "boolean") {
+        out[field.name] = el.checked;
+      } else if (field.type === "multiselect") {
+        var checked = Array.prototype.slice.call(el.querySelectorAll('input[type="checkbox"]:checked'));
+        out[field.name] = checked.map(function (c) { return c.getAttribute("data-multi-value"); });
+      } else if (el.value !== "") {
+        out[field.name] = el.value;
+      }
+    });
+    return out;
+  }
+
+  // Карточка ленты — простая конкатенация значений (без единиц измерения,
+  // сознательное упрощение первой итерации, см. итоговое сообщение).
+  function cardSummary(listing) {
+    var names = CARD_SUMMARY_FIELDS[listing.category_slug];
+    if (!names || !listing.field_values) return "";
+    var parts = names
+      .map(function (name) { return listing.field_values[name]; })
+      .filter(function (v) { return v !== null && v !== undefined && v !== ""; });
+    return parts.join(" \u00B7 ");
+  }
+
+  // Детальная страница — полный список присутствующих значений с подписями.
+  // Нужен fetch названий полей (в listing есть только name->value), поэтому
+  // дорисовывается отдельно от основного render() детальной страницы.
+  function renderDetailList(listing) {
+    var el = document.getElementById("detail-fields-list");
+    if (!el || !listing.field_values || !Object.keys(listing.field_values).length) return;
+    if (!window.DzApi || !window.DzApi.getCategoryFields || !listing.category_slug) return;
+
+    window.DzApi.getCategoryFields(listing.category_slug).then(function (fields) {
+      var html = "";
+      (fields || []).forEach(function (field) {
+        var value = listing.field_values[field.name];
+        if (value === null || value === undefined || value === "" ||
+            (Array.isArray(value) && !value.length)) return;
+        var display = Array.isArray(value) ? value.join(", ")
+          : value === true ? "\u2713"
+          : value === false ? null
+          : String(value) + (field.unit ? " " + field.unit : "");
+        if (display === null) return;
+        html += '<div class="detail-field-row"><span>' + escapeHtml(fieldLabel(field)) + '</span><span>' +
+          escapeHtml(display) + "</span></div>";
+      });
+      el.innerHTML = html;
+    }).catch(function () {});
+  }
+
+  // Ручной выбор категории в форме (create) — редактирование вызывает
+  // render() явно из openListingSheet, этот слушатель для него не нужен, но
+  // безобиден (тот же render() просто перерисует то же самое ещё раз).
+  document.addEventListener("DOMContentLoaded", function () {
+    var categorySelect = document.getElementById("listing-field-category");
+    if (categorySelect) {
+      categorySelect.addEventListener("change", function () {
+        render(categorySelect.value, {});
+      });
+    }
+  });
+
+  // Раздел 4.2 ТЗ №2 — категорийные фильтры в панели поиска. Рендерит
+  // только is_filterable-поля; для select — точное совпадение, для number —
+  // пара мин/макс (совпадает с тем, что уже понимает handleListListings на
+  // бэкенде: field_<name> / field_<name>_min / field_<name>_max).
+  // Остальные типы (text/multiselect/boolean/date) как поисковые фильтры
+  // пока не рендерим — не так полезны для сужения выдачи, как select/number.
+  var searchFilterFieldDefs = [];
+
+  function renderSearchFilters(categorySlug) {
+    var el = document.getElementById("filter-category-fields-container");
+    if (!el) return;
+    searchFilterFieldDefs = [];
+    if (!categorySlug || !window.DzApi || !window.DzApi.getCategoryFields) {
+      el.innerHTML = "";
+      return;
+    }
+    window.DzApi.getCategoryFields(categorySlug).then(function (fields) {
+      searchFilterFieldDefs = (fields || []).filter(function (f) { return f.is_filterable && (f.type === "select" || f.type === "number"); });
+      var html = "";
+      searchFilterFieldDefs.forEach(function (field) {
+        var label = escapeHtml(fieldLabel(field));
+        if (field.type === "select") {
+          html += '<div class="filter-row"><label class="sheet-field-label">' + label + '</label>';
+          html += '<select class="filter-select" data-search-field="' + field.name + '"><option value="">' + escapeHtml(t("search.filters.any")) + '</option>';
+          (field.options || []).forEach(function (opt) {
+            html += '<option value="' + escapeHtml(opt) + '">' + escapeHtml(opt) + "</option>";
+          });
+          html += "</select></div>";
+        } else {
+          html += '<div class="filter-row-split"><div class="filter-row"><label class="sheet-field-label">' + label + ' ' + escapeHtml(t("search.filters.from")) + '</label>';
+          html += '<input class="filter-input" type="number" data-search-field="' + field.name + '" data-search-field-mode="min"></div>';
+          html += '<div class="filter-row"><label class="sheet-field-label">' + label + ' ' + escapeHtml(t("search.filters.to")) + '</label>';
+          html += '<input class="filter-input" type="number" data-search-field="' + field.name + '" data-search-field-mode="max"></div></div>';
+        }
+      });
+      el.innerHTML = html;
+    }).catch(function () { el.innerHTML = ""; });
+  }
+
+  function collectSearchFilters() {
+    var out = {};
+    document.querySelectorAll('#filter-category-fields-container [data-search-field]').forEach(function (input) {
+      if (!input.value) return;
+      var name = input.getAttribute("data-search-field");
+      var mode = input.getAttribute("data-search-field-mode");
+      var key = mode ? "field_" + name + "_" + mode : "field_" + name;
+      out[key] = input.value;
+    });
+    return out;
+  }
+
+  window.DzCategoryFields = {
+    render: render,
+    clear: clear,
+    collect: collect,
+    cardSummary: cardSummary,
+    renderDetailList: renderDetailList,
+    renderSearchFilters: renderSearchFilters,
+    collectSearchFilters: collectSearchFilters,
+  };
+})();
+</script>
+<script>
+// =============================================================================
+// ТЗ №2, раздел 3 — общий flow. Требует от dz-api.js ЕЩЁ 2 метода сверх уже
+// присланных: getCompanyProfile(), upsertCompanyProfile(payload).
+// Карта — OpenStreetMap embed (без API-ключа), по договорённости с
+// пользователем (см. переписку) вместо платного Google Maps.
+// =============================================================================
+
+(function () {
+  "use strict";
+
+  var DICT_FLOW = {
+    lv: {
+      "listing.field.dealType": "Darījuma veids",
+      "listing.priceType.FROM": "No €...",
+      "listing.priceType.BY_AGREEMENT": "Pēc vienošanās",
+      "listing.field.district": "Rajons",
+      "listing.field.showOnMap": "Rādīt kartē",
+      "listing.field.mapPicker": "Atrašanās vietas koordinātas",
+      "listing.field.useMyLocation": "Izmantot manu atrašanās vietu",
+      "listing.location.locating": "Nosaka atrašanās vietu...",
+      "listing.location.done": "Atrašanās vieta saglabāta",
+      "listing.location.error": "Neizdevās noteikt atrašanās vietu",
+      "listing.field.showEmail": "Rādīt e-pastu sludinājumā",
+      "listing.field.allowExchange": "Iespējama apmaiņa",
+      "listing.field.exchangeForPlaceholder": "Uz ko vēlies apmainīt?",
+      "listing.field.isUrgent": "Steidzami (redzams tikai meklēšanas filtrā, ne sludinājumā)",
+      "listing.field.sellerType": "Pārdevēja tips",
+      "listing.sellerType.PRIVATE": "Privātpersona",
+      "listing.sellerType.COMPANY": "Uzņēmums",
+      "listing.field.companyName": "Uzņēmuma nosaukums",
+      "listing.field.companyReg": "Reģ. numurs",
+      "listing.field.companyWebsite": "Mājaslapa",
+      "listing.field.companyAddress": "Adrese",
+      "listing.field.companyContacts": "Papildu kontakti",
+      "listing.field.companyLogo": "Logo saite (URL)",
+      "search.filters.urgent": "Tikai steidzami",
+      "dealType.SELL": "Pārdodu", "dealType.BUY": "Pērku",
+      "dealType.RENT_OUT": "Izīrēju", "dealType.RENT_IN": "Īrēju",
+      "dealType.OFFER_SERVICE": "Piedāvāju", "dealType.FIND_SERVICE": "Meklēju",
+      "dealType.FIND_JOB": "Meklēju darbu", "dealType.HIRE": "Piedāvāju darbu",
+    },
+    ru: {
+      "listing.field.dealType": "Тип сделки",
+      "listing.priceType.FROM": "От €...",
+      "listing.priceType.BY_AGREEMENT": "По договорённости",
+      "listing.field.district": "Район",
+      "listing.field.showOnMap": "Показать на карте",
+      "listing.field.mapPicker": "Координаты местоположения",
+      "listing.field.useMyLocation": "Использовать моё местоположение",
+      "listing.location.locating": "Определяем местоположение...",
+      "listing.location.done": "Местоположение сохранено",
+      "listing.location.error": "Не удалось определить местоположение",
+      "listing.field.showEmail": "Показать email в объявлении",
+      "listing.field.allowExchange": "Возможен обмен",
+      "listing.field.exchangeForPlaceholder": "На что хотите обменять?",
+      "listing.field.isUrgent": "Срочно (видно только в фильтре поиска, не в объявлении)",
+      "listing.field.sellerType": "Тип продавца",
+      "listing.sellerType.PRIVATE": "Частное лицо",
+      "listing.sellerType.COMPANY": "Компания",
+      "listing.field.companyName": "Название компании",
+      "listing.field.companyReg": "Рег. номер",
+      "listing.field.companyWebsite": "Сайт",
+      "listing.field.companyAddress": "Адрес",
+      "listing.field.companyContacts": "Доп. контакты",
+      "listing.field.companyLogo": "Ссылка на логотип (URL)",
+      "search.filters.urgent": "Только срочные",
+      "dealType.SELL": "Продам", "dealType.BUY": "Куплю",
+      "dealType.RENT_OUT": "Сдам", "dealType.RENT_IN": "Сниму",
+      "dealType.OFFER_SERVICE": "Предлагаю", "dealType.FIND_SERVICE": "Ищу",
+      "dealType.FIND_JOB": "Ищу работу", "dealType.HIRE": "Вакансия",
+    },
+    en: {
+      "listing.field.dealType": "Deal type",
+      "listing.priceType.FROM": "From €...",
+      "listing.priceType.BY_AGREEMENT": "By agreement",
+      "listing.field.district": "District",
+      "listing.field.showOnMap": "Show on map",
+      "listing.field.mapPicker": "Location coordinates",
+      "listing.field.useMyLocation": "Use my location",
+      "listing.location.locating": "Locating...",
+      "listing.location.done": "Location saved",
+      "listing.location.error": "Couldn't determine location",
+      "listing.field.showEmail": "Show email in listing",
+      "listing.field.allowExchange": "Open to exchange",
+      "listing.field.exchangeForPlaceholder": "What would you exchange for?",
+      "listing.field.isUrgent": "Urgent (visible only in search filter, not on the listing)",
+      "listing.field.sellerType": "Seller type",
+      "listing.sellerType.PRIVATE": "Private",
+      "listing.sellerType.COMPANY": "Company",
+      "listing.field.companyName": "Company name",
+      "listing.field.companyReg": "Reg. number",
+      "listing.field.companyWebsite": "Website",
+      "listing.field.companyAddress": "Address",
+      "listing.field.companyContacts": "Extra contacts",
+      "listing.field.companyLogo": "Logo URL",
+      "search.filters.urgent": "Urgent only",
+      "dealType.SELL": "Selling", "dealType.BUY": "Buying",
+      "dealType.RENT_OUT": "Renting out", "dealType.RENT_IN": "Looking to rent",
+      "dealType.OFFER_SERVICE": "Offering", "dealType.FIND_SERVICE": "Looking for",
+      "dealType.FIND_JOB": "Job seeking", "dealType.HIRE": "Hiring",
+    },
+  };
+  (function mergeDict() {
+    if (window.Dzintars && window.Dzintars.i18n && window.Dzintars.i18n.dict) {
+      var dict = window.Dzintars.i18n.dict;
+      for (var lang in DICT_FLOW) if (dict[lang]) Object.assign(dict[lang], DICT_FLOW[lang]);
+      if (window.Dzintars.i18n.apply) window.Dzintars.i18n.apply();
+    } else {
+      document.addEventListener("DOMContentLoaded", mergeDict);
+    }
+  })();
+
+  function t(key) { return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.t(key) : key; }
+
+  // Раздел 3.2 ТЗ №2 — зеркало DEAL_TYPES_BY_CATEGORY с бэкенда. Небольшая
+  // захардкоженная карта, ТЗ сам говорит не тащить её через API ради
+  // списка, который почти не меняется.
+  var DEAL_TYPE_OPTIONS_BY_CATEGORY = {
+    realestate: ["SELL", "RENT_OUT", "BUY", "RENT_IN"],
+    services: ["OFFER_SERVICE", "FIND_SERVICE"],
+    vacancy: ["HIRE"],
+    "job-seeker": ["FIND_JOB"],
+    jobs: ["FIND_JOB", "HIRE"],
+    DEFAULT: ["SELL", "BUY"],
+  };
+
+  function populateDealTypes(categorySlug, selectedValue) {
+    var select = document.getElementById("listing-field-deal-type");
+    if (!select) return;
+    var options = DEAL_TYPE_OPTIONS_BY_CATEGORY[categorySlug] || DEAL_TYPE_OPTIONS_BY_CATEGORY.DEFAULT;
+    select.innerHTML = "";
+    options.forEach(function (opt) {
+      var o = document.createElement("option");
+      o.value = opt;
+      o.textContent = t("dealType." + opt);
+      select.appendChild(o);
+    });
+    if (selectedValue && options.indexOf(selectedValue) !== -1) select.value = selectedValue;
+  }
+
+  function toggleRow(checkboxId, rowId) {
+    var cb = document.getElementById(checkboxId);
+    var row = document.getElementById(rowId);
+    if (!cb || !row) return;
+    row.hidden = !cb.checked;
+  }
+
+  function wireToggles() {
+    var showEmail = document.getElementById("listing-field-show-email");
+    if (showEmail) showEmail.addEventListener("change", function () { toggleRow("listing-field-show-email", "listing-email-row"); });
+
+    var allowExchange = document.getElementById("listing-field-allow-exchange");
+    if (allowExchange) allowExchange.addEventListener("change", function () { toggleRow("listing-field-allow-exchange", "listing-exchange-for-row"); });
+
+    var showOnMap = document.getElementById("listing-field-show-on-map");
+    if (showOnMap) {
+      showOnMap.addEventListener("change", function () {
+        var row = document.getElementById("listing-map-picker-row");
+        if (row) row.hidden = !showOnMap.checked;
+      });
+    }
+
+    var categorySelect = document.getElementById("listing-field-category");
+    if (categorySelect) {
+      categorySelect.addEventListener("change", function () {
+        populateDealTypes(categorySelect.value, null);
+      });
+    }
+
+    var locBtn = document.getElementById("listing-use-location-btn");
+    if (locBtn) {
+      locBtn.addEventListener("click", function () {
+        var status = document.getElementById("listing-location-status");
+        if (!navigator.geolocation) return;
+        if (status) status.textContent = t("listing.location.locating");
+        navigator.geolocation.getCurrentPosition(
+          function (pos) {
+            document.getElementById("listing-field-latitude").value = pos.coords.latitude;
+            document.getElementById("listing-field-longitude").value = pos.coords.longitude;
+            if (status) status.textContent = t("listing.location.done");
+          },
+          function () {
+            if (status) status.textContent = t("listing.location.error");
+          }
+        );
+      });
+    }
+
+    var switchEl = document.getElementById("listing-seller-type-switch");
+    if (switchEl) {
+      switchEl.querySelectorAll(".auth-mode-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          switchEl.querySelectorAll(".auth-mode-btn").forEach(function (b) { b.classList.remove("is-active"); });
+          btn.classList.add("is-active");
+          var value = btn.getAttribute("data-value");
+          document.getElementById("listing-field-seller-type").value = value;
+          var companyFields = document.getElementById("listing-company-fields");
+          if (companyFields) companyFields.hidden = value !== "COMPANY";
+          if (value === "COMPANY" && window.DzApi && window.DzApi.getCompanyProfile) {
+            window.DzApi.getCompanyProfile().then(function (company) {
+              if (!company) return;
+              document.getElementById("listing-field-company-name").value = company.company_name || "";
+              document.getElementById("listing-field-company-reg").value = company.reg_number || "";
+              document.getElementById("listing-field-company-website").value = company.website || "";
+              document.getElementById("listing-field-company-address").value = company.address || "";
+              document.getElementById("listing-field-company-contacts").value = company.contacts || "";
+              document.getElementById("listing-field-company-logo").value = company.logo_url || "";
+            }).catch(function () {});
+          }
+        });
+      });
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", wireToggles);
+
+  function reset() {
+    populateDealTypes("", null);
+    var byId = function (id) { return document.getElementById(id); };
+    ["listing-field-district", "listing-field-contact-email", "listing-field-exchange-for",
+      "listing-field-company-name", "listing-field-company-reg", "listing-field-company-website",
+      "listing-field-company-address", "listing-field-company-contacts", "listing-field-company-logo"]
+      .forEach(function (id) { if (byId(id)) byId(id).value = ""; });
+    ["listing-field-show-on-map", "listing-field-show-email", "listing-field-allow-exchange", "listing-field-is-urgent"]
+      .forEach(function (id) { if (byId(id)) byId(id).checked = false; });
+    if (byId("listing-field-latitude")) byId("listing-field-latitude").value = "";
+    if (byId("listing-field-longitude")) byId("listing-field-longitude").value = "";
+    if (byId("listing-location-status")) byId("listing-location-status").textContent = "";
+    if (byId("listing-email-row")) byId("listing-email-row").hidden = true;
+    if (byId("listing-exchange-for-row")) byId("listing-exchange-for-row").hidden = true;
+    if (byId("listing-map-picker-row")) byId("listing-map-picker-row").hidden = true;
+    if (byId("listing-field-seller-type")) byId("listing-field-seller-type").value = "PRIVATE";
+    if (byId("listing-company-fields")) byId("listing-company-fields").hidden = true;
+    var switchEl = byId("listing-seller-type-switch");
+    if (switchEl) {
+      switchEl.querySelectorAll(".auth-mode-btn").forEach(function (b) {
+        b.classList.toggle("is-active", b.getAttribute("data-value") === "PRIVATE");
+      });
+    }
+  }
+
+  // Вызывается из openListingSheet (см. точечную правку выше по файлу) при
+  // входе в режим редактирования — заполняет всё, чего нет в "основной"
+  // предзаполняющей логике (та отвечает за title/description/price/...).
+  function prefill(listing) {
+    var byId = function (id) { return document.getElementById(id); };
+    populateDealTypes(listing.category_slug, listing.deal_type);
+    if (byId("listing-field-district")) byId("listing-field-district").value = listing.district || "";
+    if (byId("listing-field-show-on-map")) byId("listing-field-show-on-map").checked = !!listing.show_on_map;
+    if (byId("listing-map-picker-row")) byId("listing-map-picker-row").hidden = !listing.show_on_map;
+    if (byId("listing-field-latitude")) byId("listing-field-latitude").value = listing.latitude != null ? listing.latitude : "";
+    if (byId("listing-field-longitude")) byId("listing-field-longitude").value = listing.longitude != null ? listing.longitude : "";
+    if (byId("listing-field-show-email")) byId("listing-field-show-email").checked = !!listing.show_email;
+    if (byId("listing-email-row")) byId("listing-email-row").hidden = !listing.show_email;
+    if (byId("listing-field-contact-email")) byId("listing-field-contact-email").value = listing.contact_email || "";
+    if (byId("listing-field-allow-exchange")) byId("listing-field-allow-exchange").checked = !!listing.allow_exchange;
+    if (byId("listing-exchange-for-row")) byId("listing-exchange-for-row").hidden = !listing.allow_exchange;
+    if (byId("listing-field-exchange-for")) byId("listing-field-exchange-for").value = listing.exchange_for || "";
+    if (byId("listing-field-is-urgent")) byId("listing-field-is-urgent").checked = !!listing.is_urgent;
+
+    var sellerType = listing.seller_type === "COMPANY" ? "COMPANY" : "PRIVATE";
+    if (byId("listing-field-seller-type")) byId("listing-field-seller-type").value = sellerType;
+    if (byId("listing-company-fields")) byId("listing-company-fields").hidden = sellerType !== "COMPANY";
+    var switchEl = byId("listing-seller-type-switch");
+    if (switchEl) {
+      switchEl.querySelectorAll(".auth-mode-btn").forEach(function (b) {
+        b.classList.toggle("is-active", b.getAttribute("data-value") === sellerType);
+      });
+    }
+    if (sellerType === "COMPANY" && window.DzApi && window.DzApi.getCompanyProfile) {
+      window.DzApi.getCompanyProfile().then(function (company) {
+        if (!company) return;
+        if (byId("listing-field-company-name")) byId("listing-field-company-name").value = company.company_name || "";
+        if (byId("listing-field-company-reg")) byId("listing-field-company-reg").value = company.reg_number || "";
+        if (byId("listing-field-company-website")) byId("listing-field-company-website").value = company.website || "";
+        if (byId("listing-field-company-address")) byId("listing-field-company-address").value = company.address || "";
+        if (byId("listing-field-company-contacts")) byId("listing-field-company-contacts").value = company.contacts || "";
+        if (byId("listing-field-company-logo")) byId("listing-field-company-logo").value = company.logo_url || "";
+      }).catch(function () {});
+    }
+  }
+
+  // Детальная страница — встраиваем OpenStreetMap iframe, если продавец
+  // включил "показать на карте". Без API-ключа, без сторонних SDK — просто
+  // export/embed.html с bbox вокруг точки и маркером (раздел 3.5 ТЗ №2:
+  // явно НЕ Google Maps).
+  function renderDetailMap(listing) {
+    var container = document.getElementById("detail-fields-list");
+    if (!container || !listing.show_on_map || listing.latitude == null || listing.longitude == null) return;
+    var lat = listing.latitude, lng = listing.longitude;
+    var d = 0.01;
+    var bbox = (lng - d) + "," + (lat - d) + "," + (lng + d) + "," + (lat + d);
+    var src = "https://www.openstreetmap.org/export/embed.html?bbox=" + bbox + "&marker=" + lat + "," + lng;
+    var mapDiv = document.createElement("div");
+    mapDiv.className = "detail-map-embed";
+    mapDiv.innerHTML = '<iframe src="' + src + '" style="border:0;width:100%;height:200px;border-radius:var(--radius-md);" loading="lazy"></iframe>';
+    container.parentNode.insertBefore(mapDiv, container.nextSibling);
+  }
+
+  window.DzListingFlow = { reset: reset, prefill: prefill, renderDetailMap: renderDetailMap };
+})();
+</script>
 
 </body>
-           </html>
+   </html>
