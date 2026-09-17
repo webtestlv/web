@@ -291,6 +291,32 @@
     });
   }
 
+  // Смена ника/аватарки в профиле (Version 4, п.6 запроса). Аватарка сама
+  // загружается тем же uploadPhoto() выше — эти две функции только
+  // сохраняют результат (ник как строку, avatar_url как ссылку из
+  // uploadPhoto) в профиле пользователя и обновляют локальный кэш, чтобы
+  // остальной UI (например строка продавца в карточках) увидел новые
+  // значения без принудительного /api/me запроса.
+  function updateNickname(nickname) {
+    return request("/api/me/nickname", {
+      method: "PATCH",
+      body: { nickname: nickname },
+    }).then(function (data) {
+      setCachedUser(data.user);
+      return data.user;
+    });
+  }
+
+  function updateAvatar(url) {
+    return request("/api/me/avatar", {
+      method: "PATCH",
+      body: { url: url },
+    }).then(function (data) {
+      setCachedUser(data.user);
+      return data.user;
+    });
+  }
+
   // ---------------------------------------------------------------------
   // Мессенджер (Version 2)
   // ---------------------------------------------------------------------
@@ -345,6 +371,67 @@
       "/api/conversations/" + encodeURIComponent(conversationId) + "/messages/" + encodeURIComponent(messageId),
       { method: "DELETE" }
     );
+  }
+
+  // Удалить чат у себя (весь) — по запросу в чате: сам диалог у второй
+  // стороны не трогается, только скрывается из своего списка (см.
+  // handleHideConversation на бэкенде).
+  function hideConversation(conversationId) {
+    return request("/api/conversations/" + encodeURIComponent(conversationId), { method: "DELETE" });
+  }
+
+  // Суммарный счётчик непрочитанных для бейджа "99+" на иконке "Сообщения".
+  function getUnreadCount() {
+    return request("/api/conversations/unread-count").then(function (data) {
+      return data.unread_count;
+    });
+  }
+
+  // -----------------------------------------------------------------------
+  // Сделка из чата — "Завершить сделку" / "Подтвердить" / "Отменить" /
+  // "Оспорить" прямо в переписке (отдельно от confirmTransaction/
+  // disputeTransaction ниже, которые остаются для старого пути через
+  // "Мои объявления" → /sold).
+  // -----------------------------------------------------------------------
+  function getConversationDeal(conversationId) {
+    return request("/api/conversations/" + encodeURIComponent(conversationId) + "/deal").then(function (data) {
+      return data.deal;
+    });
+  }
+
+  function initiateDeal(conversationId) {
+    return request("/api/conversations/" + encodeURIComponent(conversationId) + "/deal/initiate", {
+      method: "POST",
+    }).then(function (data) {
+      return data.deal;
+    });
+  }
+
+  function confirmDeal(conversationId) {
+    return request("/api/conversations/" + encodeURIComponent(conversationId) + "/deal/confirm", {
+      method: "POST",
+    }).then(function (data) {
+      return data.deal;
+    });
+  }
+
+  function disputeDeal(conversationId) {
+    return request("/api/conversations/" + encodeURIComponent(conversationId) + "/deal/dispute", {
+      method: "POST",
+    }).then(function (data) {
+      return data.deal;
+    });
+  }
+
+  // reason — необязательная причина отмены (по запросу: "можно причину
+  // написать типо почему отменил"), уходит в чат системным сообщением.
+  function cancelDeal(conversationId, reason) {
+    return request("/api/conversations/" + encodeURIComponent(conversationId) + "/deal/cancel", {
+      method: "POST",
+      body: { reason: reason || "" },
+    }).then(function (data) {
+      return data.deal;
+    });
   }
 
   // ---------------------------------------------------------------------
@@ -467,6 +554,8 @@
     getMyListings: getMyListings,
     // Version 3 — фото объявлений
     uploadPhoto: uploadPhoto,
+    updateNickname: updateNickname,
+    updateAvatar: updateAvatar,
     // Version 2 — мессенджер
     createConversation: createConversation,
     getConversations: getConversations,
@@ -474,6 +563,13 @@
     sendMessage: sendMessage,
     editMessage: editMessage,
     deleteMessage: deleteMessage,
+    hideConversation: hideConversation,
+    getUnreadCount: getUnreadCount,
+    getConversationDeal: getConversationDeal,
+    initiateDeal: initiateDeal,
+    confirmDeal: confirmDeal,
+    disputeDeal: disputeDeal,
+    cancelDeal: cancelDeal,
     // Version 4 — сделки и репутация
     confirmTransaction: confirmTransaction,
     disputeTransaction: disputeTransaction,
