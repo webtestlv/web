@@ -294,6 +294,15 @@ img, svg { display: block; max-width: 100%; }
   justify-content: space-between;
   gap: var(--sp-3);
   padding: var(--sp-2) var(--sp-4) 0;
+  /* Было <a>, стало <button> (раздел 4 ТЗ v4 — теперь реальное действие,
+     не href="#") — сбрасываем браузерные дефолты кнопки, чтобы вид не
+     изменился: без этого появился бы бордер/фон/иной шрифт у элемента. */
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .foryou-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
@@ -519,6 +528,10 @@ img, svg { display: block; max-width: 100%; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* ТЗ v4, раздел 5 — строка продавца теперь кликабельна (открывает его
+   профиль), небольшой visual affordance без переусложнения карточки. */
+.listing-seller-line.is-clickable { cursor: pointer; }
+.listing-seller-line.is-clickable:hover { color: var(--ink-700); text-decoration: underline; }
 
 .listing-card.is-empty .listing-title,
 .listing-card.is-empty .listing-price,
@@ -824,6 +837,131 @@ img, svg { display: block; max-width: 100%; }
 }
 .listing-form-row-split .listing-form-row { flex: 1; }
 
+/* ===================== Swipe recommendations (ТЗ v4, раздел 4) ===================== */
+/* z-index: 100 — выше любого другого sheet/overlay в проекте (максимум
+   был 95) — это самостоятельный полноэкранный режим, должен перекрывать
+   абсолютно всё, если случайно окажется открыт поверх чего-то ещё. */
+.swipe-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--ink-900);
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.swipe-overlay[hidden] { display: none; }
+
+.swipe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-4) var(--sp-5);
+  flex-shrink: 0;
+}
+.swipe-header-title { font-size: var(--fs-h2); font-weight: var(--fw-h2); color: var(--text-inverse); }
+.swipe-close-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.12);
+  color: var(--text-inverse);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+
+.swipe-stage {
+  flex: 1;
+  position: relative;
+  padding: 0 var(--sp-5) var(--sp-4);
+  min-height: 0;
+}
+.swipe-loading, .swipe-empty {
+  position: absolute;
+  inset: var(--sp-2) var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text-inverse);
+}
+.swipe-empty-title { font-size: var(--fs-h2); font-weight: var(--fw-h2); margin-bottom: var(--sp-2); }
+.swipe-empty-sub { font-size: var(--fs-body); color: rgba(255,255,255,0.7); }
+
+/* Карточка объявления внутри свайп-стека. Стековые карточки идут одна за
+   другой в DOM — верхняя (последняя) перетаскивается жестом, следующие
+   видны краем снизу (та же идея, что и .foryou-stack на главной, но
+   реальные, функциональные карточки, а не декоративная заглушка). */
+.swipe-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background: var(--paper-0);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+  touch-action: none;
+  will-change: transform;
+}
+.swipe-card.is-dragging { transition: none; }
+.swipe-card.is-settling { transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1); }
+.swipe-card-photo {
+  flex: 1;
+  min-height: 0;
+  background: var(--paper-100) center/cover no-repeat;
+  position: relative;
+}
+.swipe-card-photo svg { width: 100%; height: 100%; }
+.swipe-card-body {
+  flex-shrink: 0;
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--paper-0);
+}
+.swipe-card-title { font-size: var(--fs-h2); font-weight: var(--fw-h2); color: var(--text-900); margin-bottom: var(--sp-1); }
+.swipe-card-price { font-size: var(--fs-subhead); font-weight: 600; color: var(--ink-900); margin-bottom: var(--sp-1); }
+.swipe-card-location { font-size: var(--fs-13); color: var(--text-600); }
+
+/* Штампы LIKE/NOPE — проявляются пропорционально смещению карточки при
+   перетаскивании (opacity выставляется инлайн через JS, см.
+   DzSwipeRecommendations), классическая tinder-механика. */
+.swipe-stamp {
+  position: absolute;
+  top: var(--sp-5);
+  padding: 6px 14px;
+  border: 3px solid;
+  border-radius: 10px;
+  font-size: 22px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  pointer-events: none;
+}
+.swipe-stamp.is-like { left: var(--sp-5); color: var(--success-600, #185863); border-color: var(--success-600, #185863); transform: rotate(-12deg); }
+.swipe-stamp.is-nope { right: var(--sp-5); color: var(--danger-600); border-color: var(--danger-600); transform: rotate(12deg); }
+
+.swipe-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--sp-6);
+  padding: var(--sp-5);
+  flex-shrink: 0;
+}
+.swipe-action-btn {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+}
+.swipe-action-btn.is-dislike { background: var(--paper-0); color: var(--danger-600); }
+.swipe-action-btn.is-like { background: var(--paper-0); color: var(--success-600, #185863); }
+/* ===================== /Swipe recommendations ===================== */
+
 .listing-form-checkbox-row {
   display: flex;
   align-items: center;
@@ -1095,6 +1233,48 @@ textarea.sheet-input {
   line-height: 1.5;
   margin-bottom: var(--sp-5);
 }
+/* ТЗ v4, раздел 5 — блок продавца на странице объявления. Кнопка (не div)
+   для доступности с клавиатуры/скринридеров — это интерактивный элемент,
+   открывающий профиль, а не декоративная информация. */
+.detail-seller-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-4);
+  border: 1px solid var(--line-100);
+  border-radius: var(--radius-md);
+  background: var(--paper-0);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-ui);
+}
+.detail-seller-avatar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--ink-900);
+  color: var(--text-inverse);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-16);
+  font-weight: 600;
+}
+.detail-seller-avatar.has-image { background-size: cover; background-position: center; }
+.detail-seller-info { min-width: 0; flex: 1; }
+.detail-seller-name { font-size: var(--fs-15); font-weight: 600; color: var(--text-900); }
+.detail-seller-sub {
+  font-size: var(--fs-12);
+  color: var(--text-600);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.detail-seller-chevron { flex-shrink: 0; color: var(--text-400); }
+.detail-seller-chevron svg { width: 18px; height: 18px; }
 .detail-actions {
   display: flex;
   gap: var(--sp-3);
@@ -2104,6 +2284,22 @@ textarea.sheet-input {
 }
 .sold-candidate-row:disabled { opacity: 0.5; }
 
+/* ТЗ v4, раздел 2 — сообщения от администрации (admin_messages). Янтарный
+   акцент — тот же токен, что и у остальных "требует внимания" элементов
+   интерфейса (см. --amber-500 в остальной палитре), не создаём новый цвет. */
+.admin-messages-section { margin-top: var(--sp-5); }
+.admin-message-card {
+  background: var(--amber-100); border-radius: var(--radius-md);
+  padding: var(--sp-4); margin-bottom: var(--sp-3);
+  border: 1px solid rgba(229,164,0,0.25);
+}
+.admin-message-card .amc-label {
+  font-size: var(--fs-12); font-weight: 600; color: #8a6400;
+  text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: var(--sp-1);
+}
+.admin-message-card .amc-text { font-size: var(--fs-14); color: var(--text-900); white-space: pre-wrap; }
+.admin-message-card .amc-date { font-size: var(--fs-12); color: var(--text-600); margin-top: var(--sp-2); }
+
 /* Мои сделки (вкладка Профиль) */
 .mydeals-section { margin-top: var(--sp-6); padding-top: var(--sp-5); border-top: 1px solid var(--line-100); }
 .mydeals-heading { font-size: var(--fs-h2); color: var(--ink-900); margin: 0 0 var(--sp-4); }
@@ -2201,12 +2397,31 @@ textarea.sheet-input {
   display: flex; align-items: center; justify-content: center;
   font-size: var(--fs-20); font-weight: 600;
 }
+/* ТЗ v4, раздел 5 — реальный аватар продавца (было: всегда заглушка "?").
+   .has-image переключает круг на фоновую картинку, инициалы (базовый
+   класс без модификатора) остаются запасным вариантом. */
+.profile-header-avatar.has-image { background-size: cover; background-position: center; }
 .profile-header-main { min-width: 0; }
+.profile-header-nickname { font-size: var(--fs-16); font-weight: 600; color: var(--text-900); margin-bottom: 2px; }
+.profile-header-listings-count { font-size: var(--fs-13); color: var(--text-600); margin-bottom: var(--sp-2); }
 .profile-header-rating-row { display: flex; align-items: baseline; gap: var(--sp-2); }
 .profile-header-rating-number { font-size: var(--fs-28); font-weight: 700; color: var(--ink-900); line-height: 1; }
 .profile-header-stars { font-size: var(--fs-20); color: var(--amber-500); letter-spacing: 2px; }
 .profile-header-count { font-size: var(--fs-13); color: var(--text-600); margin-top: var(--sp-1); }
 .profile-header-no-rating { font-size: var(--fs-14); color: var(--text-600); }
+/* Кнопка "Написать" (раздел 5) — на всю ширину под шапкой профиля, тем
+   же стилем кнопки-primary, что уже используется по остальному проекту
+   (см. .sheet-submit.is-ready), но своим классом, т.к. живёт не в форме,
+   а прямо в теле sheet. */
+.publicprofile-message-btn {
+  display: block; width: 100%;
+  background: var(--ink-900); color: var(--text-inverse);
+  border: none; border-radius: var(--radius-md);
+  padding: var(--sp-3); font-size: var(--fs-15); font-weight: 600;
+  font-family: var(--font-ui); cursor: pointer;
+  margin-bottom: var(--sp-4);
+}
+.publicprofile-message-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* Мой профиль (Version 4, п.6) — карточка вместо огромной круглой
    .empty-state-заглушки: аватар со сменой фото, редактируемый ник,
@@ -2301,6 +2516,30 @@ textarea.sheet-input {
   color: var(--text-600);
   margin: var(--sp-1) 0 var(--sp-5);
 }
+/* ТЗ v4, раздел 3 — город пользователя (необязательное поле) */
+.profile-city-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-1);
+}
+.profile-city-text { font-size: var(--fs-14); color: var(--text-900); }
+.profile-city-edit-row {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+  margin: var(--sp-1) 0;
+  max-width: 320px;
+}
+.profile-city-edit-row .filter-input { flex: 1; }
+.profile-city-hint {
+  font-size: var(--fs-12);
+  color: var(--text-600);
+  max-width: 280px;
+  margin: 0 0 var(--sp-5);
+  line-height: 1.4;
+}
 .profile-logout-btn {
   height: 36px;
   padding: 0 var(--sp-4);
@@ -2346,7 +2585,15 @@ textarea.sheet-input {
         </div>
       </header>
 
-      <a class="foryou-row" href="#">
+      <!-- ТЗ v4, раздел 4 — точка входа в свайп-рекомендации, уже
+           существовавшая вёрстка (была href="#", никуда не вела).
+           Заменено на button + window.DzSwipeRecommendations.open() —
+           это открытие полноэкранного режима внутри SPA, не переход по
+           ссылке, поэтому <a> здесь семантически неверна. Только для
+           авторизованных (п.14 -> А) — гостю open() покажет тот же
+           auth-sheet, что открывается и в остальных местах приложения при
+           попытке авторизованного действия без логина. -->
+      <button type="button" class="foryou-row" onclick="window.DzSwipeRecommendations && window.DzSwipeRecommendations.open()">
         <div class="foryou-text">
           <span class="foryou-title">
             <span data-i18n="home.foryou.title">Kartītes tev</span>
@@ -2361,7 +2608,7 @@ textarea.sheet-input {
           <span class="stack-card stack-card-2"></span>
           <span class="stack-card stack-card-3"></span>
         </div>
-      </a>
+      </button>
     </div>
 
 
@@ -2600,8 +2847,34 @@ textarea.sheet-input {
 
         <p class="profile-login-text" id="profile-logged-in-login">&nbsp;</p>
 
+        <!-- ТЗ v4, раздел 3 — город пользователя, необязательное поле.
+             По образцу редактируемого ника выше: строка отображения +
+             отдельная строка выбора, переключаются кликом по кнопке-карандашу.
+             Пояснительный текст — п.10 обсуждения с заказчиком. -->
+        <div class="profile-city-row" id="profile-city-display-row">
+          <span class="profile-city-text" id="profile-city-text" data-i18n="profile.city.notSet">Pilsēta nav norādīta</span>
+          <button type="button" class="profile-nickname-edit-btn" id="profile-city-edit-btn" aria-label="Mainīt pilsētu" data-i18n-aria-label="profile.city.change">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="14" height="14">
+              <path d="M3 17.25V21H6.75L17.81 9.94L14.06 6.19L3 17.25ZM20.71 7.04C21.1 6.65 21.1 6.02 20.71 5.63L18.37 3.29C17.98 2.9 17.35 2.9 16.96 3.29L15.13 5.12L18.88 8.87L20.71 7.04Z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="profile-city-edit-row" id="profile-city-edit-row" hidden>
+          <select class="filter-input" id="profile-city-select">
+            <option value="" data-i18n="profile.city.notSet">Pilsēta nav norādīta</option>
+          </select>
+          <button type="button" class="mylistings-action-btn is-primary is-compact" id="profile-city-save-btn" data-i18n="profile.nickname.save">Saglabāt</button>
+          <button type="button" class="mylistings-action-btn is-ghost is-compact" id="profile-city-cancel-btn" data-i18n="profile.nickname.cancel">Atcelt</button>
+        </div>
+        <p class="profile-city-hint" data-i18n="profile.city.hint">Norādot pilsētu, jūs saņemsiet personalizētus piedāvājumus un sludinājumus tuvāk jums.</p>
+
         <button class="profile-logout-btn" type="button" id="profile-logout-btn" data-i18n="profile.logout">Iziet</button>
       </div>
+
+      <!-- ТЗ v4, раздел 2 — сообщения от администрации. Отдельный блок,
+           не часть profile-card, т.к. видна независимо (наполняется своим
+           GET /api/me/admin-messages, см. DzAdminMessages в конце файла). -->
+      <div class="admin-messages-section" id="admin-messages-section" hidden></div>
 
       <!-- Version 4 (раздел 6 ТЗ): сделки и репутация. Независимый блок —
            показывается/скрывается отдельно от guest/logged-in состояний
@@ -3026,6 +3299,29 @@ textarea.sheet-input {
         <input class="filter-input" type="text" id="filter-city" maxlength="100" data-i18n-placeholder="listing.field.cityPlaceholder" placeholder="Piemēram: Rīga">
       </div>
 
+      <!-- ТЗ v4, раздел 3 (уточнение заказчика: опция сортировки в самой
+           ленте, не тумблер в настройках — см. В1 в переписке). Сортировки
+           на фронте не было вообще (ни по цене, ни по дате) — весь этот
+           блок новый; backend уже поддерживал price_asc/price_desc
+           (handleListListings), просто фронт их никогда не использовал. -->
+      <div class="filter-row">
+        <label class="sheet-field-label" for="filter-sort" data-i18n="search.filters.sort">Kārtot</label>
+        <select class="filter-select" id="filter-sort">
+          <option value="" data-i18n="search.filters.sortNewest">Vispirms jaunākie</option>
+          <option value="price_asc" data-i18n="search.filters.sortPriceAsc">Lētākie vispirms</option>
+          <option value="price_desc" data-i18n="search.filters.sortPriceDesc">Dārgākie vispirms</option>
+          <option value="distance" data-i18n="search.filters.sortDistance">Tuvāk man</option>
+        </select>
+      </div>
+      <!-- Появляется только при выборе sort=distance — город отсчёта для
+           ЭТОГО конкретного просмотра ленты (может отличаться от того,
+           что сохранён в профиле; предзаполняется из него, если есть,
+           см. DzListingFilters.openFilterSheet). -->
+      <div class="filter-row" id="filter-sort-distance-city-row" hidden>
+        <label class="sheet-field-label" for="filter-sort-distance-city" data-i18n="search.filters.sortDistanceCity">No kuras pilsētas</label>
+        <select class="filter-select" id="filter-sort-distance-city"></select>
+      </div>
+
       <div class="filter-row filter-checkbox-row">
         <input type="checkbox" id="filter-urgent">
         <label for="filter-urgent" data-i18n="search.filters.urgent">Tikai steidzami</label>
@@ -3140,6 +3436,36 @@ textarea.sheet-input {
   </div>
 </div>
 
+<!-- ТЗ v4, раздел 4 — свайп-рекомендации. Полноэкранный оверлей, а не
+     bottom-sheet — это самостоятельный immersive-режим (свайп жестом),
+     а не второстепенное модальное окно поверх текущего экрана. -->
+<div class="swipe-overlay" id="swipe-overlay" role="dialog" aria-modal="true" aria-labelledby="swipe-overlay-title" hidden>
+  <div class="swipe-header">
+    <span class="swipe-header-title" id="swipe-overlay-title" data-i18n="swipe.title">Kartītes tev</span>
+    <button type="button" class="swipe-close-btn" id="swipe-close-btn" aria-label="Aizvērt" data-i18n-aria-label="swipe.close">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="22" height="22"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+
+  <div class="swipe-stage" id="swipe-stage">
+    <!-- Карточки объявлений вставляются сюда через JS (DzSwipeRecommendations) -->
+    <div class="swipe-loading" id="swipe-loading" data-i18n="swipe.loading">Ielādē...</div>
+    <div class="swipe-empty" id="swipe-empty" hidden>
+      <div class="swipe-empty-title" data-i18n="swipe.empty.title">Pagaidām viss</div>
+      <div class="swipe-empty-sub" data-i18n="swipe.empty.sub">Vēlāk parādīsies jauni sludinājumi</div>
+    </div>
+  </div>
+
+  <div class="swipe-actions">
+    <button type="button" class="swipe-action-btn is-dislike" id="swipe-dislike-btn" aria-label="Nav interesanti" data-i18n-aria-label="swipe.dislike">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="26" height="26"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </button>
+    <button type="button" class="swipe-action-btn is-like" id="swipe-like-btn" aria-label="Interesanti" data-i18n-aria-label="swipe.like">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M12 21C12 21 3 15.5 3 9.5C3 6.5 5.5 4 8.5 4C10.1 4 11.4 4.8 12 6C12.6 4.8 13.9 4 15.5 4C18.5 4 21 6.5 21 9.5C21 15.5 12 21 12 21Z"/></svg>
+    </button>
+  </div>
+</div>
+
 <script src="dz-api.js"></script>
 <script>
 (function () {
@@ -3155,6 +3481,13 @@ textarea.sheet-input {
       "search.placeholder": "Meklēt visos reģionos…",
       "home.foryou.title": "Kartītes tev",
       "home.foryou.sub": "Pēc taviem meklējumiem un pilsētas",
+      "swipe.title": "Kartītes tev",
+      "swipe.close": "Aizvērt",
+      "swipe.like": "Interesanti",
+      "swipe.dislike": "Nav interesanti",
+      "swipe.loading": "Ielādē...",
+      "swipe.empty.title": "Pagaidām viss",
+      "swipe.empty.sub": "Vēlāk parādīsies jauni sludinājumi",
       "home.recommended": "Ieteiktie sludinājumi",
       "cat.realestate": "Nekustamais īpašums",
       "cat.transport": "Transports",
@@ -3201,6 +3534,11 @@ textarea.sheet-input {
       "profile.nickname.placeholder": "Lietotājs",
       "profile.nickname.tooShort": "Segvārdam jābūt vismaz 2 rakstzīmes.",
       "profile.nickname.saveFailed": "Neizdevās saglabāt. Pamēģini vēlreiz.",
+      "profile.city.notSet": "Pilsēta nav norādīta",
+      "profile.city.change": "Mainīt pilsētu",
+      "profile.city.hint": "Norādot pilsētu, jūs saņemsiet personalizētus piedāvājumus un sludinājumus tuvāk jums.",
+      "profile.city.saveFailed": "Neizdevās saglabāt pilsētu. Pamēģini vēlreiz.",
+      "adminMessages.label": "Ziņojums no administrācijas",
       "nav.signout": "Iziet",
       "auth.modeLogin": "Ienākt",
       "auth.modeRegister": "Reģistrēties",
@@ -3323,6 +3661,8 @@ textarea.sheet-input {
       "listing.card.negotiable": "Vienošanās",
       "listing.card.free": "Par brīvu",
       "listing.card.exchange": "Apmaiņa",
+      "listing.card.distanceKm": "km",
+      "listing.card.distanceMeters": "m",
 
       "chat.unknownListing": "Sludinājums",
       "chat.loading": "Ielādē saraksti…",
@@ -3336,12 +3676,15 @@ textarea.sheet-input {
       "chat.deal.start": "Pabeigt darījumu",
       "chat.deal.confirm": "Apstiprināt",
       "chat.deal.cancel": "Atcelt",
-      "chat.deal.dispute": "Apstrīdēt",
-      "chat.deal.disputeConfirm": "Apstrīdēt darījumu? Tas nozīmē, ka nepieciešama manuāla izskatīšana.",
+      "chat.deal.dispute": "Sūdzība",
+      "chat.deal.disputeConfirm": "Iesniegt sūdzību par šo darījumu? Administrācija saņems visu šīs sarunas vēsturi. Ja uz kontu tiek saņemtas atkārtotas pamatotas sūdzības, tas var tikt bloķēts.",
+      "chat.deal.disputeCommentLabel": "Komentārs (nav obligāts)",
+      "chat.deal.disputeCommentPlaceholder": "Aprakstiet, kas notika...",
+      "chat.deal.disputeSubmit": "Iesniegt sūdzību",
       "chat.deal.waitingForOther": "Gaida otras puses apstiprinājumu",
       "chat.deal.otherWantsToComplete": "Otra puse atzīmēja darījumu kā pabeigtu",
       "chat.deal.statusCompleted": "Darījums pabeigts ✅",
-      "chat.deal.statusDisputed": "Darījums apstrīdēts — nepieciešama manuāla izskatīšana",
+      "chat.deal.statusDisputed": "Iesniegta sūdzība — nepieciešama manuāla izskatīšana",
       "chat.deal.cancelReasonPlaceholder": "Iemesls (nav obligāts)",
       "chat.deal.cancelConfirm": "Atcelt darījumu",
       "chat.deleteConversation": "Dzēst sarunu",
@@ -3381,6 +3724,13 @@ textarea.sheet-input {
       "search.filters.priceMax": "Cena līdz",
       "search.filters.condition": "Stāvoklis",
       "search.filters.city": "Pilsēta",
+      "search.filters.sort": "Kārtot",
+      "search.filters.sortNewest": "Vispirms jaunākie",
+      "search.filters.sortPriceAsc": "Lētākie vispirms",
+      "search.filters.sortPriceDesc": "Dārgākie vispirms",
+      "search.filters.sortDistance": "Tuvāk man",
+      "search.filters.sortDistanceCity": "No kuras pilsētas",
+      "search.filters.sortDistanceNoCity": "Izvēlieties pilsētu",
       "search.filters.apply": "Piemērot",
       "search.filters.reset": "Notīrīt"
     },
@@ -3390,6 +3740,13 @@ textarea.sheet-input {
       "search.placeholder": "Поиск во всех регионах…",
       "home.foryou.title": "Карточки для вас",
       "home.foryou.sub": "По вашим поискам и городу",
+      "swipe.title": "Карточки для вас",
+      "swipe.close": "Закрыть",
+      "swipe.like": "Интересно",
+      "swipe.dislike": "Неинтересно",
+      "swipe.loading": "Загрузка...",
+      "swipe.empty.title": "Пока это всё",
+      "swipe.empty.sub": "Позже появятся новые объявления",
       "home.recommended": "Рекомендуемые объявления",
       "cat.realestate": "Недвижимость",
       "cat.transport": "Транспорт",
@@ -3436,6 +3793,11 @@ textarea.sheet-input {
       "profile.nickname.placeholder": "Пользователь",
       "profile.nickname.tooShort": "Ник должен быть не короче 2 символов.",
       "profile.nickname.saveFailed": "Не удалось сохранить. Попробуйте снова.",
+      "profile.city.notSet": "Город не указан",
+      "profile.city.change": "Изменить город",
+      "profile.city.hint": "Укажите город, чтобы получать персонализированные подборки и объявления ближе к вам.",
+      "profile.city.saveFailed": "Не удалось сохранить город. Попробуйте снова.",
+      "adminMessages.label": "Сообщение от администрации",
       "nav.signout": "Выйти",
       "auth.modeLogin": "Войти",
       "auth.modeRegister": "Регистрация",
@@ -3559,6 +3921,8 @@ textarea.sheet-input {
       "listing.card.negotiable": "Торг",
       "listing.card.free": "Бесплатно",
       "listing.card.exchange": "Обмен",
+      "listing.card.distanceKm": "км",
+      "listing.card.distanceMeters": "м",
 
       "chat.unknownListing": "Объявление",
       "chat.loading": "Загрузка переписки…",
@@ -3572,12 +3936,15 @@ textarea.sheet-input {
       "chat.deal.start": "Завершить сделку",
       "chat.deal.confirm": "Подтвердить",
       "chat.deal.cancel": "Отменить",
-      "chat.deal.dispute": "Оспорить",
-      "chat.deal.disputeConfirm": "Оспорить сделку? Это означает, что потребуется ручное разбирательство.",
+      "chat.deal.dispute": "Жалоба",
+      "chat.deal.disputeConfirm": "Подать жалобу на эту сделку? Администрация получит всю историю этой переписки. При повторных обоснованных жалобах аккаунт может быть заблокирован.",
+      "chat.deal.disputeCommentLabel": "Комментарий (необязательно)",
+      "chat.deal.disputeCommentPlaceholder": "Опишите, что произошло...",
+      "chat.deal.disputeSubmit": "Отправить жалобу",
       "chat.deal.waitingForOther": "Ожидает подтверждения от второй стороны",
       "chat.deal.otherWantsToComplete": "Собеседник отметил сделку завершённой",
       "chat.deal.statusCompleted": "Сделка завершена ✅",
-      "chat.deal.statusDisputed": "Сделка оспорена — требуется ручное разбирательство",
+      "chat.deal.statusDisputed": "Подана жалоба — требуется ручное разбирательство",
       "chat.deal.cancelReasonPlaceholder": "Причина (необязательно)",
       "chat.deal.cancelConfirm": "Отменить сделку",
       "chat.deleteConversation": "Удалить чат",
@@ -3617,6 +3984,13 @@ textarea.sheet-input {
       "search.filters.priceMax": "Цена до",
       "search.filters.condition": "Состояние",
       "search.filters.city": "Город",
+      "search.filters.sort": "Сортировка",
+      "search.filters.sortNewest": "Сначала новые",
+      "search.filters.sortPriceAsc": "Сначала дешёвые",
+      "search.filters.sortPriceDesc": "Сначала дорогие",
+      "search.filters.sortDistance": "Ближе ко мне",
+      "search.filters.sortDistanceCity": "От какого города",
+      "search.filters.sortDistanceNoCity": "Выберите город",
       "search.filters.apply": "Применить",
       "search.filters.reset": "Сбросить"
     },
@@ -3626,6 +4000,13 @@ textarea.sheet-input {
       "search.placeholder": "Search all regions…",
       "home.foryou.title": "Picked for you",
       "home.foryou.sub": "Based on your searches and city",
+      "swipe.title": "Picked for you",
+      "swipe.close": "Close",
+      "swipe.like": "Interested",
+      "swipe.dislike": "Not interested",
+      "swipe.loading": "Loading...",
+      "swipe.empty.title": "That's all for now",
+      "swipe.empty.sub": "New listings will show up later",
       "home.recommended": "Recommended listings",
       "cat.realestate": "Real estate",
       "cat.transport": "Vehicles",
@@ -3672,6 +4053,11 @@ textarea.sheet-input {
       "profile.nickname.placeholder": "User",
       "profile.nickname.tooShort": "Nickname must be at least 2 characters.",
       "profile.nickname.saveFailed": "Couldn't save. Please try again.",
+      "profile.city.notSet": "City not set",
+      "profile.city.change": "Change city",
+      "profile.city.hint": "Set your city to get personalized recommendations and listings closer to you.",
+      "profile.city.saveFailed": "Couldn't save your city. Please try again.",
+      "adminMessages.label": "Message from administration",
       "nav.signout": "Sign out",
       "auth.modeLogin": "Sign in",
       "auth.modeRegister": "Sign up",
@@ -3794,6 +4180,8 @@ textarea.sheet-input {
       "listing.card.negotiable": "Negotiable",
       "listing.card.free": "Free",
       "listing.card.exchange": "Exchange",
+      "listing.card.distanceKm": "km",
+      "listing.card.distanceMeters": "m",
 
       "chat.unknownListing": "Listing",
       "chat.loading": "Loading conversation…",
@@ -3807,12 +4195,15 @@ textarea.sheet-input {
       "chat.deal.start": "Complete deal",
       "chat.deal.confirm": "Confirm",
       "chat.deal.cancel": "Cancel",
-      "chat.deal.dispute": "Dispute",
-      "chat.deal.disputeConfirm": "Dispute this deal? This means it will need manual review.",
+      "chat.deal.dispute": "Report",
+      "chat.deal.disputeConfirm": "Report this deal? Our team will receive the full history of this conversation. Repeated valid reports against an account may lead to it being blocked.",
+      "chat.deal.disputeCommentLabel": "Comment (optional)",
+      "chat.deal.disputeCommentPlaceholder": "Describe what happened...",
+      "chat.deal.disputeSubmit": "Submit report",
       "chat.deal.waitingForOther": "Waiting for the other party to respond",
       "chat.deal.otherWantsToComplete": "The other party marked the deal as complete",
       "chat.deal.statusCompleted": "Deal completed ✅",
-      "chat.deal.statusDisputed": "Deal disputed — needs manual review",
+      "chat.deal.statusDisputed": "Reported — needs manual review",
       "chat.deal.cancelReasonPlaceholder": "Reason (optional)",
       "chat.deal.cancelConfirm": "Cancel deal",
       "chat.deleteConversation": "Delete chat",
@@ -3852,6 +4243,13 @@ textarea.sheet-input {
       "search.filters.priceMax": "Price to",
       "search.filters.condition": "Condition",
       "search.filters.city": "City",
+      "search.filters.sort": "Sort by",
+      "search.filters.sortNewest": "Newest first",
+      "search.filters.sortPriceAsc": "Price: low to high",
+      "search.filters.sortPriceDesc": "Price: high to low",
+      "search.filters.sortDistance": "Nearest to me",
+      "search.filters.sortDistanceCity": "From which city",
+      "search.filters.sortDistanceNoCity": "Choose a city",
       "search.filters.apply": "Apply",
       "search.filters.reset": "Reset"
     }
@@ -3989,6 +4387,17 @@ textarea.sheet-input {
   // Форматирует цену объявления под текущий язык: FIXED/NEGOTIABLE — число
   // + "€" + (при необходимости) пометка "Торг"; FREE/EXCHANGE — просто
   // переведённая метка без числа.
+  // Раздел 3 ТЗ v4 — форматирование дистанции для карточки объявления
+  // (sort=distance). Меньше 1 км показываем в метрах (некруглое "0.3 км"
+  // хуже читается, чем "300 м" — в рамках одного города это частый случай),
+  // при 10 км и больше округляем до целого (десятые доли на таком
+  // расстоянии не несут практической информации для решения "смотреть/нет").
+  function formatDistanceKm(km) {
+    if (km < 1) return Math.round(km * 1000) + " " + t("listing.card.distanceMeters");
+    var rounded = km < 10 ? Math.round(km * 10) / 10 : Math.round(km);
+    return rounded + " " + t("listing.card.distanceKm");
+  }
+
   function formatListingPrice(listing) {
     if (listing.price_type === "FREE") return t("listing.card.free");
     if (listing.price_type === "EXCHANGE") return t("listing.card.exchange");
@@ -4038,7 +4447,13 @@ textarea.sheet-input {
 
     var locationEl = document.createElement("div");
     locationEl.className = "listing-location";
-    locationEl.textContent = listing.city || "";
+    // Раздел 3 ТЗ v4 — distance_km присутствует только когда лента
+    // запрошена с sort=distance И город у объявления резолвился (см.
+    // handleListListings/serializeListing) — в остальных сортировках
+    // поле всегда null, тогда просто показываем город как раньше.
+    locationEl.textContent = (typeof listing.distance_km === "number")
+      ? (listing.city ? listing.city + " · " : "") + formatDistanceKm(listing.distance_km)
+      : (listing.city || "");
 
     body.appendChild(titleEl);
     body.appendChild(priceEl);
@@ -4049,10 +4464,21 @@ textarea.sheet-input {
     // звёзды"). listing.seller приходит только из /api/search (см.
     // getSellerInfoForMany на бэкенде) — если его нет (например, старый
     // кэш ответа), строка просто не рендерится, а не показывает "null".
+    // ТЗ v4, раздел 5 — строка кликабельна, открывает bottom-sheet
+    // профиля продавца (DzPublicProfile), с контекстом ЭТОГО объявления
+    // (нужен кнопке "Написать" внутри профиля, см. её комментарий).
+    // stopPropagation — клик по продавцу не должен ЗАОДНО срабатывать как
+    // клик по всей карточке (который открывает детальный вид).
     if (listing.seller && listing.seller.display_name) {
       var sellerEl = document.createElement("div");
-      sellerEl.className = "listing-seller-line";
+      sellerEl.className = "listing-seller-line is-clickable";
       sellerEl.textContent = buildSellerLineText(listing.seller);
+      sellerEl.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        if (window.DzPublicProfile && listing.seller.user_id) {
+          window.DzPublicProfile.open(listing.seller.user_id, { listingId: listing.id, listingTitle: listing.title });
+        }
+      });
       body.appendChild(sellerEl);
     }
 
@@ -4421,6 +4847,26 @@ textarea.sheet-input {
     if (nicknameText) {
       nicknameText.textContent = user.nickname || (user.login ? user.login.split("@")[0] : t("profile.nickname.placeholder"));
     }
+    renderProfileCityText(user);
+  }
+
+  // ТЗ v4, раздел 3 — отображение выбранного города по city_id. Название
+  // города не хранится в самом user (только city_id) — резолвим по
+  // справочнику, который DzApi.getCities() кэширует сам (см. dz-api.js),
+  // поэтому повторные вызовы здесь не бьют по сети заново.
+  function renderProfileCityText(user) {
+    var textEl = document.getElementById("profile-city-text");
+    if (!textEl) return;
+    if (!user || !user.city_id || !window.DzApi || !window.DzApi.getCities) {
+      textEl.textContent = t("profile.city.notSet");
+      textEl.setAttribute("data-i18n", "profile.city.notSet");
+      return;
+    }
+    window.DzApi.getCities().then(function (cities) {
+      var match = (cities || []).find(function (c) { return c.id === user.city_id; });
+      textEl.removeAttribute("data-i18n");
+      textEl.textContent = match ? match.name : t("profile.city.notSet");
+    });
   }
 
   function wireProfileIdentityEditing() {
@@ -4485,6 +4931,65 @@ textarea.sheet-input {
       input.addEventListener("keydown", function (e) {
         if (e.key === "Enter") { e.preventDefault(); saveBtn && saveBtn.click(); }
         if (e.key === "Escape") { e.preventDefault(); closeEdit(); }
+      });
+    }
+
+    // ТЗ v4, раздел 3 — редактирование города, тот же display/edit-row
+    // паттерн, что и у ника выше, но <select>, а не свободный текст:
+    // город — обязательно один из latvia_cities (или "не указан"), не
+    // произвольная строка (в отличие от listings.city, который остаётся
+    // текстом по причинам, описанным в комментарии у миграции latvia_cities).
+    var cityDisplayRow = document.getElementById("profile-city-display-row");
+    var cityEditRow = document.getElementById("profile-city-edit-row");
+    var cityEditBtn = document.getElementById("profile-city-edit-btn");
+    var citySelect = document.getElementById("profile-city-select");
+    var citySaveBtn = document.getElementById("profile-city-save-btn");
+    var cityCancelBtn = document.getElementById("profile-city-cancel-btn");
+    var citySelectPopulated = false;
+
+    function populateCitySelect() {
+      if (citySelectPopulated || !citySelect || !window.DzApi || !window.DzApi.getCities) return Promise.resolve();
+      return window.DzApi.getCities().then(function (cities) {
+        (cities || []).forEach(function (c) {
+          var opt = document.createElement("option");
+          opt.value = String(c.id);
+          opt.textContent = c.name;
+          citySelect.appendChild(opt);
+        });
+        citySelectPopulated = true;
+      });
+    }
+
+    function openCityEdit() {
+      var current = window.DzApi ? window.DzApi.getCachedUser() : null;
+      populateCitySelect().then(function () {
+        if (citySelect) citySelect.value = current && current.city_id ? String(current.city_id) : "";
+      });
+      if (cityDisplayRow) cityDisplayRow.hidden = true;
+      if (cityEditRow) cityEditRow.hidden = false;
+    }
+    function closeCityEdit() {
+      if (cityDisplayRow) cityDisplayRow.hidden = false;
+      if (cityEditRow) cityEditRow.hidden = true;
+    }
+    if (cityEditBtn) cityEditBtn.addEventListener("click", openCityEdit);
+    if (cityCancelBtn) cityCancelBtn.addEventListener("click", closeCityEdit);
+    if (citySaveBtn) {
+      citySaveBtn.addEventListener("click", function () {
+        if (!window.DzApi) return;
+        var rawValue = citySelect ? citySelect.value : "";
+        var cityId = rawValue ? parseInt(rawValue, 10) : null;
+        window.DzApi.updateMyCity(cityId)
+          .then(function (user) {
+            renderProfileCityText(user);
+            closeCityEdit();
+          })
+          .catch(function () {
+            // Молча остаёмся в режиме редактирования — простое MVP-поведение,
+            // по аналогии с тем, что и у остальных PATCH-полей профиля нет
+            // отдельного toast-механизма на фронте, только error-текст у ника.
+            alert(t("profile.city.saveFailed"));
+          });
       });
     }
   }
@@ -4680,6 +5185,15 @@ textarea.sheet-input {
 
   function t(key) {
     return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.t(key) : key;
+  }
+  // Используется только в renderListingPreview() для форматирования цены
+  // под локаль (ru-RU/en-US/lv-LV) — раньше ссылалась на lang(), которая
+  // не была определена в этом блоке (другой <script>-IIFE), из-за чего
+  // ReferenceError обрывал весь рендер шага 5 "Предпросмотр" ещё до того,
+  // как контейнер получал innerHTML — кнопки шага работали, но сам
+  // предпросмотр оставался пустым.
+  function lang() {
+    return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.getLang() : "lv";
   }
 
   // ---------------------------------------------------------------------
@@ -5608,9 +6122,56 @@ textarea.sheet-input {
       condition: document.getElementById("filter-condition"),
       city: document.getElementById("filter-city"),
       urgent: document.getElementById("filter-urgent"),
+      sort: document.getElementById("filter-sort"),
+      sortDistanceCityRow: document.getElementById("filter-sort-distance-city-row"),
+      sortDistanceCity: document.getElementById("filter-sort-distance-city"),
       applyBtn: document.getElementById("filter-apply-btn"),
       resetBtn: document.getElementById("filter-reset-btn"),
     };
+  }
+
+  // ТЗ v4, раздел 3 — сортировка "Рядом со мной" требует конкретного
+  // города отсчёта. Список городов — тот же кэшированный DzApi.getCities(),
+  // что и в настройках профиля; заполняем один раз лениво (при первом
+  // выборе этого режима сортировки), а не на каждое открытие шторки.
+  var sortDistanceCitiesPopulated = false;
+  function populateSortDistanceCities() {
+    var els = getFilterEls();
+    if (sortDistanceCitiesPopulated || !els.sortDistanceCity || !window.DzApi || !window.DzApi.getCities) {
+      return Promise.resolve();
+    }
+    return window.DzApi.getCities().then(function (cities) {
+      var placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = t("search.filters.sortDistanceNoCity");
+      els.sortDistanceCity.appendChild(placeholder);
+      (cities || []).forEach(function (c) {
+        var opt = document.createElement("option");
+        opt.value = String(c.id);
+        opt.textContent = c.name;
+        els.sortDistanceCity.appendChild(opt);
+      });
+      sortDistanceCitiesPopulated = true;
+    });
+  }
+
+  function updateSortDistanceRowVisibility() {
+    var els = getFilterEls();
+    if (!els.sort || !els.sortDistanceCityRow) return;
+    var isDistance = els.sort.value === "distance";
+    els.sortDistanceCityRow.hidden = !isDistance;
+    if (!isDistance) return;
+    populateSortDistanceCities().then(function () {
+      // Предзаполняем городом из настроек профиля, если поле ещё пустое —
+      // пользователю не нужно выбирать город заново, если он уже указал
+      // его один раз в профиле (см. раздел 3); но это только значение по
+      // умолчанию для ЭТОГО просмотра ленты, а не постоянно сохранённая
+      // настройка (см. В1 в переписке — разово, не тумблер).
+      if (els.sortDistanceCity && !els.sortDistanceCity.value && window.DzApi) {
+        var me = window.DzApi.getCachedUser ? window.DzApi.getCachedUser() : null;
+        if (me && me.city_id) els.sortDistanceCity.value = String(me.city_id);
+      }
+    });
   }
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -5619,6 +6180,10 @@ textarea.sheet-input {
       filterCategorySelect.addEventListener("change", function () {
         if (window.DzCategoryFields) window.DzCategoryFields.renderSearchFilters(filterCategorySelect.value);
       });
+    }
+    var sortSelect = document.getElementById("filter-sort");
+    if (sortSelect) {
+      sortSelect.addEventListener("change", updateSortDistanceRowVisibility);
     }
   });
 
@@ -5650,6 +6215,23 @@ textarea.sheet-input {
     if (els.condition && els.condition.value) filters.condition = els.condition.value;
     if (els.city && els.city.value.trim()) filters.city = els.city.value.trim();
     if (els.urgent && els.urgent.checked) filters.is_urgent = "1";
+    // Раздел 3 ТЗ v4 — sort=distance без выбранного city_id вырождается в
+    // бэкенде до "объявления без резолвящегося города уходят в конец" для
+    // ВСЕХ строк разом (см. handleListListings) — по сути случайный/по id
+    // порядок, бесполезно как режим сортировки. Поэтому здесь отправляем
+    // sort=distance, только если город реально выбран; иначе тихо
+    // остаёмся на дефолтной sort=newest, как и до появления этой опции
+    // (В2 — "без изменений", если condition сортировки не выполнено).
+    if (els.sort && els.sort.value) {
+      if (els.sort.value === "distance") {
+        if (els.sortDistanceCity && els.sortDistanceCity.value) {
+          filters.sort = "distance";
+          filters.city_id = els.sortDistanceCity.value;
+        }
+      } else {
+        filters.sort = els.sort.value;
+      }
+    }
     if (window.DzCategoryFields) Object.assign(filters, window.DzCategoryFields.collectSearchFilters());
     return filters;
   }
@@ -5689,6 +6271,9 @@ textarea.sheet-input {
         if (els.condition) els.condition.value = "";
         if (els.city) els.city.value = "";
         if (els.urgent) els.urgent.checked = false;
+        if (els.sort) els.sort.value = "";
+        if (els.sortDistanceCity) els.sortDistanceCity.value = "";
+        updateSortDistanceRowVisibility();
         if (window.DzCategoryFields) window.DzCategoryFields.renderSearchFilters("");
         applyFiltersAndReload();
       });
@@ -6375,6 +6960,13 @@ textarea.sheet-input {
     cancelBtn.addEventListener("click", showCancelReasonRow);
     els.dealBar.appendChild(cancelBtn);
 
+    // "Жалоба" (ТЗ v4, раздел 1) — было "Оспорить"/disputeDeal, сам
+    // эндпоинт и переход в DISPUTED не изменились (см. handleDisputeDeal),
+    // добавился только необязательный комментарий и явное предупреждение
+    // про риск блокировки аккаунта в тексте подтверждения. Двухшаговое
+    // действие сохранено (тот же window.confirm(), что был и раньше) —
+    // второй шаг (window.prompt для комментария) намеренно необязательный,
+    // отдельную форму под одно необязательное поле в dealBar не заводим.
     var disputeBtn = document.createElement("button");
     disputeBtn.type = "button";
     disputeBtn.className = "chat-deal-btn is-warning";
@@ -6382,8 +6974,10 @@ textarea.sheet-input {
     disputeBtn.addEventListener("click", function () {
       if (!window.DzApi || !state.conversationId) return;
       if (!window.confirm(t("chat.deal.disputeConfirm"))) return;
+      var comment = window.prompt(t("chat.deal.disputeCommentLabel"), "");
+      if (comment === null) return; // пользователь нажал "Отмена" во втором шаге — жалобу не отправляем
       disputeBtn.disabled = true;
-      window.DzApi.disputeDeal(state.conversationId)
+      window.DzApi.disputeDeal(state.conversationId, comment.trim() || null)
         .then(function () { loadDeal(); loadMessages(); })
         .catch(function () { disputeBtn.disabled = false; });
     });
@@ -6811,6 +7405,39 @@ textarea.sheet-input {
   var CHEVRON_LEFT_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 6L9 12L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var CHEVRON_RIGHT_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+  // ТЗ v4, раздел 5 — та же строка продавца, что и на карточке в ленте
+  // (buildSellerLineText/pluralReviews в блоке buildListingCard), но этот
+  // detail-sheet — отдельный <script>-IIFE (см. общий комментарий по
+  // файлу про отсутствие общего скоупа), поэтому копия здесь, с той же
+  // заменой getLang() -> window.Dzintars.i18n.getLang(), что уже
+  // применялась для formatDate/swipeGetLang выше по файлу.
+  function detailGetLang() {
+    return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.getLang() : "lv";
+  }
+  function detailPluralReviews(n) {
+    if (detailGetLang() === "ru") {
+      var mod10 = n % 10, mod100 = n % 100;
+      if (mod10 === 1 && mod100 !== 11) return n + " " + t("seller.reviews.one");
+      if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return n + " " + t("seller.reviews.few");
+      return n + " " + t("seller.reviews.many");
+    }
+    return n + " " + (n === 1 ? t("seller.reviews.one") : t("seller.reviews.many"));
+  }
+  function buildSellerLineText(seller) {
+    var parts = [seller.display_name];
+    if (seller.days_on_site !== null && seller.days_on_site !== undefined) {
+      parts.push(seller.days_on_site + " " + t("seller.daysOnSite"));
+    }
+    if (seller.reviews_count > 0) {
+      var reviewsPart = detailPluralReviews(seller.reviews_count);
+      if (seller.rating !== null && seller.rating !== undefined) {
+        reviewsPart += " " + seller.rating.toFixed(1) + "★";
+      }
+      parts.push(reviewsPart);
+    }
+    return parts.join(" • ");
+  }
+
   function getEls() {
     return {
       overlay: document.getElementById("detail-sheet-overlay"),
@@ -6899,6 +7526,27 @@ textarea.sheet-input {
     // названий полей категории, а не только значений, уже лежащих в listing.
     html += '<div class="detail-fields-list" id="detail-fields-list"></div>';
 
+    // ТЗ v4, раздел 5 — блок продавца на странице объявления. Раньше
+    // здесь продавец не отображался вообще (только кнопка "Написать" без
+    // привязки к конкретному человеку) — listing.seller теперь приходит
+    // и сюда тоже (см. handleGetListing на бэкенде, где раньше sellerInfo
+    // не передавался в serializeListing). Не показываем себе (isOwner) —
+    // видеть "профиль продавца" на собственном объявлении бессмысленно.
+    if (!isOwner && listing.seller && listing.seller.display_name) {
+      html += '<button type="button" class="detail-seller-card" id="detail-seller-card">';
+      if (listing.seller.avatar_url) {
+        html += '<div class="detail-seller-avatar has-image" style="background-image:url(\'' + escapeHtml(listing.seller.avatar_url) + '\')"></div>';
+      } else {
+        html += '<div class="detail-seller-avatar">' + escapeHtml(listing.seller.display_name.charAt(0).toUpperCase()) + '</div>';
+      }
+      html += '<div class="detail-seller-info">';
+      html += '<div class="detail-seller-name">' + escapeHtml(listing.seller.display_name) + '</div>';
+      html += '<div class="detail-seller-sub">' + escapeHtml(buildSellerLineText(listing.seller)) + '</div>';
+      html += '</div>';
+      html += '<span class="detail-seller-chevron">' + CHEVRON_RIGHT_ICON + '</span>';
+      html += '</button>';
+    }
+
     html += '<div class="detail-actions">';
     if (!isOwner) {
       html += '<button type="button" class="detail-btn-fav' + (isSaved ? ' is-saved' : '') + '" id="detail-fav-btn">' + FAV_ICON + '</button>';
@@ -6950,6 +7598,17 @@ textarea.sheet-input {
     }
 
     if (!isOwner) {
+      // ТЗ v4, раздел 5 — клик по блоку продавца открывает его профиль,
+      // с контекстом ЭТОГО объявления (нужен кнопке "Написать" внутри
+      // профиля — см. её комментарий в DzPublicProfile).
+      var sellerCard = document.getElementById("detail-seller-card");
+      if (sellerCard && listing.seller && listing.seller.user_id) {
+        sellerCard.addEventListener("click", function () {
+          if (window.DzPublicProfile) {
+            window.DzPublicProfile.open(listing.seller.user_id, { listingId: listing.id, listingTitle: listing.title });
+          }
+        });
+      }
       var favBtn = document.getElementById("detail-fav-btn");
       if (favBtn) {
         favBtn.addEventListener("click", function () {
@@ -7095,6 +7754,8 @@ textarea.sheet-input {
       "publicProfile.loading": "Ielādē...",
       "publicProfile.error": "Neizdevās ielādēt profilu.",
       "publicProfile.completedDeals": "pabeigti darījumi",
+      "publicProfile.listingsCount": "sludinājumi",
+      "publicProfile.message": "Rakstīt",
       "publicProfile.noReviews": "Vēl nav atsauksmju",
       "publicProfile.report": "Ziņot",
       "publicProfile.reportPrompt": "Kāpēc ziņojat par šo atsauksmi?",
@@ -7141,6 +7802,8 @@ textarea.sheet-input {
       "publicProfile.loading": "Загрузка...",
       "publicProfile.error": "Не удалось загрузить профиль.",
       "publicProfile.completedDeals": "завершённых сделок",
+      "publicProfile.listingsCount": "объявлений",
+      "publicProfile.message": "Написать",
       "publicProfile.noReviews": "Пока нет отзывов",
       "publicProfile.report": "Пожаловаться",
       "publicProfile.reportPrompt": "Почему вы жалуетесь на этот отзыв?",
@@ -7187,6 +7850,8 @@ textarea.sheet-input {
       "publicProfile.loading": "Loading...",
       "publicProfile.error": "Couldn't load this profile.",
       "publicProfile.completedDeals": "completed deals",
+      "publicProfile.listingsCount": "listings",
+      "publicProfile.message": "Message",
       "publicProfile.noReviews": "No reviews yet",
       "publicProfile.report": "Report",
       "publicProfile.reportPrompt": "Why are you reporting this review?",
@@ -7431,6 +8096,13 @@ textarea.sheet-input {
   // DzPublicProfile — публичный профиль: рейтинг + отзывы (раздел 6.4 ТЗ)
   // ---------------------------------------------------------------------
   var DzPublicProfile = (function () {
+    // ТЗ v4, раздел 5 — контекст, из которого был открыт профиль (нужен
+    // кнопке "Написать": createConversation требует listingId, диалог в
+    // этой системе не может существовать без привязки к объявлению — см.
+    // conversations.listing_id NOT NULL). Хранится на время, пока открыт
+    // именно этот sheet — сбрасывается при следующем open().
+    var currentContext = { userId: null, listingId: null, listingTitle: null };
+
     function getEls() {
       return {
         overlay: document.getElementById("profile-sheet-overlay"),
@@ -7439,9 +8111,21 @@ textarea.sheet-input {
       };
     }
 
-    function open(userId) {
+    // options — { listingId, listingTitle } — необязательные: открытие
+    // профиля ИЗ КОНТЕКСТА конкретного объявления (карточка в ленте,
+    // детальный вид) передаёт их, чтобы кнопка "Написать" знала, какой
+    // диалог создавать. Открытие "своего профиля" (см. mydeals) их не
+    // передаёт — и это ожидаемо: писать самому себе бессмысленно, кнопка
+    // "Написать" в render() скрывается именно по отсутствию контекста ИЛИ
+    // по совпадению userId с текущим пользователем (см. ниже).
+    function open(userId, options) {
       var els = getEls();
       if (!els.overlay || !els.sheet || !els.body) return;
+      currentContext = {
+        userId: userId,
+        listingId: (options && options.listingId) || null,
+        listingTitle: (options && options.listingTitle) || null,
+      };
       els.body.innerHTML = '<p class="mydeals-loading">' + escapeHtml(t("publicProfile.loading")) + "</p>";
       els.overlay.classList.add("is-open");
       els.sheet.classList.add("is-open");
@@ -7463,6 +8147,22 @@ textarea.sheet-input {
       document.body.style.overflow = "";
     }
 
+    // ТЗ v4, раздел 5 — реальный аватар вместо заглушки "?" (было:
+    // escapeHtml("?") безусловно). initials — запасной вариант, когда у
+    // продавца нет avatar_url (частый случай — аватар необязателен при
+    // регистрации), первая буква ника/логина, тот же приём, что уже
+    // применяется для карточек в чате (см. buildConversationRow выше по
+    // файлу — тут не переиспользуем ту функцию напрямую, другой IIFE, см.
+    // общий комментарий про отсутствие общего скоупа, но повторяем тот же
+    // видимый результат).
+    function buildAvatarHtml(profile) {
+      var label = profile.nickname || "?";
+      if (profile.avatar_url) {
+        return '<div class="profile-header-avatar has-image" style="background-image:url(\'' + profile.avatar_url.replace(/'/g, "\\'") + '\')"></div>';
+      }
+      return '<div class="profile-header-avatar">' + escapeHtml(label.charAt(0).toUpperCase()) + "</div>";
+    }
+
     function buildProfileHeaderHtml(profile) {
       var totalCount = (profile.rating_as_seller_count || 0) + (profile.rating_as_buyer_count || 0);
       var overall = null;
@@ -7472,8 +8172,15 @@ textarea.sheet-input {
         overall = sum / totalCount;
       }
       var html = '<div class="profile-header-card">';
-      html += '<div class="profile-header-avatar">' + escapeHtml("?") + "</div>";
+      html += buildAvatarHtml(profile);
       html += '<div class="profile-header-main">';
+      // ТЗ v4, раздел 5 — ник и кол-во активных объявлений (п.23 -> А),
+      // над рейтингом: это то, что человек ищет в первую очередь, открывая
+      // чужой профиль ("кто это" раньше "сколько ему поставили звёзд").
+      if (profile.nickname) {
+        html += '<div class="profile-header-nickname">' + escapeHtml(profile.nickname) + "</div>";
+      }
+      html += '<div class="profile-header-listings-count">' + (profile.active_listings_count || 0) + " " + escapeHtml(t("publicProfile.listingsCount")) + "</div>";
       if (overall !== null) {
         html += '<div class="profile-header-rating-row">';
         html += '<span class="profile-header-rating-number">' + overall.toFixed(1) + "</span>";
@@ -7490,14 +8197,27 @@ textarea.sheet-input {
     function render(profile) {
       var els = getEls();
       var html = buildProfileHeaderHtml(profile);
-      html += '<div class="mydeals-rating-row"><span>' + escapeHtml(t("mydeals.asSeller")) + "</span><span>" +
-        (profile.rating_as_seller !== null
-          ? starsHtml(profile.rating_as_seller) + " (" + profile.rating_as_seller_count + ")"
-          : escapeHtml(t("mydeals.noRatingYet"))) +
-        "</span></div>";
+
+      // ТЗ v4, раздел 5 — кнопка "Написать". Показывается, только если:
+      // (1) это НЕ собственный профиль пользователя, (2) есть контекст
+      // конкретного объявления (см. комментарий у currentContext выше про
+      // то, почему listingId обязателен технически). Без "Подписаться" —
+      // явно исключено по итогам обсуждения с заказчиком.
+      var me = window.DzApi && window.DzApi.getCachedUser ? window.DzApi.getCachedUser() : null;
+      var isOwnProfile = me && me.id === profile.id;
+      var canMessage = !isOwnProfile && currentContext.listingId;
+      if (canMessage) {
+        html += '<button type="button" class="publicprofile-message-btn" id="publicprofile-message-btn">' + escapeHtml(t("publicProfile.message")) + "</button>";
+      }
+
       html += '<div class="mydeals-rating-row"><span>' + escapeHtml(t("mydeals.asBuyer")) + "</span><span>" +
         (profile.rating_as_buyer !== null
           ? starsHtml(profile.rating_as_buyer) + " (" + profile.rating_as_buyer_count + ")"
+          : escapeHtml(t("mydeals.noRatingYet"))) +
+        "</span></div>";
+      html += '<div class="mydeals-rating-row"><span>' + escapeHtml(t("mydeals.asSeller")) + "</span><span>" +
+        (profile.rating_as_seller !== null
+          ? starsHtml(profile.rating_as_seller) + " (" + profile.rating_as_seller_count + ")"
           : escapeHtml(t("mydeals.noRatingYet"))) +
         "</span></div>";
       html += '<p class="publicprofile-completed">' + profile.completed_transactions + " " + escapeHtml(t("publicProfile.completedDeals")) + "</p>";
@@ -7516,6 +8236,28 @@ textarea.sheet-input {
       }
       html += "</div>";
       els.body.innerHTML = html;
+
+      // ТЗ v4, раздел 5 — открытие чата из профиля продавца. Тот же путь,
+      // что уже используется в detail-sheet ("Написать" под объявлением):
+      // createConversation(listingId) -> DzChat.open(conv.id, ...), см.
+      // комментарий у currentContext выше. closeProfile перед открытием
+      // чата — тот же порядок действий (закрыть один sheet перед другим),
+      // что и в остальных местах приложения.
+      var messageBtn = document.getElementById("publicprofile-message-btn");
+      if (messageBtn) {
+        messageBtn.addEventListener("click", function () {
+          if (!window.DzApi || !currentContext.listingId) return;
+          messageBtn.disabled = true;
+          window.DzApi.createConversation(currentContext.listingId)
+            .then(function (conv) {
+              close();
+              if (window.DzChat) window.DzChat.open(conv.id, { listingTitle: currentContext.listingTitle });
+            })
+            .catch(function () {
+              messageBtn.disabled = false;
+            });
+        });
+      }
 
       els.body.querySelectorAll(".publicprofile-report-link").forEach(function (btn) {
         btn.addEventListener("click", function () {
@@ -7579,8 +8321,8 @@ textarea.sheet-input {
 
       el.innerHTML =
         buildProfileHeaderHtml(profile, me) +
-        '<div class="mydeals-rating-row"><span>' + escapeHtml(t("mydeals.asSeller")) + "</span><span>" + sellerPart + "</span></div>" +
         '<div class="mydeals-rating-row"><span>' + escapeHtml(t("mydeals.asBuyer")) + "</span><span>" + buyerPart + "</span></div>" +
+        '<div class="mydeals-rating-row"><span>' + escapeHtml(t("mydeals.asSeller")) + "</span><span>" + sellerPart + "</span></div>" +
         '<button type="button" class="mydeals-view-profile-link" id="mydeals-view-profile">' + escapeHtml(t("mydeals.viewMyProfile")) + "</button>";
 
       var viewBtn = document.getElementById("mydeals-view-profile");
@@ -7691,12 +8433,399 @@ textarea.sheet-input {
   })();
   window.DzMyDeals = DzMyDeals;
 
-  // Открытие вкладки "Профиль" -> подгрузить/скрыть блок "Мои сделки".
+  // ---------------------------------------------------------------------
+  // DzAdminMessages — сообщения от администрации (ТЗ v4, раздел 2).
+  // Однонаправленный канал: пользователь только читает, не отвечает сюда
+  // же (см. комментарий у admin_messages в миграции про причину не делать
+  // это частью conversations/messages).
+  // ---------------------------------------------------------------------
+  var DzAdminMessages = (function () {
+    // Своя копия форматирования даты, а не переиспользование formatConvTime
+    // из DzChat — тот код лежит в другом <script>-IIFE и не экспортирован
+    // на window (см. общий комментарий по файлу про то, что у IIFE-блоков
+    // нет общего скоупа, кроме window). Для уведомлений от администрации
+    // не нужна относительная логика ("только что"/день недели) — обычная
+    // полная дата и время достаточно ясны в этом контексте. Язык — через
+    // window.Dzintars.i18n.getLang (единственный, реально экспортированный
+    // наружу источник текущего языка; локальных getLang() в этом
+    // конкретном блоке нет, дублировать его здесь незачем).
+    function formatDate(iso) {
+      if (!iso) return "";
+      var date = new Date(iso.replace(" ", "T") + (iso.indexOf("Z") === -1 ? "Z" : ""));
+      if (isNaN(date.getTime())) return "";
+      var langCode = (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.getLang() : "lv";
+      var lang = langCode === "ru" ? "ru-RU" : langCode === "en" ? "en-US" : "lv-LV";
+      return date.toLocaleDateString(lang, { day: "2-digit", month: "2-digit", year: "numeric" }) +
+        " " + date.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function refresh() {
+      var section = document.getElementById("admin-messages-section");
+      if (!section) return;
+      if (!window.DzApi || !window.DzApi.isLoggedIn || !window.DzApi.isLoggedIn() || !window.DzApi.getAdminMessages) {
+        section.hidden = true;
+        section.innerHTML = "";
+        return;
+      }
+      window.DzApi.getAdminMessages()
+        .then(function (messages) {
+          if (!messages || !messages.length) {
+            section.hidden = true;
+            section.innerHTML = "";
+            return;
+          }
+          section.hidden = false;
+          // Новые сверху — то, что пользователь написал/забанил только что,
+          // важнее старой истории уведомлений.
+          var sorted = messages.slice().sort(function (a, b) {
+            return String(b.created_at).localeCompare(String(a.created_at));
+          });
+          section.innerHTML = sorted.map(function (m) {
+            return '<div class="admin-message-card">' +
+              '<div class="amc-label">' + escapeHtml(t("adminMessages.label")) + '</div>' +
+              '<div class="amc-text">' + escapeHtml(m.text) + '</div>' +
+              '<div class="amc-date">' + escapeHtml(formatDate(m.created_at)) + '</div>' +
+              '</div>';
+          }).join("");
+        })
+        .catch(function () {
+          // Тихо: это дополнительный, не критичный для остального профиля
+          // блок — ошибка загрузки не должна ломать остальную вкладку.
+          section.hidden = true;
+        });
+    }
+    return { refresh: refresh };
+  })();
+  window.DzAdminMessages = DzAdminMessages;
+
+  // ---------------------------------------------------------------------
+  // DzSwipeRecommendations — свайп-рекомендации (ТЗ v4, раздел 4).
+  // Точка входа — кнопка .foryou-row на главной (см. её HTML/onclick).
+  // ---------------------------------------------------------------------
+  var DzSwipeRecommendations = (function () {
+    var queue = [];        // текущая пачка объявлений, ещё не показанных
+    var cardEls = [];      // DOM-карточки, соответствующие queue (та же длина/порядок)
+    var isLoading = false;
+    var isExhausted = false;
+    var isFetchingMore = false;
+
+    // Этот <script>-блок — отдельный IIFE от того, где определены
+    // formatListingPrice/formatDistanceKm/PHOTO_ICON/getLang (см. общий
+    // комментарий по файлу: у IIFE нет общего скоупа, кроме window; тот же
+    // класс проблемы уже встречался у formatDate в DzAdminMessages выше).
+    // t()/escapeHtml() в ЭТОМ блоке уже есть (проверено) — дублируются
+    // только отсутствующие здесь три вещи, копия 1:1 с оригиналом
+    // (buildListingCard, ближе к началу файла).
+    var SWIPE_PHOTO_ICON = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/>' +
+      '<circle cx="8.5" cy="10" r="1.5" stroke="currentColor" stroke-width="1.6"/>' +
+      '<path d="M3 16L8 12L12 15L16 11L21 16" stroke="currentColor" stroke-width="1.6"/>' +
+      '</svg>';
+
+    function swipeGetLang() {
+      return (window.Dzintars && window.Dzintars.i18n) ? window.Dzintars.i18n.getLang() : "lv";
+    }
+
+    function swipeFormatDistanceKm(km) {
+      if (km < 1) return Math.round(km * 1000) + " " + t("listing.card.distanceMeters");
+      var rounded = km < 10 ? Math.round(km * 10) / 10 : Math.round(km);
+      return rounded + " " + t("listing.card.distanceKm");
+    }
+
+    function swipeFormatListingPrice(listing) {
+      if (listing.price_type === "FREE") return t("listing.card.free");
+      if (listing.price_type === "EXCHANGE") return t("listing.card.exchange");
+      var lang = swipeGetLang();
+      var amount = listing.price === null || listing.price === undefined ? "" : Number(listing.price).toLocaleString(lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "lv-LV", { maximumFractionDigits: 2 });
+      var priceStr = amount + " €";
+      if (listing.price_type === "NEGOTIABLE") {
+        priceStr += " · " + t("listing.card.negotiable");
+      }
+      return priceStr;
+    }
+
+    function els() {
+      return {
+        overlay: document.getElementById("swipe-overlay"),
+        stage: document.getElementById("swipe-stage"),
+        loading: document.getElementById("swipe-loading"),
+        empty: document.getElementById("swipe-empty"),
+        closeBtn: document.getElementById("swipe-close-btn"),
+        likeBtn: document.getElementById("swipe-like-btn"),
+        dislikeBtn: document.getElementById("swipe-dislike-btn"),
+      };
+    }
+
+    // Раздел 4, п.14 -> А (только авторизованные) — та же проверка и тот
+    // же путь к auth-sheet, что уже используется по всему остальному
+    // приложению (window.openAuthSheet, см. кнопки "Войти" в пустых
+    // состояниях и других местах файла).
+    function open() {
+      if (!window.DzApi || !window.DzApi.isLoggedIn || !window.DzApi.isLoggedIn()) {
+        if (window.openAuthSheet) window.openAuthSheet();
+        return;
+      }
+      var e = els();
+      if (!e.overlay) return;
+      e.overlay.hidden = false;
+      document.body.style.overflow = "hidden"; // тот же приём, что и у остальных полноэкранных/sheet UI — не даём фону скроллиться под оверлеем
+      resetStage();
+      loadBatch();
+    }
+
+    function close() {
+      var e = els();
+      if (e.overlay) e.overlay.hidden = true;
+      document.body.style.overflow = "";
+    }
+
+    function resetStage() {
+      queue = [];
+      cardEls = [];
+      isExhausted = false;
+      var e = els();
+      if (e.stage) {
+        Array.prototype.forEach.call(e.stage.querySelectorAll(".swipe-card"), function (el) { el.remove(); });
+      }
+      if (e.empty) e.empty.hidden = true;
+      if (e.loading) e.loading.hidden = false;
+    }
+
+    function loadBatch() {
+      if (isLoading || !window.DzApi || !window.DzApi.getSwipeRecommendations) return;
+      isLoading = true;
+      window.DzApi.getSwipeRecommendations(15)
+        .then(function (data) {
+          isLoading = false;
+          var e = els();
+          if (e.loading) e.loading.hidden = true;
+          if (data.exhausted || !data.listings || !data.listings.length) {
+            isExhausted = true;
+            if (e.empty) e.empty.hidden = false;
+            return;
+          }
+          queue = data.listings;
+          renderStack();
+        })
+        .catch(function () {
+          isLoading = false;
+          var e = els();
+          if (e.loading) e.loading.hidden = true;
+          if (e.empty) e.empty.hidden = false; // тихая деградация до пустого состояния — не блокируем пользователя техническим текстом ошибки в развлекательном UI
+        });
+    }
+
+    // Рисует до 3 верхних карточек очереди стеком (визуально — только
+    // самая верхняя реально видна и интерактивна, за ней слегка проступают
+    // края следующих двух, тот же приём, что у декоративного .foryou-stack
+    // на главной, но с реальными карточками).
+    function renderStack() {
+      var e = els();
+      if (!e.stage) return;
+      Array.prototype.forEach.call(e.stage.querySelectorAll(".swipe-card"), function (el) { el.remove(); });
+      cardEls = [];
+      var visibleSlice = queue.slice(0, 3);
+      // От последней (нижней по стеку, третьей) к первой (верхней) — то,
+      // что добавлено в DOM позже, лежит визуально выше в отсутствие
+      // явного z-index на .swipe-card (порядок в DOM определяет порядок
+      // отрисовки).
+      for (var i = visibleSlice.length - 1; i >= 0; i--) {
+        var card = buildSwipeCard(visibleSlice[i], i);
+        e.stage.appendChild(card);
+        cardEls.unshift(card);
+      }
+      if (cardEls.length) wireDrag(cardEls[0], queue[0]);
+    }
+
+    function buildSwipeCard(listing, stackIndex) {
+      var card = document.createElement("div");
+      card.className = "swipe-card";
+      // Карточки под верхней слегка приподняты и уменьшены — тот же
+      // fanned-stack эффект, что у .foryou-stack, только вычисленный, а не
+      // фиксированный в CSS (глубина стека здесь динамическая — 1..3).
+      if (stackIndex > 0) {
+        card.style.transform = "translateY(" + stackIndex * 10 + "px) scale(" + (1 - stackIndex * 0.04) + ")";
+        card.style.zIndex = String(10 - stackIndex);
+      }
+
+      var photo = document.createElement("div");
+      photo.className = "swipe-card-photo";
+      if (listing.photos && listing.photos.length) {
+        photo.style.backgroundImage = "url('" + listing.photos[0].url.replace(/'/g, "\\'") + "')";
+      } else {
+        photo.innerHTML = SWIPE_PHOTO_ICON;
+      }
+
+      var likeStamp = document.createElement("div");
+      likeStamp.className = "swipe-stamp is-like";
+      likeStamp.textContent = t("swipe.like");
+      var nopeStamp = document.createElement("div");
+      nopeStamp.className = "swipe-stamp is-nope";
+      nopeStamp.textContent = t("swipe.dislike");
+      photo.appendChild(likeStamp);
+      photo.appendChild(nopeStamp);
+
+      var body = document.createElement("div");
+      body.className = "swipe-card-body";
+      var titleEl = document.createElement("div");
+      titleEl.className = "swipe-card-title";
+      titleEl.textContent = listing.title;
+      var priceEl = document.createElement("div");
+      priceEl.className = "swipe-card-price";
+      priceEl.textContent = swipeFormatListingPrice(listing);
+      var locationEl = document.createElement("div");
+      locationEl.className = "swipe-card-location";
+      // Та же логика "город + дистанция, если есть", что и на карточке
+      // основной ленты (см. buildListingCard/formatDistanceKm) — раздел 4
+      // тоже сортирует по близости при наличии города (п.17 -> А).
+      locationEl.textContent = (typeof listing.distance_km === "number")
+        ? (listing.city ? listing.city + " · " : "") + swipeFormatDistanceKm(listing.distance_km)
+        : (listing.city || "");
+      body.appendChild(titleEl);
+      body.appendChild(priceEl);
+      body.appendChild(locationEl);
+
+      card.appendChild(photo);
+      card.appendChild(body);
+      return card;
+    }
+
+    // Pointer Events — единый API для touch и mouse (десктоп тоже должен
+    // уметь "свайпнуть" мышью, это веб-приложение, а не только мобильное).
+    function wireDrag(card, listing) {
+      var startX = 0, startY = 0, currentX = 0, isDragging = false;
+      var likeStamp = card.querySelector(".swipe-stamp.is-like");
+      var nopeStamp = card.querySelector(".swipe-stamp.is-nope");
+      var DECISION_THRESHOLD = 100; // px — порог, после которого отпускание жеста трактуется как решение, а не просто как незавершённое перетаскивание
+
+      function onPointerDown(ev) {
+        isDragging = true;
+        startX = ev.clientX;
+        startY = ev.clientY;
+        currentX = 0;
+        card.classList.add("is-dragging");
+        card.setPointerCapture(ev.pointerId);
+      }
+      function onPointerMove(ev) {
+        if (!isDragging) return;
+        currentX = ev.clientX - startX;
+        var dy = ev.clientY - startY;
+        var rotate = currentX / 18;
+        card.style.transform = "translate(" + currentX + "px, " + dy + "px) rotate(" + rotate + "deg)";
+        var progress = Math.min(1, Math.abs(currentX) / DECISION_THRESHOLD);
+        if (currentX > 0) {
+          likeStamp.style.opacity = String(progress);
+          nopeStamp.style.opacity = "0";
+        } else {
+          nopeStamp.style.opacity = String(progress);
+          likeStamp.style.opacity = "0";
+        }
+      }
+      function onPointerUp() {
+        if (!isDragging) return;
+        isDragging = false;
+        card.classList.remove("is-dragging");
+        if (Math.abs(currentX) >= DECISION_THRESHOLD) {
+          commitSwipe(currentX > 0);
+        } else {
+          // Не дотянули до порога — карточка плавно возвращается на место,
+          // решение не отправляется.
+          card.classList.add("is-settling");
+          card.style.transform = "";
+          likeStamp.style.opacity = "0";
+          nopeStamp.style.opacity = "0";
+          setTimeout(function () { card.classList.remove("is-settling"); }, 280);
+        }
+      }
+
+      card.addEventListener("pointerdown", onPointerDown);
+      card.addEventListener("pointermove", onPointerMove);
+      card.addEventListener("pointerup", onPointerUp);
+      card.addEventListener("pointercancel", onPointerUp);
+
+      // Кнопки — та же commitSwipe, что и у завершённого жеста; кнопки
+      // управляют ВЕРХНЕЙ картой независимо от того, начинал ли пользователь
+      // её перетаскивать (п.12 -> Б: кнопки и свайп одновременно, оба пути
+      // должны вести к одному и тому же результату).
+      function commitSwipe(liked) {
+        card.classList.add("is-settling");
+        var flyX = liked ? window.innerWidth : -window.innerWidth;
+        card.style.transform = "translate(" + flyX + "px, -40px) rotate(" + (liked ? 30 : -30) + "deg)";
+        card.style.opacity = "0";
+        if (window.DzApi && window.DzApi.swipeListing) {
+          window.DzApi.swipeListing(listing.id, liked).catch(function () {
+            // Тихо — карточка уже улетела визуально, повторный показ того
+            // же объявления в следующей пачке (если запрос правда не
+            // дошёл) не критичен для развлекательного UI такого рода.
+          });
+        }
+        setTimeout(function () { advanceQueue(); }, 260);
+      }
+
+      // Экспортируем commitSwipe наружу через WeakMap-подобный приём —
+      // проще: вешаем прямо на DOM-элемент, чтобы кнопки ниже могли до
+      // него дотянуться без отдельного модульного состояния "текущая карта".
+      card._commitSwipe = commitSwipe;
+    }
+
+    function advanceQueue() {
+      queue.shift();
+      if (queue.length === 0) {
+        if (isFetchingMore) return;
+        isFetchingMore = true;
+        var e = els();
+        if (e.loading) e.loading.hidden = false;
+        window.DzApi.getSwipeRecommendations(15)
+          .then(function (data) {
+            isFetchingMore = false;
+            if (e.loading) e.loading.hidden = true;
+            if (data.exhausted || !data.listings || !data.listings.length) {
+              isExhausted = true;
+              if (e.empty) e.empty.hidden = false;
+              return;
+            }
+            queue = data.listings;
+            renderStack();
+          })
+          .catch(function () {
+            isFetchingMore = false;
+            if (e.loading) e.loading.hidden = true;
+            if (e.empty) e.empty.hidden = false;
+          });
+        return;
+      }
+      renderStack();
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      var e = els();
+      if (e.closeBtn) e.closeBtn.addEventListener("click", close);
+      if (e.likeBtn) {
+        e.likeBtn.addEventListener("click", function () {
+          if (cardEls.length && cardEls[0]._commitSwipe) cardEls[0]._commitSwipe(true);
+        });
+      }
+      if (e.dislikeBtn) {
+        e.dislikeBtn.addEventListener("click", function () {
+          if (cardEls.length && cardEls[0]._commitSwipe) cardEls[0]._commitSwipe(false);
+        });
+      }
+    });
+
+    return { open: open, close: close };
+  })();
+  window.DzSwipeRecommendations = DzSwipeRecommendations;
+
+  // Открытие вкладки "Профиль" -> подгрузить/скрыть блок "Мои сделки" и
+  // сообщения от администрации.
   // Отдельный слушатель на существующей кнопке таба — не трогает
   // switchTab()/её текущую логику переключения панелей.
   document.addEventListener("DOMContentLoaded", function () {
     var profileTabBtn = document.querySelector('.tab-item[data-tab="profile"]');
-    if (profileTabBtn) profileTabBtn.addEventListener("click", DzMyDeals.refresh);
+    if (profileTabBtn) {
+      profileTabBtn.addEventListener("click", DzMyDeals.refresh);
+      profileTabBtn.addEventListener("click", DzAdminMessages.refresh);
+    }
   });
 })();
 </script>
@@ -8498,4 +9627,4 @@ textarea.sheet-input {
 </script>
 
 </body>
-             </html>
+   </html>
