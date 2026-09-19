@@ -317,6 +317,50 @@
     });
   }
 
+  // ТЗ v4, раздел 3 — справочник городов + город пользователя (необязательное
+  // поле). getCities кэшируется на уровне модуля (не меняется в течение
+  // сессии — это статичный справочник, а не пользовательские данные) —
+  // повторные открытия настроек не должны каждый раз бить по сети заново.
+  var citiesCache = null;
+  function getCities() {
+    if (citiesCache) return Promise.resolve(citiesCache);
+    return request("/api/cities").then(function (data) {
+      citiesCache = data.cities || [];
+      return citiesCache;
+    });
+  }
+
+  function updateMyCity(cityId) {
+    return request("/api/me/city", {
+      method: "PATCH",
+      body: { city_id: cityId },
+    }).then(function (data) {
+      setCachedUser(data.user);
+      return data.user;
+    });
+  }
+
+  function getAdminMessages() {
+    return request("/api/me/admin-messages").then(function (data) {
+      return data.messages || [];
+    });
+  }
+
+  // ТЗ v4, раздел 4 — свайп-рекомендации. getSwipeRecommendations
+  // возвращает объект целиком (не только .listings), т.к. фронту нужны и
+  // exhausted/fromDislikedPool, не только сам массив карточек.
+  function getSwipeRecommendations(limit) {
+    var qs = limit ? "?limit=" + encodeURIComponent(limit) : "";
+    return request("/api/swipe-recommendations" + qs);
+  }
+
+  function swipeListing(listingId, liked) {
+    return request("/api/swipe-recommendations/" + encodeURIComponent(listingId), {
+      method: "POST",
+      body: { liked: !!liked },
+    });
+  }
+
   // ---------------------------------------------------------------------
   // Мессенджер (Version 2)
   // ---------------------------------------------------------------------
@@ -415,9 +459,13 @@
     });
   }
 
-  function disputeDeal(conversationId) {
+  // comment — необязательный комментарий к жалобе (ТЗ v4, раздел 1), тот
+  // же паттерн, что и reason у cancelDeal ниже. Бэкенд сам берёт снимок
+  // переписки — сюда его передавать не нужно.
+  function disputeDeal(conversationId, comment) {
     return request("/api/conversations/" + encodeURIComponent(conversationId) + "/deal/dispute", {
       method: "POST",
+      body: { comment: comment || "" },
     }).then(function (data) {
       return data.deal;
     });
@@ -583,5 +631,12 @@
     // Раздел 3.9 — профиль компании
     getCompanyProfile: getCompanyProfile,
     upsertCompanyProfile: upsertCompanyProfile,
+    // ТЗ v4, раздел 2/3 — сообщения от администрации, справочник городов
+    getAdminMessages: getAdminMessages,
+    getCities: getCities,
+    updateMyCity: updateMyCity,
+    // ТЗ v4, раздел 4 — свайп-рекомендации
+    getSwipeRecommendations: getSwipeRecommendations,
+    swipeListing: swipeListing,
   };
 })();
