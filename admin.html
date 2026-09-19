@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dzintars — панель администратора</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+/* Палитра и шрифт взяты из home.html (--ink-900/--amber-*/Inter) — та же
+   визуальная система, что у основного приложения, но собственная плотная
+   табличная вёрстка: это внутренний рабочий инструмент, а не витрина,
+   здесь важнее скорость сканирования данных, чем "характерный вход". */
+:root {
+  --ink-900: #0D3B43;
+  --ink-700: #185863;
+  --amber-600: #E5A400;
+  --amber-100: #FFF3CF;
+  --paper-50: #F6F7F9;
+  --paper-0: #FFFFFF;
+  --line-100: #E5E7EB;
+  --line-200: #D8DBDF;
+  --text-900: #111827;
+  --text-600: #6B7280;
+  --text-400: #9CA3AF;
+  --danger-600: #B84C42;
+  --danger-100: #FBEAE8;
+  --success-600: #185863;
+  --font-ui: "Inter", "SF Pro Display", "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  font-family: var(--font-ui);
+  background: var(--paper-50);
+  color: var(--text-900);
+  font-size: 14px;
+  line-height: 1.5;
+}
+button, input, textarea, select { font-family: inherit; font-size: inherit; }
+
+/* ---------- Экран логина ---------- */
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--paper-0);
+  border: 1px solid var(--line-100);
+  border-radius: 12px;
+  padding: 32px;
+}
+.login-card h1 {
+  font-size: 18px;
+  margin: 0 0 4px;
+  color: var(--ink-900);
+}
+.login-card .subtitle {
+  color: var(--text-600);
+  font-size: 13px;
+  margin: 0 0 24px;
+}
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-600);
+  margin-bottom: 6px;
+}
+.field input {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--line-200);
+  border-radius: 8px;
+  outline: none;
+}
+.field input:focus { border-color: var(--ink-700); }
+.btn {
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+  transition: opacity .15s;
+}
+.btn:hover { opacity: .9; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: var(--ink-900); color: #fff; width: 100%; }
+.btn-danger { background: var(--danger-100); color: var(--danger-600); }
+.btn-ghost { background: transparent; border: 1px solid var(--line-200); color: var(--text-900); }
+.error-text { color: var(--danger-600); font-size: 12.5px; margin-top: 10px; }
+
+/* ---------- Основной layout ---------- */
+.app-shell { display: none; min-height: 100vh; }
+.app-shell.is-visible { display: flex; }
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--ink-900);
+  color: #fff;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-brand {
+  padding: 0 20px 20px;
+  font-weight: 700;
+  font-size: 15px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  margin-bottom: 12px;
+}
+.sidebar-brand span { display: block; font-weight: 400; font-size: 11px; opacity: .6; margin-top: 2px; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.75);
+  font-size: 13.5px;
+}
+.nav-item:hover { background: rgba(255,255,255,0.06); }
+.nav-item.is-active { background: rgba(255,255,255,0.1); color: #fff; font-weight: 600; }
+.nav-badge {
+  background: var(--amber-600);
+  color: var(--ink-900);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+}
+.sidebar-footer { margin-top: auto; padding: 12px 20px 0; }
+.sidebar-footer .who { font-size: 12px; opacity: .6; margin-bottom: 8px; }
+
+.main { flex: 1; padding: 28px 32px; min-width: 0; overflow-x: auto; }
+.main h2 { margin: 0 0 4px; font-size: 19px; color: var(--ink-900); }
+.main .lead { color: var(--text-600); font-size: 13px; margin: 0 0 20px; }
+
+.filter-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.filter-row select, .filter-row input {
+  padding: 7px 10px;
+  border: 1px solid var(--line-200);
+  border-radius: 7px;
+}
+
+table { width: 100%; border-collapse: collapse; background: var(--paper-0); border: 1px solid var(--line-100); border-radius: 10px; overflow: hidden; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line-100); font-size: 13px; vertical-align: top; }
+th { background: var(--paper-50); font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em; color: var(--text-600); font-weight: 600; }
+tr:last-child td { border-bottom: none; }
+tr.is-clickable { cursor: pointer; }
+tr.is-clickable:hover { background: var(--paper-50); }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--text-600); }
+.status-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+.status-open { background: var(--amber-100); color: #8a6400; }
+.status-resolved { background: #E4F1E8; color: var(--success-600); }
+.empty-row td { text-align: center; color: var(--text-400); padding: 32px; }
+
+/* ---------- Детальный просмотр жалобы ---------- */
+.back-link { color: var(--ink-700); cursor: pointer; font-size: 13px; margin-bottom: 14px; display: inline-block; }
+.report-meta { background: var(--paper-0); border: 1px solid var(--line-100); border-radius: 10px; padding: 16px; margin-bottom: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.report-meta .k { font-size: 11px; color: var(--text-600); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 3px; }
+.report-meta .v { font-size: 13.5px; }
+.report-comment { background: var(--amber-100); border-radius: 8px; padding: 12px 14px; font-size: 13.5px; margin-bottom: 18px; }
+
+.snapshot-list { background: var(--paper-0); border: 1px solid var(--line-100); border-radius: 10px; padding: 16px; max-height: 480px; overflow-y: auto; }
+.snap-msg { padding: 8px 0; border-bottom: 1px solid var(--line-100); }
+.snap-msg:last-child { border-bottom: none; }
+.snap-msg .who { font-size: 11px; color: var(--text-400); margin-bottom: 3px; }
+.snap-msg.is-system .text { color: var(--text-600); font-style: italic; }
+
+/* ---------- Пользователи ---------- */
+.user-action-card { background: var(--paper-0); border: 1px solid var(--line-100); border-radius: 10px; padding: 18px; max-width: 460px; }
+.user-action-card .field { margin-bottom: 12px; }
+.user-action-card textarea { width: 100%; min-height: 70px; padding: 9px 11px; border: 1px solid var(--line-200); border-radius: 8px; resize: vertical; }
+.action-row { display: flex; gap: 8px; margin-top: 6px; }
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--ink-900); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0; transform: translateY(8px); transition: all .2s; pointer-events: none; }
+.toast.is-visible { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <h1>Dzintars — админ-панель</h1>
+    <p class="subtitle">Вход только для сотрудников администрации.</p>
+    <form id="login-form">
+      <div class="field">
+        <label for="login-input">Логин</label>
+        <input type="text" id="login-input" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password-input">Пароль</label>
+        <input type="password" id="password-input" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary" id="login-submit">Войти</button>
+      <div class="error-text" id="login-error" hidden></div>
+    </form>
+  </div>
+</div>
+
+<div class="app-shell" id="app-shell">
+  <div class="sidebar">
+    <div class="sidebar-brand">Dzintars<span>Панель администратора</span></div>
+    <div class="nav-item is-active" data-section="deal-reports">
+      <span>Жалобы на сделки</span>
+      <span class="nav-badge" id="badge-deal-reports" hidden>0</span>
+    </div>
+    <div class="nav-item" data-section="review-reports">
+      <span>Жалобы на отзывы</span>
+      <span class="nav-badge" id="badge-review-reports" hidden>0</span>
+    </div>
+    <div class="nav-item" data-section="users">
+      <span>Пользователи</span>
+    </div>
+    <div class="sidebar-footer">
+      <div class="who" id="who-am-i"></div>
+      <button class="btn btn-ghost" style="width:100%" id="logout-btn" type="button">Выйти</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- Жалобы на сделки: список -->
+    <div id="view-deal-reports">
+      <h2>Жалобы на сделки</h2>
+      <p class="lead">Раздел 1 ТЗ — жалоба из чата сделки, со снимком переписки на момент подачи.</p>
+      <div class="filter-row">
+        <select id="deal-reports-status-filter">
+          <option value="">Все статусы</option>
+          <option value="OPEN">Открытые</option>
+          <option value="RESOLVED">Решённые</option>
+        </select>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Дата</th><th>Сделка</th><th>От кого</th><th>На кого</th><th>Комментарий</th><th>Статус</th></tr>
+        </thead>
+        <tbody id="deal-reports-tbody">
+          <tr class="empty-row"><td colspan="6">Загрузка…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Жалоба на сделку: детали -->
+    <div id="view-deal-report-detail" hidden>
+      <span class="back-link" id="deal-report-back">← Ко всем жалобам на сделки</span>
+      <h2>Жалоба #<span id="detail-report-id"></span></h2>
+      <div class="report-meta" id="detail-meta"></div>
+      <div class="report-comment" id="detail-comment" hidden></div>
+      <h3 style="font-size:14px;margin:0 0 10px;color:var(--text-600)">Переписка на момент подачи жалобы</h3>
+      <div class="snapshot-list" id="detail-messages"></div>
+    </div>
+
+    <!-- Жалобы на отзывы -->
+    <div id="view-review-reports" hidden>
+      <h2>Жалобы на отзывы</h2>
+      <p class="lead">Уже существовавший механизм (review_reports) — здесь только отображение.</p>
+      <div class="filter-row">
+        <select id="review-reports-status-filter">
+          <option value="">Все статусы</option>
+          <option value="OPEN">Открытые</option>
+          <option value="RESOLVED">Решённые</option>
+        </select>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Дата</th><th>Отзыв</th><th>От кого</th><th>Причина</th><th>Комментарий</th><th>Статус</th></tr>
+        </thead>
+        <tbody id="review-reports-tbody">
+          <tr class="empty-row"><td colspan="6">Загрузка…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Пользователи -->
+    <div id="view-users" hidden>
+      <h2>Пользователи</h2>
+      <p class="lead">Блокировка входа, скрытие объявлений и запрет писать в чатах — по ID пользователя.</p>
+      <div class="user-action-card">
+        <div class="field">
+          <label for="user-id-input">ID пользователя</label>
+          <input type="text" id="user-id-input" placeholder="Например, ID из жалобы выше">
+        </div>
+        <div class="field">
+          <label for="ban-reason-input">Причина блокировки (необязательно, видна только администрации)</label>
+          <textarea id="ban-reason-input" placeholder="Например: повторные подтверждённые жалобы на сделки"></textarea>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-danger" id="ban-btn" type="button">Заблокировать</button>
+          <button class="btn btn-ghost" id="unban-btn" type="button">Разблокировать</button>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--line-100);margin:18px 0">
+        <div class="field">
+          <label for="admin-message-input">Написать пользователю от администрации</label>
+          <textarea id="admin-message-input" placeholder="Сообщение будет доступно пользователю в приложении"></textarea>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-primary" id="send-message-btn" type="button" style="width:auto">Отправить сообщение</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // Тот же принцип, что и в dz-api.js основного приложения: относительный
+  // путь, воркер отдаёт и /admin (эту страницу), и /api/* с одного origin,
+  // поэтому отдельный API_BASE_URL не нужен.
+  var TOKEN_KEY = "dz_admin_token";
+
+  function getToken() { return localStorage.getItem(TOKEN_KEY); }
+  function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
+  function clearToken() { localStorage.removeItem(TOKEN_KEY); }
+
+  function request(path, options) {
+    options = options || {};
+    var headers = Object.assign({ "Content-Type": "application/json" }, options.headers || {});
+    var token = getToken();
+    if (token) headers["Authorization"] = "Bearer " + token;
+    return fetch(path, {
+      method: options.method || "GET",
+      headers: headers,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        if (!res.ok) {
+          var err = new Error(data.error || "request_failed");
+          err.status = res.status;
+          throw err;
+        }
+        return data;
+      });
+    });
+  }
+
+  function showToast(text) {
+    var el = document.getElementById("toast");
+    el.textContent = text;
+    el.classList.add("is-visible");
+    setTimeout(function () { el.classList.remove("is-visible"); }, 2400);
+  }
+
+  function escapeHtml(s) {
+    var div = document.createElement("div");
+    div.textContent = s == null ? "" : String(s);
+    return div.innerHTML;
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return "—";
+    // Формат из D1 — "YYYY-MM-DD HH:MM:SS" (UTC, datetime('now')); заменяем
+    // пробел на "T", чтобы Date его гарантированно распарсил в Safari тоже.
+    var d = new Date(iso.replace(" ", "T") + "Z");
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  }
+
+  // -----------------------------------------------------------------------
+  // Авторизация
+  // -----------------------------------------------------------------------
+
+  function showLoginScreen() {
+    document.getElementById("login-screen").style.display = "flex";
+    document.getElementById("app-shell").classList.remove("is-visible");
+  }
+
+  function showAppShell(admin) {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app-shell").classList.add("is-visible");
+    document.getElementById("who-am-i").textContent = admin.login;
+  }
+
+  function checkExistingSession() {
+    if (!getToken()) { showLoginScreen(); return; }
+    request("/api/admin/me")
+      .then(function (data) {
+        showAppShell(data.admin);
+        activateSection("deal-reports");
+      })
+      .catch(function () {
+        clearToken();
+        showLoginScreen();
+      });
+  }
+
+  document.getElementById("login-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var login = document.getElementById("login-input").value.trim();
+    var password = document.getElementById("password-input").value;
+    var errEl = document.getElementById("login-error");
+    var submitBtn = document.getElementById("login-submit");
+    errEl.hidden = true;
+    submitBtn.disabled = true;
+    request("/api/admin/login", { method: "POST", body: { login: login, password: password } })
+      .then(function (data) {
+        setToken(data.token);
+        showAppShell(data.admin);
+        activateSection("deal-reports");
+      })
+      .catch(function (err) {
+        var msg = "Не удалось войти. Проверьте логин и пароль.";
+        if (err.status === 429) msg = "Слишком много попыток входа. Попробуйте позже.";
+        errEl.textContent = msg;
+        errEl.hidden = false;
+      })
+      .finally(function () { submitBtn.disabled = false; });
+  });
+
+  document.getElementById("logout-btn").addEventListener("click", function () {
+    request("/api/admin/logout", { method: "POST" }).catch(function () {});
+    clearToken();
+    showLoginScreen();
+  });
+
+  // -----------------------------------------------------------------------
+  // Навигация между разделами
+  // -----------------------------------------------------------------------
+
+  var SECTION_VIEWS = {
+    "deal-reports": "view-deal-reports",
+    "review-reports": "view-review-reports",
+    "users": "view-users",
+  };
+
+  function activateSection(name) {
+    document.getElementById("view-deal-report-detail").hidden = true;
+    Object.keys(SECTION_VIEWS).forEach(function (key) {
+      document.getElementById(SECTION_VIEWS[key]).hidden = key !== name;
+    });
+    document.querySelectorAll(".nav-item").forEach(function (el) {
+      el.classList.toggle("is-active", el.getAttribute("data-section") === name);
+    });
+    if (name === "deal-reports") loadDealReports();
+    if (name === "review-reports") loadReviewReports();
+  }
+
+  document.querySelectorAll(".nav-item").forEach(function (el) {
+    el.addEventListener("click", function () { activateSection(el.getAttribute("data-section")); });
+  });
+
+  // -----------------------------------------------------------------------
+  // Жалобы на сделки
+  // -----------------------------------------------------------------------
+
+  function loadDealReports() {
+    var status = document.getElementById("deal-reports-status-filter").value;
+    var tbody = document.getElementById("deal-reports-tbody");
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Загрузка…</td></tr>';
+    var qs = status ? "?status=" + encodeURIComponent(status) : "";
+    request("/api/admin/deal-reports" + qs)
+      .then(function (data) {
+        var reports = data.reports || [];
+        document.getElementById("badge-deal-reports").hidden = !reports.length;
+        document.getElementById("badge-deal-reports").textContent = reports.length;
+        if (!reports.length) {
+          tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Жалоб не найдено</td></tr>';
+          return;
+        }
+        tbody.innerHTML = reports.map(function (r) {
+          return "<tr class=\"is-clickable\" data-report-id=\"" + r.id + "\">"
+            + "<td>" + fmtDate(r.created_at) + "</td>"
+            + "<td class=\"mono\">#" + r.transaction_id + "</td>"
+            + "<td class=\"mono\">" + escapeHtml(r.reporter_id) + "</td>"
+            + "<td class=\"mono\">" + escapeHtml(r.reported_user_id) + "</td>"
+            + "<td>" + (r.comment ? escapeHtml(r.comment).slice(0, 60) : "<span style=\"color:var(--text-400)\">—</span>") + "</td>"
+            + "<td><span class=\"status-pill status-" + (r.status === "RESOLVED" ? "resolved" : "open") + "\">" + escapeHtml(r.status) + "</span></td>"
+            + "</tr>";
+        }).join("");
+        tbody.querySelectorAll("tr[data-report-id]").forEach(function (row) {
+          row.addEventListener("click", function () { openDealReportDetail(row.getAttribute("data-report-id")); });
+        });
+      })
+      .catch(function () {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Не удалось загрузить жалобы</td></tr>';
+      });
+  }
+
+  document.getElementById("deal-reports-status-filter").addEventListener("change", loadDealReports);
+
+  function openDealReportDetail(id) {
+    document.getElementById("view-deal-reports").hidden = true;
+    document.getElementById("view-deal-report-detail").hidden = false;
+    document.getElementById("detail-report-id").textContent = id;
+    document.getElementById("detail-meta").innerHTML = "";
+    document.getElementById("detail-messages").innerHTML = "<p style=\"color:var(--text-400)\">Загрузка…</p>";
+    request("/api/admin/deal-reports/" + encodeURIComponent(id))
+      .then(function (data) {
+        var r = data.report;
+        document.getElementById("detail-meta").innerHTML = [
+          ["Сделка", "#" + r.transaction_id],
+          ["Диалог", "#" + r.conversation_id],
+          ["Подал жалобу", r.reporter_id],
+          ["На кого жалоба", r.reported_user_id],
+          ["Дата", fmtDate(r.created_at)],
+          ["Статус", r.status],
+        ].map(function (pair) {
+          return "<div><div class=\"k\">" + escapeHtml(pair[0]) + "</div><div class=\"v mono\">" + escapeHtml(pair[1]) + "</div></div>";
+        }).join("");
+
+        var commentEl = document.getElementById("detail-comment");
+        if (r.comment) {
+          commentEl.hidden = false;
+          commentEl.textContent = r.comment;
+        } else {
+          commentEl.hidden = true;
+        }
+
+        var msgsEl = document.getElementById("detail-messages");
+        if (!r.messages.length) {
+          msgsEl.innerHTML = "<p style=\"color:var(--text-400)\">В диалоге не было сообщений</p>";
+          return;
+        }
+        msgsEl.innerHTML = r.messages.map(function (m) {
+          var isSystem = m.message_type === "system";
+          return "<div class=\"snap-msg" + (isSystem ? " is-system" : "") + "\">"
+            + "<div class=\"who\">" + (isSystem ? "Системное сообщение" : escapeHtml(m.sender_id)) + " · " + fmtDate(m.created_at) + "</div>"
+            + "<div class=\"text\">" + escapeHtml(m.deleted_at ? "(сообщение удалено)" : m.text) + "</div>"
+            + "</div>";
+        }).join("");
+      })
+      .catch(function () {
+        document.getElementById("detail-messages").innerHTML = "<p style=\"color:var(--danger-600)\">Не удалось загрузить жалобу</p>";
+      });
+  }
+
+  document.getElementById("deal-report-back").addEventListener("click", function () {
+    document.getElementById("view-deal-report-detail").hidden = true;
+    document.getElementById("view-deal-reports").hidden = false;
+  });
+
+  // -----------------------------------------------------------------------
+  // Жалобы на отзывы
+  // -----------------------------------------------------------------------
+
+  function loadReviewReports() {
+    var status = document.getElementById("review-reports-status-filter").value;
+    var tbody = document.getElementById("review-reports-tbody");
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Загрузка…</td></tr>';
+    var qs = status ? "?status=" + encodeURIComponent(status) : "";
+    request("/api/admin/review-reports" + qs)
+      .then(function (data) {
+        var reports = data.reports || [];
+        document.getElementById("badge-review-reports").hidden = !reports.length;
+        document.getElementById("badge-review-reports").textContent = reports.length;
+        if (!reports.length) {
+          tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Жалоб не найдено</td></tr>';
+          return;
+        }
+        tbody.innerHTML = reports.map(function (r) {
+          return "<tr>"
+            + "<td>" + fmtDate(r.created_at) + "</td>"
+            + "<td class=\"mono\">#" + r.review_id + "</td>"
+            + "<td class=\"mono\">" + escapeHtml(r.reporter_id) + "</td>"
+            + "<td>" + escapeHtml(r.reason) + "</td>"
+            + "<td>" + (r.comment ? escapeHtml(r.comment).slice(0, 60) : "<span style=\"color:var(--text-400)\">—</span>") + "</td>"
+            + "<td><span class=\"status-pill status-" + (r.status === "RESOLVED" ? "resolved" : "open") + "\">" + escapeHtml(r.status) + "</span></td>"
+            + "</tr>";
+        }).join("");
+      })
+      .catch(function () {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Не удалось загрузить жалобы</td></tr>';
+      });
+  }
+
+  document.getElementById("review-reports-status-filter").addEventListener("change", loadReviewReports);
+
+  // -----------------------------------------------------------------------
+  // Пользователи: бан / разбан / сообщение
+  // -----------------------------------------------------------------------
+
+  document.getElementById("ban-btn").addEventListener("click", function () {
+    var userId = document.getElementById("user-id-input").value.trim();
+    if (!userId) { showToast("Укажите ID пользователя"); return; }
+    if (!window.confirm("Заблокировать пользователя " + userId + "? Он не сможет войти, его объявления скроются из ленты, писать в чатах он не сможет.")) return;
+    var reason = document.getElementById("ban-reason-input").value.trim();
+    request("/api/admin/users/" + encodeURIComponent(userId) + "/ban", { method: "POST", body: { reason: reason } })
+      .then(function () { showToast("Пользователь заблокирован"); })
+      .catch(function () { showToast("Не удалось заблокировать пользователя"); });
+  });
+
+  document.getElementById("unban-btn").addEventListener("click", function () {
+    var userId = document.getElementById("user-id-input").value.trim();
+    if (!userId) { showToast("Укажите ID пользователя"); return; }
+    request("/api/admin/users/" + encodeURIComponent(userId) + "/ban", { method: "DELETE" })
+      .then(function () { showToast("Пользователь разблокирован"); })
+      .catch(function () { showToast("Не удалось разблокировать пользователя"); });
+  });
+
+  document.getElementById("send-message-btn").addEventListener("click", function () {
+    var userId = document.getElementById("user-id-input").value.trim();
+    var text = document.getElementById("admin-message-input").value.trim();
+    if (!userId) { showToast("Укажите ID пользователя"); return; }
+    if (!text) { showToast("Введите текст сообщения"); return; }
+    request("/api/admin/users/" + encodeURIComponent(userId) + "/message", { method: "POST", body: { text: text } })
+      .then(function () {
+        showToast("Сообщение отправлено");
+        document.getElementById("admin-message-input").value = "";
+      })
+      .catch(function () { showToast("Не удалось отправить сообщение"); });
+  });
+
+  checkExistingSession();
+})();
+</script>
+</body>
+</html>
