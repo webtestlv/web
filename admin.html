@@ -315,9 +315,12 @@ tr.is-clickable:hover { background: var(--paper-50); }
 (function () {
   "use strict";
 
-  // Тот же принцип, что и в dz-api.js основного приложения: относительный
-  // путь, воркер отдаёт и /admin (эту страницу), и /api/* с одного origin,
-  // поэтому отдельный API_BASE_URL не нужен.
+  // Изначально был относительный путь (расчёт на то, что admin.html будет
+  // отдаваться тем же воркером через Static Assets). По факту деплоя
+  // страница живёт на отдельном статическом хостинге рядом с home.html —
+  // поэтому здесь тот же принцип, что и в dz-api.js: абсолютный
+  // API_BASE_URL. Поменяй на свой адрес, если воркер называется иначе.
+  var API_BASE_URL = "https://dzintars-api.estoniabolt.workers.dev";
   var TOKEN_KEY = "dz_admin_token";
 
   function getToken() { return localStorage.getItem(TOKEN_KEY); }
@@ -329,7 +332,7 @@ tr.is-clickable:hover { background: var(--paper-50); }
     var headers = Object.assign({ "Content-Type": "application/json" }, options.headers || {});
     var token = getToken();
     if (token) headers["Authorization"] = "Bearer " + token;
-    return fetch(path, {
+    return fetch(API_BASE_URL + path, {
       method: options.method || "GET",
       headers: headers,
       body: options.body ? JSON.stringify(options.body) : undefined,
