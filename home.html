@@ -911,7 +911,22 @@ img, svg { display: block; max-width: 100%; }
 .swipe-card-photo {
   flex: 1;
   min-height: 0;
-  background: var(--paper-100) center/cover no-repeat;
+  background-color: var(--paper-100);
+  /* БАГ (найден при тестировании, планшет/десктоп-браузер): фото
+     повторялось мозаикой вместо одной растянутой картинки. Раньше это
+     задавалось shorthand'ом "background: var(--paper-100) center/cover
+     no-repeat" в CSS, а JS отдельно ставил только background-image через
+     photo.style.backgroundImage. Технически long-hand свойства должны
+     наследоваться из class-правила независимо, но на практике это
+     оказалось ненадёжным (конкретный браузер/движок мог развернуть
+     shorthand иначе, чем ожидалось) — поэтому здесь каждое свойство
+     теперь задано отдельным long-hand'ом явно, а JS ниже дублирует те же
+     три свойства через .style, а не только background-image, чтобы
+     инлайн-стиль гарантированно перекрывал класс целиком, без частичного
+     наследования между shorthand и long-hand. */
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
   position: relative;
 }
 .swipe-card-photo svg { width: 100%; height: 100%; }
@@ -6904,9 +6919,14 @@ textarea.sheet-input {
     }
 
     if (deal.status !== "PENDING") {
-      // COMPLETED/DISPUTED — финальные состояния, кнопок больше нет,
-      // только статусная строка (событие уже отражено системным
-      // сообщением в самой ленте чата, здесь — просто напоминание сверху).
+      // COMPLETED/DISPUTED — финальные состояния. Раньше здесь были только
+      // статусная строка ("кнопок больше нет, ..."), а предложение
+      // оценить сделку жило только на отдельном экране "Мои сделки"
+      // (DzMyDeals). По итогам тестирования — оценка должна предлагаться
+      // прямо в чате, где и произошла вся сделка, а не только на другом
+      // экране. Кнопка появляется ТОЛЬКО при COMPLETED (не при DISPUTED —
+      // оценивать нечего, пока идёт разбирательство) и только если этот
+      // пользователь ещё не оставил свой отзыв (my_review_submitted).
       els.dealBar.hidden = false;
       els.dealBar.innerHTML = "";
       var doneStatus = document.createElement("div");
@@ -6915,6 +6935,22 @@ textarea.sheet-input {
       doneStatus.style.marginBottom = "0";
       doneStatus.textContent = deal.status === "COMPLETED" ? t("chat.deal.statusCompleted") : t("chat.deal.statusDisputed");
       els.dealBar.appendChild(doneStatus);
+      if (deal.status === "COMPLETED" && !deal.my_review_submitted) {
+        var reviewBtn = document.createElement("button");
+        reviewBtn.type = "button";
+        reviewBtn.className = "chat-deal-btn is-primary";
+        reviewBtn.textContent = t("mydeals.leaveReview");
+        reviewBtn.addEventListener("click", function () {
+          if (window.DzReview) {
+            // refresh-колбэк — тот же принцип, что и в "Мои сделки"
+            // (перезагрузить данные после отправки отзыва), здесь это
+            // повторный loadDeal(), чтобы my_review_submitted обновился и
+            // кнопка исчезла без перезагрузки страницы.
+            window.DzReview.open(deal, loadDeal);
+          }
+        });
+        els.dealBar.appendChild(reviewBtn);
+      }
       return;
     }
 
@@ -8405,9 +8441,13 @@ textarea.sheet-input {
             });
           }));
         } else if (tx.status === "COMPLETED" && !tx.my_review_submitted) {
-          actions.appendChild(actionBtn(t("mydeals.leaveReview"), true, function () {
-            if (window.DzReview) window.DzReview.open(tx, refresh);
-          }));
+          // Кнопка "Оставить отзыв" убрана отсюда (по требованию: оценка
+          // происходит ТОЛЬКО в чате, см. renderDealBar — этот же
+          // review-sheet теперь открывается оттуда). "Мои сделки" —
+          // просмотровый список статусов, не второе дублирующее место для
+          // того же действия. Ничего не показываем в этой ветке — статус
+          // "COMPLETED" уже виден строкой выше (status.textContent), а
+          // "оцените" предлагается там, где произошла сама сделка.
         } else if (tx.status === "COMPLETED" && tx.my_review_submitted) {
           var done = document.createElement("span");
           done.className = "mydeals-row-done";
@@ -8640,18 +8680,37 @@ textarea.sheet-input {
     function buildSwipeCard(listing, stackIndex) {
       var card = document.createElement("div");
       card.className = "swipe-card";
-      // Карточки под верхней слегка приподняты и уменьшены — тот же
-      // fanned-stack эффект, что у .foryou-stack, только вычисленный, а не
-      // фиксированный в CSS (глубина стека здесь динамическая — 1..3).
+      // БАГ (найден при тестировании): раньше z-index ставился только
+      // карточкам со stackIndex > 0 ("if (stackIndex > 0) { ... zIndex
+      // ... }"), а верхняя (stackIndex === 0) оставалась без явного
+      // z-index вообще. Итог — нижние карточки СО СВОИМ z-index (9, 8)
+      // визуально перекрывали верхнюю (auto ~ 0 в контексте соседей с
+      // явным z-index), несмотря на правильный порядок в DOM: явный
+      // z-index на братьях всегда побеждает порядок DOM, комментарий про
+      // "z-index не нужен, порядок решает DOM" был верен только если НИ У
+      // ОДНОЙ карточки в стеке z-index нет вообще. wireDrag вешается
+      // только на cardEls[0] (реально верхнюю по логике) — так что палец
+      // либо утыкался в необработанную карточку под ней, либо события
+      // расходились непредсказуемо. Кнопки работали, потому что их
+      // обработчик клика не завязан на то, какой DOM-элемент лежит выше
+      // по z-index на конкретных координатах. Исправление — z-index
+      // ставим ВСЕГДА, явно, включая верхнюю карточку.
+      card.style.zIndex = String(10 - stackIndex);
       if (stackIndex > 0) {
         card.style.transform = "translateY(" + stackIndex * 10 + "px) scale(" + (1 - stackIndex * 0.04) + ")";
-        card.style.zIndex = String(10 - stackIndex);
       }
 
       var photo = document.createElement("div");
       photo.className = "swipe-card-photo";
       if (listing.photos && listing.photos.length) {
+        // Задаём все три свойства фона явно через .style (не только
+        // backgroundImage) — см. комментарий у .swipe-card-photo в CSS про
+        // причину, по которой одного only background-image оказалось
+        // недостаточно для надёжного no-repeat на практике.
         photo.style.backgroundImage = "url('" + listing.photos[0].url.replace(/'/g, "\\'") + "')";
+        photo.style.backgroundRepeat = "no-repeat";
+        photo.style.backgroundPosition = "center";
+        photo.style.backgroundSize = "cover";
       } else {
         photo.innerHTML = SWIPE_PHOTO_ICON;
       }
@@ -9627,4 +9686,4 @@ textarea.sheet-input {
 </script>
 
 </body>
-   </html>
+                                                                                                                                                </html>
