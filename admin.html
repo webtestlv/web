@@ -271,6 +271,49 @@ tr.is-clickable:hover { background: var(--paper-50); }
 @media (max-width: 720px) {
   .toast { left: 16px; right: 16px; bottom: calc(var(--mobile-tabbar-h) + 12px); text-align: center; }
 }
+
+/* ---------- Активность сайта ---------- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--paper-0);
+  border: 1px solid var(--line-100);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.stat-card .stat-value { font-size: 24px; font-weight: 700; color: var(--ink-900); line-height: 1.15; }
+.stat-card .stat-label { font-size: 12px; color: var(--text-600); margin-top: 2px; }
+.stat-card.is-warning .stat-value { color: var(--danger-600); }
+.stat-card.is-warning.is-zero .stat-value { color: var(--success-600); }
+
+.chart-block {
+  background: var(--paper-0);
+  border: 1px solid var(--line-100);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.chart-block h3 { font-size: 13.5px; margin: 0 0 12px; color: var(--text-900); }
+.chart-block .chart-total { font-size: 12px; color: var(--text-600); font-weight: 400; }
+.chart-svg-wrap { width: 100%; overflow-x: auto; }
+.chart-svg-wrap svg { display: block; min-width: 560px; }
+.chart-empty { color: var(--text-400); font-size: 13px; padding: 24px 0; text-align: center; }
+
+.cat-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12.5px; }
+.cat-bar-label { width: 120px; flex-shrink: 0; color: var(--text-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-bar-track { flex: 1; background: var(--paper-50); border-radius: 5px; height: 18px; position: relative; }
+.cat-bar-fill { background: var(--ink-700); height: 100%; border-radius: 5px; min-width: 3px; }
+.cat-bar-count { width: 32px; flex-shrink: 0; text-align: right; color: var(--text-900); font-weight: 600; }
+
+@media (max-width: 720px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .stat-card .stat-value { font-size: 20px; }
+  .cat-bar-label { width: 84px; }
+}
 </style>
 </head>
 <body>
@@ -319,6 +362,9 @@ tr.is-clickable:hover { background: var(--paper-50); }
     <div class="nav-item" data-section="users">
       <span>Пользователи</span>
     </div>
+    <div class="nav-item" data-section="analytics">
+      <span>Активность</span>
+    </div>
     <div class="sidebar-footer">
       <div class="who" id="who-am-i"></div>
       <button class="btn btn-ghost" style="width:100%" id="logout-btn" type="button">Выйти</button>
@@ -364,7 +410,7 @@ tr.is-clickable:hover { background: var(--paper-50); }
           <button class="btn btn-success btn-sm" id="detail-resolve-btn" type="button">Отметить решённой</button>
           <button class="btn btn-ghost btn-sm" id="detail-reopen-btn" type="button" hidden>Вернуть в открытые</button>
         </div>
-        <h3 style="margin-top:16px">Действия по пользователю «На кого жалоба»</h3>
+        <h3 style="margin-top:16px">Действия по пользователю «На кого жалоба»<span id="detail-actions-target-login" style="text-transform:none;letter-spacing:normal;font-weight:400;color:var(--text-900)"></span></h3>
         <div class="action-row">
           <button class="btn btn-danger btn-sm" id="detail-ban-btn" type="button">Заблокировать</button>
           <button class="btn btn-ghost btn-sm" id="detail-unban-btn" type="button">Разблокировать</button>
@@ -395,10 +441,10 @@ tr.is-clickable:hover { background: var(--paper-50); }
       </div>
       <table>
         <thead>
-          <tr><th>Дата</th><th>Отзыв</th><th>От кого</th><th>Причина</th><th>Комментарий</th><th>Статус</th><th>Действие</th></tr>
+          <tr><th>Дата</th><th>Отзыв</th><th>От кого</th><th>Автор отзыва</th><th>Причина</th><th>Комментарий</th><th>Статус</th><th>Действие</th></tr>
         </thead>
         <tbody id="review-reports-tbody">
-          <tr class="empty-row"><td colspan="7">Загрузка…</td></tr>
+          <tr class="empty-row"><td colspan="8">Загрузка…</td></tr>
         </tbody>
       </table>
     </div>
@@ -431,6 +477,15 @@ tr.is-clickable:hover { background: var(--paper-50); }
       </div>
     </div>
 
+    <!-- Активность сайта (по запросу: "актив сайта смотреть") -->
+    <div id="view-analytics" hidden>
+      <h2>Активность сайта</h2>
+      <p class="lead">Сводка и динамика за последние 30 дней. Регистрации показаны только общим числом — см. пояснение в коде бэкенда (пользователи хранятся не в основной базе, точной даты по каждому без дорогой операции не получить).</p>
+      <div id="analytics-content">
+        <p style="color:var(--text-400)">Загрузка…</p>
+      </div>
+    </div>
+
   </div>
 
   <!-- Нижний таб-бар — видим только на узком экране, дублирует .nav-item
@@ -446,6 +501,9 @@ tr.is-clickable:hover { background: var(--paper-50); }
     </div>
     <div class="nav-item" data-section="users">
       <span>Пользователи</span>
+    </div>
+    <div class="nav-item" data-section="analytics">
+      <span>Активность</span>
     </div>
   </nav>
 </div>
@@ -584,6 +642,7 @@ tr.is-clickable:hover { background: var(--paper-50); }
     "deal-reports": "view-deal-reports",
     "review-reports": "view-review-reports",
     "users": "view-users",
+    "analytics": "view-analytics",
   };
 
   function activateSection(name) {
@@ -596,6 +655,7 @@ tr.is-clickable:hover { background: var(--paper-50); }
     });
     if (name === "deal-reports") loadDealReports();
     if (name === "review-reports") loadReviewReports();
+    if (name === "analytics") loadAnalytics();
   }
 
   document.querySelectorAll(".nav-item").forEach(function (el) {
@@ -619,6 +679,19 @@ tr.is-clickable:hover { background: var(--paper-50); }
   // дублировать разметку под desktop/mobile отдельно.
   function td(label, innerHtml, extraClass) {
     return "<td data-label=\"" + escapeHtml(label) + "\"" + (extraClass ? " class=\"" + extraClass + "\"" : "") + ">" + innerHtml + "</td>";
+  }
+
+  // ИСПРАВЛЕНИЕ (по запросу: "логины в админке") — раньше везде показывали
+  // голый user_id (случайный UUID из KV) без способа понять, кто это. Бэк
+  // теперь резолвит логин/ник рядом с id (см. handleAdminListDealReports/
+  // GetDealReport/ListReviewReports — getUserById по обратному индексу
+  // userid:<id> в KV). Логин — основным текстом (то, что реально узнаваемо
+  // человеком), id — под ним мелким мono, на случай если два разных
+  // пользователя совпадут по нику (это технически возможно — nickname не
+  // UNIQUE, в отличие от login) и админу нужно точно различить их для бана.
+  function userLabel(id, login) {
+    if (!login) return "<span class=\"mono\">" + escapeHtml(id) + "</span>";
+    return "<div>" + escapeHtml(login) + "</div><div class=\"mono\" style=\"font-size:10.5px\">" + escapeHtml(id) + "</div>";
   }
 
   // -----------------------------------------------------------------------
@@ -646,8 +719,8 @@ tr.is-clickable:hover { background: var(--paper-50); }
           return "<tr class=\"is-clickable\" data-report-id=\"" + r.id + "\">"
             + td("Дата", fmtDate(r.created_at))
             + td("Сделка", "<span class=\"mono\">#" + r.transaction_id + "</span>")
-            + td("От кого", "<span class=\"mono\">" + escapeHtml(r.reporter_id) + "</span>")
-            + td("На кого", "<span class=\"mono\">" + escapeHtml(r.reported_user_id) + "</span>")
+            + td("От кого", userLabel(r.reporter_id, r.reporter_login))
+            + td("На кого", userLabel(r.reported_user_id, r.reported_user_login))
             + td("Комментарий", r.comment ? escapeHtml(r.comment).slice(0, 60) : "<span style=\"color:var(--text-400)\">—</span>")
             + td("Статус", "<span class=\"status-pill status-" + (r.status === "RESOLVED" ? "resolved" : "open") + "\">" + escapeHtml(r.status) + "</span>")
             + "</tr>";
@@ -680,16 +753,31 @@ tr.is-clickable:hover { background: var(--paper-50); }
       .then(function (data) {
         var r = data.report;
         currentDealReport = r;
-        document.getElementById("detail-meta").innerHTML = [
+        // ИСПРАВЛЕНИЕ (логины) — "Подал жалобу"/"На кого жалоба" теперь
+        // строятся отдельно через userLabel (не общий .map() ниже,
+        // который оборачивает всё в class="v mono" — это годится для
+        // технических полей типа "Сделка"/"Диалог", но не для
+        // читаемого логина, который не должен выглядеть моноширинным
+        // техническим текстом).
+        var metaPairs = [
           ["Сделка", "#" + r.transaction_id],
           ["Диалог", "#" + r.conversation_id],
-          ["Подал жалобу", r.reporter_id],
-          ["На кого жалоба", r.reported_user_id],
           ["Дата", fmtDate(r.created_at)],
           ["Статус", r.status],
         ].map(function (pair) {
           return "<div><div class=\"k\">" + escapeHtml(pair[0]) + "</div><div class=\"v mono\">" + escapeHtml(pair[1]) + "</div></div>";
-        }).join("");
+        });
+        var userPairs = [
+          ["Подал жалобу", r.reporter_id, r.reporter_login],
+          ["На кого жалоба", r.reported_user_id, r.reported_user_login],
+        ].map(function (triple) {
+          return "<div><div class=\"k\">" + escapeHtml(triple[0]) + "</div><div class=\"v\">" + userLabel(triple[1], triple[2]) + "</div></div>";
+        });
+        document.getElementById("detail-meta").innerHTML = userPairs.concat(metaPairs).join("");
+        var targetLoginEl = document.getElementById("detail-actions-target-login");
+        if (targetLoginEl) {
+          targetLoginEl.textContent = r.reported_user_login ? " — " + r.reported_user_login : "";
+        }
         updateResolveButtons(r.status);
 
         var commentEl = document.getElementById("detail-comment");
@@ -792,7 +880,7 @@ tr.is-clickable:hover { background: var(--paper-50); }
   function loadReviewReports() {
     var status = document.getElementById("review-reports-status-filter").value;
     var tbody = document.getElementById("review-reports-tbody");
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Загрузка…</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Загрузка…</td></tr>';
     var qs = status ? "?status=" + encodeURIComponent(status) : "";
     request("/api/admin/review-reports" + qs)
       .then(function (data) {
@@ -800,7 +888,7 @@ tr.is-clickable:hover { background: var(--paper-50); }
         var openCount = reports.filter(function (r) { return r.status === "OPEN"; }).length;
         setBadge("review-reports", openCount);
         if (!reports.length) {
-          tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Жалоб не найдено</td></tr>';
+          tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Жалоб не найдено</td></tr>';
           return;
         }
         tbody.innerHTML = reports.map(function (r) {
@@ -812,7 +900,8 @@ tr.is-clickable:hover { background: var(--paper-50); }
           return "<tr data-review-report-id=\"" + r.id + "\">"
             + td("Дата", fmtDate(r.created_at))
             + td("Отзыв", "<span class=\"mono\">#" + r.review_id + "</span>")
-            + td("От кого", "<span class=\"mono\">" + escapeHtml(r.reporter_id) + "</span>")
+            + td("От кого", userLabel(r.reporter_id, r.reporter_login))
+            + td("Автор отзыва", r.review_author_id ? userLabel(r.review_author_id, r.review_author_login) : "<span style=\"color:var(--text-400)\">—</span>")
             + td("Причина", escapeHtml(r.reason))
             + td("Комментарий", r.comment ? escapeHtml(r.comment).slice(0, 60) : "<span style=\"color:var(--text-400)\">—</span>")
             + td("Статус", "<span class=\"status-pill status-" + (isResolved ? "resolved" : "open") + "\">" + escapeHtml(r.status) + "</span>")
@@ -841,7 +930,7 @@ tr.is-clickable:hover { background: var(--paper-50); }
         });
       })
       .catch(function () {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Не удалось загрузить жалобы</td></tr>';
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Не удалось загрузить жалобы</td></tr>';
       });
   }
 
@@ -884,8 +973,109 @@ tr.is-clickable:hover { background: var(--paper-50); }
       .catch(function () { showToast("Не удалось отправить сообщение"); });
   });
 
+  // -----------------------------------------------------------------------
+  // Активность сайта (по запросу: "актив сайта смотреть"). Один запрос
+  // отдаёт сводку + 30-дневные ряды + топ категорий разом (см.
+  // handleAdminGetAnalytics на бэкенде) — здесь только рендер.
+  // -----------------------------------------------------------------------
+
+  var STAT_LABELS = {
+    total_users: "Пользователей всего",
+    total_listings: "Объявлений всего",
+    active_listings: "Активных объявлений",
+    total_transactions: "Сделок всего",
+    completed_transactions: "Завершённых сделок",
+    total_messages: "Сообщений всего",
+    open_deal_reports: "Открытых жалоб на сделки",
+    open_review_reports: "Открытых жалоб на отзывы",
+    banned_users: "Заблокировано пользователей",
+  };
+  // Карточки, где НОЛЬ — это хорошо (нет открытых проблем), а не ноль
+  // активности — красим наоборот (зелёный при нуле, янтарный при >0), в
+  // отличие от остальных метрик роста, где число само по себе нейтрально.
+  var WARNING_STAT_KEYS = ["open_deal_reports", "open_review_reports", "banned_users"];
+
+  function buildStatCards(summary) {
+    return '<div class="stat-grid">' + Object.keys(STAT_LABELS).map(function (key) {
+      var value = summary[key] || 0;
+      var isWarning = WARNING_STAT_KEYS.indexOf(key) !== -1;
+      var cls = "stat-card" + (isWarning ? " is-warning" + (value === 0 ? " is-zero" : "") : "");
+      return '<div class="' + cls + '"><div class="stat-value">' + value + '</div><div class="stat-label">' + escapeHtml(STAT_LABELS[key]) + '</div></div>';
+    }).join("") + "</div>";
+  }
+
+  // Простой линейный график без внешних библиотек (admin.html
+  // сознательно без CDN-зависимостей, тот же принцип, что и у остальной
+  // страницы) — вручную строим полилинию + точки + подписи дат через
+  // каждые ~5 точек (30 подписей на ось X нечитаемы, каждая пятая — по
+  // числу дней хватает, чтобы ориентироваться по неделям).
+  function buildLineChartSvg(series, color) {
+    var width = 560, height = 160, padTop = 10, padBottom = 24, padLeft = 8, padRight = 8;
+    var maxVal = Math.max(1, Math.max.apply(null, series.map(function (p) { return p.count; })));
+    var innerW = width - padLeft - padRight;
+    var innerH = height - padTop - padBottom;
+    var stepX = series.length > 1 ? innerW / (series.length - 1) : 0;
+
+    function xAt(i) { return padLeft + i * stepX; }
+    function yAt(v) { return padTop + innerH - (v / maxVal) * innerH; }
+
+    var points = series.map(function (p, i) { return xAt(i) + "," + yAt(p.count); }).join(" ");
+    var dots = series.map(function (p, i) {
+      return '<circle cx="' + xAt(i) + '" cy="' + yAt(p.count) + '" r="2.5" fill="' + color + '"><title>' + escapeHtml(p.date) + ": " + p.count + '</title></circle>';
+    }).join("");
+    var labels = series.map(function (p, i) {
+      if (i % 5 !== 0 && i !== series.length - 1) return "";
+      var shortDate = p.date.slice(5).replace("-", ".");
+      return '<text x="' + xAt(i) + '" y="' + (height - 6) + '" font-size="9" fill="#9CA3AF" text-anchor="middle">' + escapeHtml(shortDate) + '</text>';
+    }).join("");
+
+    return '<svg viewBox="0 0 ' + width + ' ' + height + '" xmlns="http://www.w3.org/2000/svg">'
+      + '<polyline points="' + points + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
+      + dots + labels
+      + '</svg>';
+  }
+
+  function buildChartBlock(title, series, color) {
+    var total = series.reduce(function (sum, p) { return sum + p.count; }, 0);
+    var body = total === 0
+      ? '<div class="chart-empty">За последние 30 дней активности не было</div>'
+      : '<div class="chart-svg-wrap">' + buildLineChartSvg(series, color) + '</div>';
+    return '<div class="chart-block"><h3>' + escapeHtml(title) + ' <span class="chart-total">— ' + total + ' за 30 дней</span></h3>' + body + '</div>';
+  }
+
+  function buildTopCategoriesBlock(topCategories) {
+    if (!topCategories.length) {
+      return '<div class="chart-block"><h3>Топ категорий по активным объявлениям</h3><div class="chart-empty">Пока нет активных объявлений</div></div>';
+    }
+    var maxN = Math.max.apply(null, topCategories.map(function (c) { return c.n; }));
+    var rows = topCategories.map(function (c) {
+      var pct = Math.max(4, Math.round((c.n / maxN) * 100));
+      return '<div class="cat-bar-row"><div class="cat-bar-label">' + escapeHtml(c.name) + '</div>'
+        + '<div class="cat-bar-track"><div class="cat-bar-fill" style="width:' + pct + '%"></div></div>'
+        + '<div class="cat-bar-count">' + c.n + '</div></div>';
+    }).join("");
+    return '<div class="chart-block"><h3>Топ категорий по активным объявлениям</h3>' + rows + '</div>';
+  }
+
+  function loadAnalytics() {
+    var container = document.getElementById("analytics-content");
+    container.innerHTML = '<p style="color:var(--text-400)">Загрузка…</p>';
+    request("/api/admin/analytics")
+      .then(function (data) {
+        var html = buildStatCards(data.summary);
+        html += buildChartBlock("Новые объявления по дням", data.daily.listings, "#185863");
+        html += buildChartBlock("Новые сделки по дням", data.daily.transactions, "#E5A400");
+        html += buildChartBlock("Сообщения по дням", data.daily.messages, "#0D3B43");
+        html += buildTopCategoriesBlock(data.top_categories);
+        container.innerHTML = html;
+      })
+      .catch(function () {
+        container.innerHTML = '<p style="color:var(--danger-600)">Не удалось загрузить данные активности</p>';
+      });
+  }
+
   checkExistingSession();
 })();
 </script>
 </body>
-</html>
+   </html>
