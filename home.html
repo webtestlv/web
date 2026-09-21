@@ -802,7 +802,19 @@ img, svg { display: block; max-width: 100%; }
   transform: translate(-50%, 100%);
   background: var(--paper-0);
   border-radius: 28px 28px 0 0;
-  z-index: 91;
+  /* ИСПРАВЛЕНИЕ (найдено при тестировании): review-sheet использует этот
+     же класс (см. HTML — id="review-sheet" class="listing-sheet"), но
+     open() для отзыва вызывается ИЗНУТРИ уже открытого чата (кнопка
+     "Оставить отзыв" в шапке чата, см. renderDealBar), а у .chat-sheet
+     z-index: 95. При z-index: 91 здесь review-sheet технически открывался
+     (transform/classList отрабатывали верно), но оказывался ВИЗУАЛЬНО ПОД
+     чатом — для пользователя выглядело как "кнопка нажимается, ничего не
+     происходит", хотя DOM-состояние менялось корректно. 96 — на один
+     выше самого высокого известного sheet (.chat-sheet: 95), чтобы
+     review-sheet, вызванный из любого места (включая изнутри чата),
+     гарантированно оказывался поверх.
+  */
+  z-index: 96;
   max-height: 92vh;
   max-height: 92svh;
   overflow-y: auto;
@@ -1703,11 +1715,16 @@ textarea.sheet-input {
 }
 
 .conv-card-delete-btn {
-  position: absolute;
-  top: var(--sp-2);
-  right: var(--sp-2);
-  width: 26px;
-  height: 26px;
+  /* ИСПРАВЛЕНИЕ ("дата наслаивается на Х") — раньше был position:absolute,
+     top/right поверх всей карточки, независимо от .conv-card-time рядом.
+     Теперь элемент в потоке flex-ряда .conv-card-top (третий после
+     заголовка и даты, см. JS buildConvCard) — flex-shrink: 0 не даёт
+     кнопке сжаться при длинном заголовке, margin-left отделяет её от
+     даты. */
+  flex-shrink: 0;
+  margin-left: 2px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   border: none;
   background: transparent;
@@ -2565,6 +2582,537 @@ textarea.sheet-input {
   font-size: var(--fs-13);
   font-weight: 600;
   cursor: pointer;
+}
+
+/* =========================================================================
+   RESPONSIVE LAYER — адаптация под все телефоны, планшеты и ноутбуки
+   =========================================================================
+   Оригинальный CSS выше — это мобильная база (одна колонка до 480px).
+   Этот блок ТОЛЬКО расширяет её и вставлен последним, чтобы при равной
+   специфичности выигрывать каскадом. JS и HTML-разметка не менялись:
+   верхняя навигация на десктопе — это тот же <nav class="tabbar">,
+   перестроенный CSS-ом, поэтому switchTab() работает как раньше.
+
+   Брейкпоинты (mobile-first, всё через min-width):
+     base        0–359    очень узкие телефоны (iPhone SE 1, Galaxy Fold)
+     360+        360–599  обычные телефоны
+     600+        600–899  большие телефоны в landscape, малые планшеты
+     900+        900–1199 планшеты, узкие ноутбуки
+     1200+       1200–1599 ноутбуки, десктопы
+     1600+       ≥1600    большие мониторы
+   ========================================================================= */
+
+/* ---------- Fluid-переменные: layout подстраивается плавно ------------- */
+:root {
+  /* Боковые поля растут вместе с экраном: 16px → 40px */
+  --screen-margin: clamp(16px, 2.2vw + 6px, 40px);
+  /* Ширина контента на больших экранах */
+  --content-max: 1280px;
+  /* Ширина модальных окон на планшете/десктопе */
+  --modal-w: 560px;
+  --modal-w-wide: 720px;
+  /* Высота верхней навигации на десктопе */
+  --topnav-h: 68px;
+}
+
+/* Защита от горизонтального скролла на любых экранах */
+html { -webkit-text-size-adjust: 100%; }
+body { overflow-x: hidden; }
+.app { min-width: 0; }
+.page-scroll { overscroll-behavior: contain; }
+
+/* Длинные слова/ссылки не должны ломать вёрстку */
+.detail-title, .detail-description, .listing-title, .chat-bubble,
+.conv-card-body, .mylistings-card-body { overflow-wrap: anywhere; }
+
+/* =========================================================================
+   0. ОЧЕНЬ УЗКИЕ ТЕЛЕФОНЫ (< 360px): iPhone SE 1, Galaxy Fold в сложенном
+   ========================================================================= */
+@media (max-width: 359px) {
+  :root { --screen-margin: 12px; }
+
+  .sticky-search { padding-left: var(--sp-3); padding-right: var(--sp-3); }
+  .btn-signin { padding: 0 var(--sp-3); font-size: 12px; }
+  .foryou-row, .category-scroller, .section-heading { padding-left: var(--sp-3); padding-right: var(--sp-3); }
+  .category-scroller { padding-left: var(--sp-3); padding-right: var(--sp-3); }
+  .listing-grid { gap: var(--sp-2); padding-left: var(--sp-3); padding-right: var(--sp-3); }
+  .listing-body { padding: var(--sp-2); }
+  .cat-tile { width: 112px; }
+  .cat-tile.is-wide { width: 176px; }
+  .tab-item svg { width: 26px; height: 26px; }
+  .tab-item span { font-size: 11px; }
+  .swipe-action-btn { width: 54px; height: 54px; }
+  .listing-form-row-split { flex-direction: column; gap: 0; }
+}
+
+/* =========================================================================
+   1. ВСЕ ТЕЛЕФОНЫ: динамическая высота для шторок, ландшафт, клавиатура
+   ========================================================================= */
+
+/* Телефон в ландшафте: экран низкий — шторки и tabbar не должны
+   съедать всю высоту */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root { --tabbar-h: 48px; }
+  .tab-item { flex-direction: row; justify-content: center; gap: 6px; padding: 6px 2px; }
+  .tab-item svg { width: 22px; height: 22px; }
+  .tab-item span { font-size: 11px; }
+  .filter-sheet, .auth-sheet, .listing-sheet, .detail-sheet { max-height: 100svh; border-radius: 16px 16px 0 0; }
+  .chat-sheet { height: 100svh; border-radius: 0; }
+  .swipe-actions { padding: var(--sp-2); }
+  .swipe-action-btn { width: 44px; height: 44px; }
+  .swipe-header { padding: var(--sp-2) var(--sp-4); }
+  .empty-state { min-height: auto; padding: var(--sp-5); }
+  .empty-state-illustration { width: 80px; height: 80px; margin-bottom: var(--sp-3); }
+  .post-fab { height: 44px; }
+}
+
+/* Низкие экраны (телефон в ландшафте, окно браузера невысокое): фото
+   в деталях объявления ограничиваем по высоте, иначе оно занимает весь
+   экран, а название, цена и кнопка «Написать» остаются за прокруткой,
+   и пользователь не понимает, что их можно достать. */
+@media (max-height: 560px) {
+  .detail-photo-slide,
+  .detail-photo-placeholder { aspect-ratio: auto; height: 42vh; height: 42svh; min-height: 150px; }
+  .detail-sheet .detail-photo-wrap { margin-bottom: var(--sp-3); }
+  .listing-map-picker { height: 160px; }
+  .sheet-handlebar-row { padding-top: var(--sp-2); }
+}
+
+/* Поддержка выреза (notch) в ландшафте на iPhone */
+@supports (padding: max(0px)) {
+  .app { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+  .swipe-overlay { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+}
+
+/* Крупные телефоны (Pro Max, Plus, Ultra) и phablet: чуть больше воздуха */
+@media (min-width: 400px) {
+  .cat-tile { width: 140px; height: 80px; }
+  .cat-tile.is-wide { width: 236px; }
+}
+
+/* =========================================================================
+   2. МАЛЫЕ ПЛАНШЕТЫ / ТЕЛЕФОН В LANDSCAPE  (≥ 600px)
+   Контент выходит из 480px-колонки, лента → 3 колонки.
+   ========================================================================= */
+@media (min-width: 600px) {
+  :root {
+    --max-w: 100%;            /* .app занимает всю ширину */
+    --tabbar-h: 64px;
+  }
+
+  .app { max-width: 100%; }
+
+  /* Контент центрируется с полями, а не липнет к краям */
+  .sticky-search,
+  .foryou-row,
+  .category-scroller,
+  .section-heading,
+  .listing-grid,
+  .mylistings-list,
+  .conv-list {
+    padding-left: var(--screen-margin);
+    padding-right: var(--screen-margin);
+  }
+  .listing-grid { padding-bottom: var(--sp-6); }
+
+  /* Hero: растёт чуть выше, скругление красивее */
+  .hero-banner { border-radius: 0 0 28px 28px; padding-bottom: var(--sp-5); }
+  .search-field { height: 46px; }
+  .search-field input { font-size: var(--fs-subhead); }
+  .btn-signin { height: 46px; font-size: var(--fs-subhead); padding: 0 var(--sp-6); }
+  .foryou-title { font-size: 1.25rem; }
+  .foryou-sub { font-size: var(--fs-body); }
+  .foryou-stack { width: 78px; height: 58px; }
+  .stack-card { width: 48px; height: 58px; }
+
+  /* Категории: при достаточной ширине показываем ВСЕ плитки без прокрутки.
+     Две строки по 4 плитки, растянутые на всю ширину. */
+  .category-scroller { gap: var(--sp-4); }
+  .cat-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--sp-4);
+    overflow: visible;
+  }
+  .cat-tile, .cat-tile.is-wide {
+    width: auto;
+    height: 92px;
+    padding: 18px 20px;
+  }
+  .cat-tile-label { font-size: 1rem; }
+
+  /* Лента объявлений: 3 колонки */
+  .listing-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-4);
+  }
+  .listing-body { padding: var(--sp-4); gap: 8px; }
+  .listing-title { font-size: var(--fs-body); }
+  .listing-price { font-size: 1.0625rem; }
+  .listing-location { font-size: var(--fs-caption); }
+
+  /* «Мои объявления» и «Сообщения» — две колонки карточек */
+  .mylistings-list,
+  .conv-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-4);
+    align-items: start;
+  }
+  .mylistings-card-photo { width: 96px; height: 96px; }
+
+  .post-fab { right: var(--screen-margin); }
+
+  /* ---------- Шторки → аккуратные модальные окна по центру ---------- */
+  .auth-sheet, .filter-sheet, .listing-sheet, .detail-sheet {
+    bottom: auto;
+    top: 50%;
+    width: min(var(--modal-w), calc(100vw - 48px));
+    max-width: none;
+    max-height: min(88vh, 880px);
+    max-height: min(88svh, 880px);
+    border-radius: 24px;
+    box-shadow: 0 24px 64px rgba(13, 27, 30, 0.28);
+    padding-bottom: 0;
+    /* закрыто: сдвинуто вниз и прозрачно; открыто: по центру */
+    transform: translate(-50%, calc(-50% + 32px)) scale(0.97);
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition:
+      transform 260ms cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 200ms ease,
+      visibility 0s linear 260ms;
+  }
+  .auth-sheet.is-open, .filter-sheet.is-open,
+  .listing-sheet.is-open, .detail-sheet.is-open {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+    transition:
+      transform 260ms cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 200ms ease,
+      visibility 0s;
+  }
+  /* Деталь объявления и форма создания — пошире */
+  .detail-sheet, #listing-sheet { width: min(var(--modal-w-wide), calc(100vw - 48px)); }
+
+  /* Чат — высокое окно по центру, а не 88% экрана снизу */
+  .chat-sheet {
+    bottom: auto;
+    top: 50%;
+    width: min(var(--modal-w-wide), calc(100vw - 48px));
+    max-width: none;
+    height: min(86vh, 820px);
+    height: min(86svh, 820px);
+    border-radius: 24px;
+    box-shadow: 0 24px 64px rgba(13, 27, 30, 0.28);
+    transform: translate(-50%, calc(-50% + 32px)) scale(0.97);
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition:
+      transform 260ms cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 200ms ease,
+      visibility 0s linear 260ms;
+  }
+  .chat-sheet.is-open {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+    transition:
+      transform 260ms cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 200ms ease,
+      visibility 0s;
+  }
+
+  /* Ручка «потяни вниз» в модалке не нужна — это жест только для мобильных.
+     Полоску прячем, но отступ сверху оставляем, иначе заголовок прилипает
+     к краю окна. */
+  .sheet-handlebar-row { padding: var(--sp-6) 0 var(--sp-1); border-radius: 24px 24px 0 0; }
+  .sheet-handlebar { display: none; }
+
+  /* Внутренние отступы содержимого модалок */
+  .detail-sheet-body,
+  .filter-body,
+  .listing-form-body,
+  .sheet-body { padding: 0 var(--sp-7) var(--sp-7); }
+  .chat-sheet-header { padding-left: var(--sp-6); padding-right: var(--sp-6); }
+
+  /* Карта в форме объявления повыше */
+  .listing-map-picker { height: 300px; }
+
+  /* Свайп-рекомендации: карточка не растягивается на весь экран */
+  .swipe-stage {
+    flex: 0 1 auto;
+    width: min(460px, 100%);
+    height: min(680px, 100%);
+    align-self: center;
+    margin-top: auto;
+    margin-bottom: auto;
+    padding-left: var(--sp-5);
+    padding-right: var(--sp-5);
+  }
+  .swipe-header { padding-left: var(--screen-margin); padding-right: var(--screen-margin); }
+  .swipe-action-btn { width: 68px; height: 68px; }
+
+  /* Профиль: карточка по центру, а не растянутая на всю ширину */
+  .profile-card { max-width: 520px; margin: 0 auto; }
+  .empty-state { max-width: 560px; margin: 0 auto; min-height: 60vh; min-height: 60svh; }
+}
+
+/* Оверлей на планшете/десктопе чуть светлее, размытие мягче */
+@media (min-width: 600px) {
+  .sheet-overlay { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+}
+
+/* =========================================================================
+   3. ПЛАНШЕТ LANDSCAPE / УЗКИЙ НОУТБУК  (≥ 900px)
+   ========================================================================= */
+@media (min-width: 900px) {
+  /* Контент центрируется в колонке ограниченной ширины */
+  .page-scroll > .tab-panel > *,
+  .page-scroll > .tab-panel {
+    max-width: none;
+  }
+
+  .listing-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+  .mylistings-list,
+  .conv-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .cat-tile, .cat-tile.is-wide { height: 100px; }
+}
+
+/* =========================================================================
+   4. НОУТБУК / ДЕСКТОП  (≥ 1024px)
+   Нижний tabbar → верхняя навигационная панель. Тот же <nav>, тот же JS.
+   ========================================================================= */
+@media (min-width: 1024px) {
+
+  /* --- 4.1 Каркас страницы: шапка сверху, контент ниже ---------------- */
+  .app.has-tabbar {
+    /* tabbar в DOM стоит ПОСЛЕ .page-scroll; переставляем порядок flex,
+       чтобы он визуально оказался сверху, не трогая разметку */
+    display: flex;
+    flex-direction: column;
+  }
+  .app.has-tabbar .tabbar { order: -1; }
+  .app.has-tabbar .tabbar-safe-area { display: none; }
+  .app.has-tabbar .page-scroll { order: 1; }
+
+  /* --- 4.2 Верхняя навигация ------------------------------------------ */
+  .tabbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    height: var(--topnav-h);
+    padding: 0 var(--screen-margin);
+    background: var(--paper-0);
+    border-bottom: 1px solid var(--line-100);
+    box-shadow: 0 2px 12px rgba(13, 59, 67, 0.05);
+  }
+
+  .tab-item {
+    flex-direction: row;
+    gap: var(--sp-2);
+    padding: 10px 18px;
+    border-radius: var(--radius-pill);
+    color: var(--text-600);
+    transition: background 150ms ease, color 150ms ease;
+  }
+  .tab-item svg { width: 22px; height: 22px; }
+  .tab-item span { font-size: var(--fs-subhead); font-weight: 500; }
+  .tab-item:hover { background: var(--paper-50); color: var(--text-900); }
+  .tab-item.is-active {
+    background: rgba(13, 59, 67, 0.08);
+    color: var(--ink-900);
+  }
+  .tab-item.is-active svg { color: var(--ink-900); }
+  .tab-unread-badge { top: -6px; right: -10px; }
+
+  /* Ширина контента: центрированная колонка, а не растянутая на весь монитор */
+  .page-scroll > .tab-panel {
+    width: 100%;
+    max-width: var(--content-max);
+    margin: 0 auto;
+  }
+
+  /* --- 4.3 Hero: баннер на всю ширину окна, содержимое в колонке ------ */
+  /* .tab-panel ограничена --content-max, но градиент баннера должен идти
+     от края до края окна. Приём full-bleed: вылезаем за колонку на ширину
+     окна через отрицательные поля, а внутренние отступы возвращаем
+     обратно, чтобы содержимое осталось выровнено по колонке. */
+  .hero-banner {
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding-left: calc(50vw - 50%);
+    padding-right: calc(50vw - 50%);
+    border-radius: 0 0 32px 32px;
+    padding-bottom: var(--sp-6);
+  }
+  .sticky-search {
+    padding-top: var(--sp-5);
+    padding-bottom: var(--sp-4);
+  }
+  .hero-row { max-width: 860px; margin: 0 auto; }
+  .search-field { height: 52px; padding-left: var(--sp-5); }
+  .search-field svg { width: 20px; height: 20px; }
+  .search-field input { font-size: 1.0625rem; }
+  .search-filter-btn { padding: 10px; }
+  .search-filter-btn svg { width: 22px; height: 22px; }
+  .btn-signin { height: 52px; padding: 0 var(--sp-7); }
+  .btn-signin:hover { background: var(--amber-100); }
+  .foryou-row { max-width: 860px; margin: 0 auto; }
+  .foryou-row:hover .foryou-arrow { transform: translateX(3px); }
+  .foryou-arrow { transition: transform 150ms ease; }
+
+  /* Липкая полоска поиска при скролле: прижимаем под верхнюю навигацию,
+     иначе она уедет под неё (top: 0 → высота навигации) */
+  .sticky-search { top: 0; }
+
+  /* --- 4.4 Категории: строки уже в сетке, чуть крупнее ---------------- */
+  .category-scroller { padding-top: var(--sp-6); padding-bottom: var(--sp-3); }
+  .cat-tile {
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+  .cat-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(13, 59, 67, 0.12);
+  }
+  .cat-tile-label { font-size: 1.0625rem; }
+
+  /* --- 4.5 Лента: 4 → 5 колонок на широких, hover-эффекты ------------- */
+  .section-heading { font-size: 1.375rem; padding-top: var(--sp-6); }
+  .listing-grid { gap: var(--sp-5); }
+  .listing-card {
+    transition: transform 160ms ease, box-shadow 160ms ease;
+    cursor: pointer;
+  }
+  .listing-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px rgba(13, 59, 67, 0.14);
+  }
+  .listing-fav { width: 34px; height: 34px; }
+  .listing-fav svg { width: 18px; height: 18px; }
+  .listing-title { font-size: var(--fs-subhead); }
+  .listing-price { font-size: 1.125rem; }
+
+  /* Кнопка «разместить» — в правый нижний угол контентной области */
+  .post-fab {
+    bottom: var(--sp-6);
+    right: max(var(--screen-margin), calc((100vw - var(--content-max)) / 2 + var(--screen-margin)));
+  }
+  .post-fab:hover { transform: translateY(-2px); }
+
+  /* --- 4.6 Прочие вкладки: аккуратная центрированная колонка ---------- */
+  #favorites-list { padding-top: var(--sp-6); }
+  .mylistings-list, .conv-list { padding-top: var(--sp-6); }
+  .conv-card, .mylistings-card { transition: box-shadow 150ms ease; }
+  .conv-card:hover, .mylistings-card:hover { box-shadow: var(--shadow-pop); }
+
+  .empty-state { min-height: calc(100vh - var(--topnav-h) - 80px); min-height: calc(100svh - var(--topnav-h) - 80px); }
+
+  /* --- 4.7 Модалки: чуть крупнее на десктопе -------------------------- */
+  .auth-sheet, .filter-sheet { width: 520px; }
+  .detail-sheet { width: min(860px, calc(100vw - 96px)); }
+  #listing-sheet { width: min(780px, calc(100vw - 96px)); }
+  .chat-sheet { width: min(780px, calc(100vw - 96px)); }
+
+  /* Деталь объявления: фото слева, информация справа */
+  .detail-sheet-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    column-gap: var(--sp-6);
+    align-items: start;
+  }
+  .detail-sheet-body > * { grid-column: 2; }
+  .detail-sheet-body > .detail-photo-wrap,
+  .detail-sheet-body > .detail-photo-gallery,
+  .detail-sheet-body > .detail-photo-placeholder {
+    grid-column: 1;
+    grid-row: 1 / span 30;
+    position: sticky;
+    top: 0;
+  }
+  .detail-photo-arrow { width: 38px; height: 38px; }
+  .detail-photo-arrow svg { width: 20px; height: 20px; }
+
+  /* Полоса прокрутки в модалках — тонкая и аккуратная */
+  .auth-sheet, .filter-sheet, .listing-sheet, .detail-sheet, .chat-sheet-body {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-200) transparent;
+  }
+
+  /* Свайп на десктопе: карточка не должна быть вытянутой «полоской»
+     на всю высоту монитора. Стек получает разумные пропорции (примерно
+     как у карточки в Tinder) и центрируется по вертикали. Карточки внутри
+     позиционируются absolute + inset:0, поэтому достаточно ограничить
+     сам .swipe-stage — они подстроятся под него. */
+  .swipe-stage {
+    flex: 0 1 auto;
+    width: min(480px, 100%);
+    height: min(640px, 100%);
+    align-self: center;
+    margin-top: auto;
+    margin-bottom: auto;
+  }
+  .swipe-card { border-radius: 28px; }
+
+  /* Клавиатурный фокус заметнее там, где есть клавиатура */
+  .tab-item:focus-visible, .cat-tile:focus-visible, .listing-card:focus-visible {
+    outline: 2px solid var(--ink-700);
+    outline-offset: 3px;
+  }
+}
+
+/* =========================================================================
+   5. ШИРОКИЕ ЭКРАНЫ  (≥ 1280px): лента → 5 колонок
+   ========================================================================= */
+@media (min-width: 1280px) {
+  :root { --content-max: 1360px; }
+  .listing-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .mylistings-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .conv-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* =========================================================================
+   6. БОЛЬШИЕ МОНИТОРЫ  (≥ 1600px): не растягиваем контент бесконечно
+   ========================================================================= */
+@media (min-width: 1600px) {
+  :root { --content-max: 1520px; --topnav-h: 72px; }
+  html { font-size: 17px; }   /* всё на rem пропорционально крупнее */
+}
+
+/* =========================================================================
+   7. УСТРОЙСТВА С МЫШЬЮ / ТАЧЕМ
+   hover-эффекты только там, где есть hover; touch-цели ≥ 44px там, где палец
+   ========================================================================= */
+@media (hover: none) and (pointer: coarse) {
+  .listing-card:hover, .cat-tile:hover, .mylistings-card:hover, .conv-card:hover {
+    transform: none;
+    box-shadow: var(--shadow-card);
+  }
+  .listing-fav { width: 36px; height: 36px; }
+  .detail-photo-arrow { width: 40px; height: 40px; }
+  .detail-photo-dot { width: 8px; height: 8px; }
+  .chat-sheet-back { width: 42px; height: 42px; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .cat-row { scrollbar-width: thin; }
+}
+
+/* Печать: только полезный контент */
+@media print {
+  .tabbar, .post-fab, .sheet-overlay, .swipe-overlay { display: none !important; }
+  body, .app.has-tabbar { height: auto !important; overflow: visible !important; }
+  .page-scroll { overflow: visible !important; }
 }
 </style>
 <!-- Leaflet: карта ручного выбора координат в форме объявления (клик/тап
@@ -6589,6 +7137,31 @@ textarea.sheet-input {
     top.appendChild(titleEl);
     top.appendChild(timeEl);
 
+    // ИСПРАВЛЕНИЕ (найдено при тестировании: "дата наслаивается на Х") —
+    // deleteBtn раньше был position:absolute в правом верхнем углу ВСЕЙ
+    // карточки (.conv-card-delete-btn), независимо от потока документа, а
+    // .conv-card-time (дата) в это же время лежала в обычном потоке
+    // flex-строки .conv-card-top с justify-content: space-between — оба
+    // тянулись к одному и тому же правому краю и перекрывались. Теперь
+    // deleteBtn — третий элемент ВНУТРИ того же flex-ряда top (после
+    // заголовка и даты), а не абсолютно спозиционированный поверх всей
+    // карточки — flexbox сам расставляет все три без перекрытия. См.
+    // также CSS .conv-card-delete-btn — position:absolute убран оттуда.
+    var deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "conv-card-delete-btn";
+    deleteBtn.setAttribute("aria-label", t("chat.deleteConversation"));
+    deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    deleteBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (!window.confirm(t("chat.deleteConversationConfirm"))) return;
+      deleteBtn.disabled = true;
+      window.DzApi.hideConversation(conv.id)
+        .then(function () { refreshConversations(); })
+        .catch(function () { deleteBtn.disabled = false; });
+    });
+    top.appendChild(deleteBtn);
+
     var previewRow = document.createElement("div");
     previewRow.style.display = "flex";
     previewRow.style.alignItems = "center";
@@ -6633,25 +7206,6 @@ textarea.sheet-input {
         window.DzChat.open(conv.id, { listingTitle: conv.listing_title });
       }
     });
-
-    // "Удалить чат у себя" (по запросу в чате) — не трогает переписку у
-    // второй стороны (см. handleHideConversation на бэкенде), только
-    // скрывает диалог из своего списка. stopPropagation — иначе клик по
-    // крестику также сработал бы как клик по всей карточке и открыл чат.
-    var deleteBtn = document.createElement("button");
-    deleteBtn.type = "button";
-    deleteBtn.className = "conv-card-delete-btn";
-    deleteBtn.setAttribute("aria-label", t("chat.deleteConversation"));
-    deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
-    deleteBtn.addEventListener("click", function (e) {
-      e.stopPropagation();
-      if (!window.confirm(t("chat.deleteConversationConfirm"))) return;
-      deleteBtn.disabled = true;
-      window.DzApi.hideConversation(conv.id)
-        .then(function () { refreshConversations(); })
-        .catch(function () { deleteBtn.disabled = false; });
-    });
-    card.appendChild(deleteBtn);
 
     return card;
   }
@@ -9686,4 +10240,4 @@ textarea.sheet-input {
 </script>
 
 </body>
-                                                                                                                                                </html>
+   </html>
