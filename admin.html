@@ -365,6 +365,9 @@ tr.is-clickable:hover { background: var(--paper-50); }
     <div class="nav-item" data-section="analytics">
       <span>Активность</span>
     </div>
+    <div class="nav-item" data-section="broadcast">
+      <span>Рассылка</span>
+    </div>
     <div class="sidebar-footer">
       <div class="who" id="who-am-i"></div>
       <button class="btn btn-ghost" style="width:100%" id="logout-btn" type="button">Выйти</button>
@@ -486,6 +489,29 @@ tr.is-clickable:hover { background: var(--paper-50); }
       </div>
     </div>
 
+    <!-- Рассылка всем пользователям (POST /api/admin/broadcast). Отправка
+         ОДНОМУ пользователю по ID уже была в разделе "Пользователи"
+         (send-message-btn выше) — здесь только массовая рассылка, без
+         дублирования того, что уже работает. -->
+    <div id="view-broadcast" hidden>
+      <h2>Рассылка</h2>
+      <p class="lead">Сообщение придёт КАЖДОМУ зарегистрированному пользователю в раздел «Сообщение от администрации». Действие нельзя отменить и нельзя отправить повторно только тем, кто ещё не получил.</p>
+      <div class="user-action-card">
+        <div class="field">
+          <label for="broadcast-text-input">Текст сообщения</label>
+          <textarea id="broadcast-text-input" maxlength="2000" placeholder="Например: с 1 октября меняются правила размещения объявлений…"></textarea>
+          <div style="text-align:right;font-size:11.5px;color:var(--text-400);margin-top:4px" id="broadcast-char-count">0 / 2000</div>
+        </div>
+        <label style="display:flex;align-items:flex-start;gap:8px;background:var(--amber-100);border:1px solid #F3E1AE;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#7A5E12;margin-bottom:14px;line-height:1.45;cursor:pointer">
+          <input type="checkbox" id="broadcast-confirm-checkbox" style="margin-top:2px;flex-shrink:0">
+          Подтверждаю отправку ВСЕМ зарегистрированным пользователям
+        </label>
+        <div class="action-row">
+          <button class="btn btn-primary" id="broadcast-send-btn" type="button" style="width:auto" disabled>Отправить всем</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Нижний таб-бар — видим только на узком экране, дублирует .nav-item
@@ -504,6 +530,9 @@ tr.is-clickable:hover { background: var(--paper-50); }
     </div>
     <div class="nav-item" data-section="analytics">
       <span>Активность</span>
+    </div>
+    <div class="nav-item" data-section="broadcast">
+      <span>Рассылка</span>
     </div>
   </nav>
 </div>
@@ -643,6 +672,7 @@ tr.is-clickable:hover { background: var(--paper-50); }
     "review-reports": "view-review-reports",
     "users": "view-users",
     "analytics": "view-analytics",
+    "broadcast": "view-broadcast",
   };
 
   function activateSection(name) {
@@ -974,6 +1004,62 @@ tr.is-clickable:hover { background: var(--paper-50); }
   });
 
   // -----------------------------------------------------------------------
+  // Рассылка всем пользователям (POST /api/admin/broadcast). Кнопка
+  // "Отправить всем" заблокирована, пока не отмечен чекбокс подтверждения
+  // — та же защита от "нажал не туда", что window.confirm() у бана,
+  // просто без модального окна (тут решение обдуманнее одного клика:
+  // текст уже набран, отправка необратима и касается ВСЕХ, а не одного
+  // конкретного человека, которого видно в строке жалобы).
+  // -----------------------------------------------------------------------
+
+  var BROADCAST_MAX_LEN = 2000;
+  var broadcastTextInput = document.getElementById("broadcast-text-input");
+  var broadcastCharCount = document.getElementById("broadcast-char-count");
+  var broadcastConfirmCheckbox = document.getElementById("broadcast-confirm-checkbox");
+  var broadcastSendBtn = document.getElementById("broadcast-send-btn");
+
+  function updateBroadcastSendEnabled() {
+    var hasText = broadcastTextInput.value.trim().length > 0;
+    var withinLimit = broadcastTextInput.value.length <= BROADCAST_MAX_LEN;
+    broadcastSendBtn.disabled = !(hasText && withinLimit && broadcastConfirmCheckbox.checked);
+  }
+
+  broadcastTextInput.addEventListener("input", function () {
+    var len = broadcastTextInput.value.length;
+    broadcastCharCount.textContent = len + " / " + BROADCAST_MAX_LEN;
+    broadcastCharCount.style.color = len > BROADCAST_MAX_LEN ? "var(--danger-600)" : "var(--text-400)";
+    updateBroadcastSendEnabled();
+  });
+  broadcastConfirmCheckbox.addEventListener("change", updateBroadcastSendEnabled);
+
+  broadcastSendBtn.addEventListener("click", function () {
+    var text = broadcastTextInput.value.trim();
+    if (!text) { showToast("Введите текст сообщения"); return; }
+    if (text.length > BROADCAST_MAX_LEN) { showToast("Слишком длинный текст"); return; }
+    if (!broadcastConfirmCheckbox.checked) { showToast("Подтвердите отправку всем пользователям"); return; }
+
+    broadcastSendBtn.disabled = true;
+    broadcastSendBtn.textContent = "Отправка…";
+
+    request("/api/admin/broadcast", { method: "POST", body: { text: text } })
+      .then(function (data) {
+        var sent = (data && typeof data.sent === "number") ? data.sent : 0;
+        showToast("Отправлено " + sent + " пользователям");
+        broadcastTextInput.value = "";
+        broadcastCharCount.textContent = "0 / " + BROADCAST_MAX_LEN;
+        broadcastCharCount.style.color = "var(--text-400)";
+        broadcastConfirmCheckbox.checked = false;
+        broadcastSendBtn.textContent = "Отправить всем";
+        updateBroadcastSendEnabled();
+      })
+      .catch(function () {
+        showToast("Не удалось отправить рассылку");
+        broadcastSendBtn.textContent = "Отправить всем";
+        updateBroadcastSendEnabled();
+      });
+  });
+
+  // -----------------------------------------------------------------------
   // Активность сайта (по запросу: "актив сайта смотреть"). Один запрос
   // отдаёт сводку + 30-дневные ряды + топ категорий разом (см.
   // handleAdminGetAnalytics на бэкенде) — здесь только рендер.
@@ -1078,4 +1164,4 @@ tr.is-clickable:hover { background: var(--paper-50); }
 })();
 </script>
 </body>
-   </html>
+</html>
