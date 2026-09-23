@@ -640,3 +640,160 @@
     swipeListing: swipeListing,
   };
 })();
+
+/**
+ * DzAdminApi — отдельный клиент для админ-панели (см. admin.html).
+ *
+ * Намеренно НЕ часть DzApi выше: у админки своя авторизация
+ * (POST /api/admin/login, Bearer-токен admin_session:<token> в KV на
+ * бэкенде — см. requireAdminAuth в index.js), полностью независимая от
+ * обычной пользовательской сессии. DzApi.request() выше автоматически
+ * подставляет ОБЫЧНЫЙ токен пользователя (dz_token) в каждый запрос —
+ * если бы DzAdminApi переиспользовал ту же функцию, то в браузере, где
+ * человек залогинен и как обычный пользователь (в основной вкладке
+ * home.html), и как админ (в admin.html), запрос к /api/admin/* ушёл бы
+ * с пользовательским токеном вместо админского и получил бы 401: сервер
+ * ищет admin_session:<этот_токен> в KV, а найдёт (если найдёт) обычный
+ * session:<токен>. Отдельный ключ в localStorage (dz_admin_token, не
+ * dz_token) и отдельная request()-обёртка ниже устраняют эту путаницу
+ * физически, а не соглашением "не перепутать руками".
+ */
+(function () {
+  "use strict";
+
+  var API_BASE_URL = "https://dzintars-api.estoniabolt.workers.dev";
+  var ADMIN_TOKEN_KEY = "dz_admin_token";
+
+  function getAdminToken() {
+    try {
+      return localStorage.getItem(ADMIN_TOKEN_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setAdminToken(token) {
+    try {
+      localStorage.setItem(ADMIN_TOKEN_KEY, token);
+    } catch (e) { /* storage unavailable */ }
+  }
+
+  function clearAdminToken() {
+    try {
+      localStorage.removeItem(ADMIN_TOKEN_KEY);
+    } catch (e) { /* storage unavailable */ }
+  }
+
+  function isAdminLoggedIn() {
+    return !!getAdminToken();
+  }
+
+  function adminRequest(path, options) {
+    options = options || {};
+    var headers = Object.assign(
+      { "Content-Type": "application/json" },
+      options.headers || {}
+    );
+
+    var token = getAdminToken();
+    if (token) {
+      headers["Authorization"] = "Bearer " + token;
+    }
+
+    return fetch(API_BASE_URL + path, {
+      method: options.method || "GET",
+      headers: headers,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+    })
+      .then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (data) {
+          if (!res.ok) {
+            var err = new Error(data.error || "request_failed");
+            err.code = data.error || "request_failed";
+            err.status = res.status;
+            throw err;
+          }
+          return data;
+        });
+      });
+  }
+
+  function adminLogin(login, password) {
+    return adminRequest("/api/admin/login", {
+      method: "POST",
+      body: { login: login, password: password },
+    }).then(function (data) {
+      setAdminToken(data.token);
+      return data.admin;
+    });
+  }
+
+  function adminLogout() {
+    return adminRequest("/api/admin/logout", { method: "POST" })
+      .catch(function () { /* даже если запрос не прошёл, чистим локально */ })
+      .then(function () {
+        clearAdminToken();
+      });
+  }
+
+  function adminFetchMe() {
+    if (!isAdminLoggedIn()) return Promise.resolve(null);
+    return adminRequest("/api/admin/me")
+      .then(function (data) {
+        return data.admin;
+      })
+      .catch(function (err) {
+        // Токен истёк/отозван — разлогиниваем локально, тем же паттерном,
+        // что fetchMe() у обычного DzApi выше в этом файле.
+        if (err.status === 401) {
+          clearAdminToken();
+        }
+        return null;
+      });
+  }
+
+  // Сообщение ОДНОМУ пользователю по его id (POST
+  // /api/admin/users/{id}/message на бэкенде — эндпоинт уже существовал,
+  // здесь просто первый клиент к нему).
+  function adminSendMessage(userId, text) {
+    return adminRequest("/api/admin/users/" + encodeURIComponent(userId) + "/message", {
+      method: "POST",
+      body: { text: text },
+    });
+  }
+
+  // Рассылка ВСЕМ зарегистрированным пользователям (POST
+  // /api/admin/broadcast). Возвращает { ok, sent } — sent показывает,
+  // скольким реально ушло (см. handleAdminBroadcastMessage в index.js).
+  function adminBroadcastMessage(text) {
+    return adminRequest("/api/admin/broadcast", {
+      method: "POST",
+      body: { text: text },
+    });
+  }
+
+  function adminErrorMessage(err) {
+    if (!err) return "";
+    var code = err.code || err.message;
+    switch (code) {
+      case "unauthorized": return "Sesija beigusies. Lūdzu, ienāc vēlreiz.";
+      case "TEXT_REQUIRED": return "Ievadi ziņojuma tekstu.";
+      case "TEXT_TOO_LONG": return "Ziņojums pārāk garš (maksimums 2000 rakstzīmju).";
+      case "invalid_credentials": return "Nepareizs lietotājvārds vai parole.";
+      case "too_many_attempts": return "Pārāk daudz mēģinājumu. Mēģini vēlreiz pēc 15 minūtēm.";
+      case "not_found": return "Lietotājs ar šādu ID nav atrasts.";
+      case "invalid_id": return "Norādi lietotāja ID.";
+      default: return "Kļūda: " + code;
+    }
+  }
+
+  window.DzAdminApi = {
+    isLoggedIn: isAdminLoggedIn,
+    login: adminLogin,
+    logout: adminLogout,
+    fetchMe: adminFetchMe,
+    sendMessage: adminSendMessage,
+    broadcastMessage: adminBroadcastMessage,
+    errorMessage: adminErrorMessage,
+  };
+})();
