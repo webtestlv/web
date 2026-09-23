@@ -1610,6 +1610,59 @@ textarea.sheet-input {
   font-size: var(--fs-body);
 }
 
+/* ===================== Lente: "Rādīt vēl" / подгрузка при прокрутке ===================== */
+/* #listing-load-sentinel — не элемент интерфейса, у него нет ни размера,
+   ни отступов: он существует только как цель для IntersectionObserver
+   (см. скрипт "Version 1 — listing feed" ниже). Высота 1px нужна, чтобы
+   observer вообще мог видеть пересечение с viewport. */
+#listing-load-sentinel { height: 1px; }
+
+.listing-load-more-row {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-5) var(--sp-4) var(--sp-6);
+}
+
+.listing-load-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 44px;
+  padding: 0 var(--sp-6);
+  border: 1px solid var(--line-200);
+  border-radius: var(--radius-pill);
+  background: var(--paper-0);
+  color: var(--ink-900);
+  font-size: var(--fs-subhead);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+.listing-load-more-btn:hover { background: var(--paper-50); }
+.listing-load-more-btn:disabled { cursor: default; opacity: 0.7; }
+
+.listing-load-more-spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--line-200);
+  border-top-color: var(--ink-900);
+  animation: listing-load-spin 700ms linear infinite;
+}
+/* Спиннер сверстан всегда, но показывается только пока идёт запрос —
+   is-loading ставится/снимается в JS вокруг вызова getListings(). */
+.listing-load-more-btn.is-loading .listing-load-more-spinner { display: inline-block; }
+.listing-load-more-btn.is-loading .listing-load-more-label { opacity: 0.7; }
+
+@keyframes listing-load-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .listing-load-more-spinner { animation: none; }
+}
+
 /* ===================== "Messages" tab — conversation list ===================== */
 /* Список диалогов повторяет структуру .mylistings-card (фото-плейсхолдер +
    тело + мета), просто с другим содержимым тела — см. раздел 9 ТЗ про
@@ -2903,7 +2956,10 @@ body { overflow-x: hidden; }
   .app.has-tabbar .tabbar-safe-area { display: none; }
   .app.has-tabbar .page-scroll { order: 1; }
 
-  /* --- 4.2 Верхняя навигация ------------------------------------------ */
+  /* --- 4.2 Верхняя навигация -------------------------------------------
+     Тот же градиент, что у .hero-banner (linear-gradient(135deg, #2E8FA3
+     → var(--ink-900))), чтобы верх страницы читался одним синим блоком,
+     а не белой полоской над синим баннером. */
   .tabbar {
     position: sticky;
     top: 0;
@@ -2914,9 +2970,9 @@ body { overflow-x: hidden; }
     gap: var(--sp-2);
     height: var(--topnav-h);
     padding: 0 var(--screen-margin);
-    background: var(--paper-0);
-    border-bottom: 1px solid var(--line-100);
-    box-shadow: 0 2px 12px rgba(13, 59, 67, 0.05);
+    background: linear-gradient(135deg, #2E8FA3 0%, var(--ink-900) 100%);
+    border-bottom: none;
+    box-shadow: 0 2px 12px rgba(13, 59, 67, 0.16);
   }
 
   .tab-item {
@@ -2924,18 +2980,18 @@ body { overflow-x: hidden; }
     gap: var(--sp-2);
     padding: 10px 18px;
     border-radius: var(--radius-pill);
-    color: var(--text-600);
+    color: rgba(255, 255, 255, 0.72);
     transition: background 150ms ease, color 150ms ease;
   }
   .tab-item svg { width: 22px; height: 22px; }
   .tab-item span { font-size: var(--fs-subhead); font-weight: 500; }
-  .tab-item:hover { background: var(--paper-50); color: var(--text-900); }
+  .tab-item:hover { background: rgba(255, 255, 255, 0.1); color: #FFFFFF; }
   .tab-item.is-active {
-    background: rgba(13, 59, 67, 0.08);
-    color: var(--ink-900);
+    background: rgba(255, 255, 255, 0.16);
+    color: #FFFFFF;
   }
-  .tab-item.is-active svg { color: var(--ink-900); }
-  .tab-unread-badge { top: -6px; right: -10px; }
+  .tab-item.is-active svg { color: #FFFFFF; }
+  .tab-unread-badge { top: -6px; right: -10px; box-shadow: 0 0 0 2px var(--ink-900); }
 
   /* Ширина контента: центрированная колонка, а не растянутая на весь монитор */
   .page-scroll > .tab-panel {
@@ -3065,10 +3121,16 @@ body { overflow-x: hidden; }
   }
   .swipe-card { border-radius: 28px; }
 
-  /* Клавиатурный фокус заметнее там, где есть клавиатура */
-  .tab-item:focus-visible, .cat-tile:focus-visible, .listing-card:focus-visible {
+  /* Клавиатурный фокус заметнее там, где есть клавиатура. .tab-item сидит
+     на тёмном градиенте — тёмная обводка там была бы не видна, поэтому
+     у неё отдельное, светлое кольцо. */
+  .cat-tile:focus-visible, .listing-card:focus-visible {
     outline: 2px solid var(--ink-700);
     outline-offset: 3px;
+  }
+  .tab-item:focus-visible {
+    outline: 2px solid #FFFFFF;
+    outline-offset: 2px;
   }
 }
 
@@ -3235,6 +3297,22 @@ body { overflow-x: hidden; }
           </div>
         </article>
       </noscript>
+    </div>
+
+    <!-- Пагинация ленты: сначала показываем ту же кнопку, что раньше
+         не рендерилась вовсе (см. DzListingFeed.loadPage ниже) — по клику
+         догружает следующую порцию. #listing-load-sentinel — невидимый
+         маркер чуть выше кнопки; когда он попадает в область видимости
+         (IntersectionObserver), подгрузка стартует сама, без клика — это
+         и есть "подгрузка при прокрутке". Кнопка при этом никуда не
+         девается: на медленной сети/офлайне срабатывает как ручной
+         повтор, если авто-подгрузка не получилась. -->
+    <div id="listing-load-sentinel" aria-hidden="true"></div>
+    <div class="listing-load-more-row" id="listing-load-more-row" hidden>
+      <button type="button" class="listing-load-more-btn" id="listing-load-more-btn">
+        <span class="listing-load-more-label" data-i18n="listing.loadMore">Rādīt vēl</span>
+        <span class="listing-load-more-spinner" aria-hidden="true"></span>
+      </button>
     </div>
 
     </div>
@@ -5092,9 +5170,54 @@ body { overflow-x: hidden; }
   // search-input и filter-sheet (см. DzListingFilters ниже).
   var currentFeedFilters = {};
 
+  // ---------------------------------------------------------------------
+  // Пагинация. Бэкенд отдаёт { listings, page, limit, total, hasMore } —
+  // это было видно из ответа /api/listings и раньше, но фронт всегда
+  // запрашивал только page по умолчанию (первую) и hasMore нигде не
+  // читал, поэтому всё начиная с 21-го объявления было недостижимо ни
+  // кнопкой, ни скроллом. currentPage/feedHasMore/isLoadingMore живут на
+  // уровне модуля, а не внутри loadFeed(), потому что подгрузка следующей
+  // страницы (loadMore) и первая загрузка (loadFeed) — разные вызовы,
+  // которым нужно делить одно и то же состояние "какая страница сейчас".
+  var currentPage = 1;
+  var feedHasMore = false;
+  var isLoadingMore = false;
+
+  function getLoadMoreEls() {
+    return {
+      row: document.getElementById("listing-load-more-row"),
+      btn: document.getElementById("listing-load-more-btn"),
+      sentinel: document.getElementById("listing-load-sentinel"),
+    };
+  }
+
+  function setLoadMoreVisible(visible) {
+    var els = getLoadMoreEls();
+    if (els.row) els.row.hidden = !visible;
+  }
+
+  function setLoadMoreBusy(busy) {
+    var els = getLoadMoreEls();
+    if (els.btn) {
+      els.btn.classList.toggle("is-loading", busy);
+      els.btn.disabled = busy;
+    }
+  }
+
+  function appendFavoriteState(card, listing, favoriteIds) {
+    if (favoriteIds.indexOf(String(listing.id)) !== -1) {
+      var favBtn = card.querySelector(".listing-fav");
+      if (favBtn) favBtn.classList.add("is-saved");
+    }
+  }
+
   function loadFeed() {
     var grid = document.getElementById("listing-grid");
     if (!grid || !window.DzApi) return;
+
+    currentPage = 1;
+    feedHasMore = false;
+    setLoadMoreVisible(false);
 
     grid.innerHTML = "";
     for (var i = 0; i < LISTING_COUNT; i++) {
@@ -5109,7 +5232,9 @@ body { overflow-x: hidden; }
       ? window.DzApi.getFavorites().catch(function () { return []; })
       : Promise.resolve([]);
 
-    Promise.all([window.DzApi.getListings(currentFeedFilters), favoritesPromise])
+    var requestParams = Object.assign({}, currentFeedFilters, { page: 1 });
+
+    Promise.all([window.DzApi.getListings(requestParams), favoritesPromise])
       .then(function (results) {
         var data = results[0];
         var favoriteIds = results[1] || [];
@@ -5122,17 +5247,67 @@ body { overflow-x: hidden; }
         }
         listings.forEach(function (listing) {
           var card = buildListingCard(listing);
-          if (favoriteIds.indexOf(String(listing.id)) !== -1) {
-            var favBtn = card.querySelector(".listing-fav");
-            if (favBtn) favBtn.classList.add("is-saved");
-          }
+          appendFavoriteState(card, listing, favoriteIds);
           grid.appendChild(card);
         });
+
+        // hasMore приходит прямо в ответе — доверяем ему, а не считаем
+        // "листинги.length === limit" сами: сравнение со своим же
+        // LISTING_COUNT легко разъехалось бы с реальным лимитом бэкенда
+        // при следующей правке любой из сторон.
+        feedHasMore = !!data.hasMore;
+        setLoadMoreVisible(feedHasMore);
       })
       .catch(function () {
         // Сеть недоступна / бэкенд не отвечает — не оставляем скелетоны
         // висеть вечно, показываем нейтральное сообщение вместо них.
         renderNoResultsState(grid);
+      });
+  }
+
+  function loadMoreFeed() {
+    var grid = document.getElementById("listing-grid");
+    if (!grid || !window.DzApi) return;
+    if (isLoadingMore || !feedHasMore) return;
+
+    isLoadingMore = true;
+    setLoadMoreBusy(true);
+
+    var nextPage = currentPage + 1;
+    var requestParams = Object.assign({}, currentFeedFilters, { page: nextPage });
+
+    var favoritesPromise = (window.DzApi.isLoggedIn())
+      ? window.DzApi.getFavorites().catch(function () { return []; })
+      : Promise.resolve([]);
+
+    Promise.all([window.DzApi.getListings(requestParams), favoritesPromise])
+      .then(function (results) {
+        var data = results[0];
+        var favoriteIds = results[1] || [];
+        var listings = data.listings || [];
+
+        // Ничего не пришло — страницы кончились, даже если сервер не
+        // выставил hasMore=false явно (защита от рассинхрона фронта и
+        // бэкенда на будущее, не должно срабатывать в норме).
+        listings.forEach(function (listing) {
+          var card = buildListingCard(listing);
+          appendFavoriteState(card, listing, favoriteIds);
+          grid.appendChild(card);
+        });
+
+        currentPage = nextPage;
+        feedHasMore = !!data.hasMore && listings.length > 0;
+        setLoadMoreVisible(feedHasMore);
+      })
+      .catch(function () {
+        // Подгрузка следующей страницы не удалась (сеть/бэкенд) — первая
+        // порция уже на экране и никуда не девается, поэтому здесь просто
+        // оставляем кнопку активной для повторной попытки, а не заменяем
+        // всю ленту сообщением об ошибке.
+      })
+      .finally(function () {
+        isLoadingMore = false;
+        setLoadMoreBusy(false);
       });
   }
 
@@ -5149,6 +5324,38 @@ body { overflow-x: hidden; }
 
   document.addEventListener("DOMContentLoaded", function () {
     loadFeed();
+
+    var loadMoreEls = getLoadMoreEls();
+    if (loadMoreEls.btn) {
+      loadMoreEls.btn.addEventListener("click", loadMoreFeed);
+    }
+
+    // Подгрузка при прокрутке: наблюдаем за невидимым якорем чуть ниже
+    // последней карточки. root указан явно на .page-scroll — это и есть
+    // реальный скроллящийся контейнер (см. точно такой же паттерн чуть
+    // ниже, у sticky-search/hero-banner observer'а). Без явного root
+    // IntersectionObserver по умолчанию сравнивает с окном браузера, а
+    // не с этим div'ом; на телефоне это совпадало (там прокручивается
+    // всё тело страницы целиком), поэтому баг был не виден — но на
+    // десктопе, где скроллится именно .page-scroll, а не окно, якорь
+    // никогда не "входил" в окно браузера, и подгрузка молча не
+    // срабатывала при прокрутке колесом мыши до конца ленты.
+    // rootMargin поднимает точку срабатывания на 320px раньше, чем якорь
+    // реально войдёт в видимую часть — иначе на быстрой прокрутке человек
+    // долетал бы до конца ленты раньше, чем успевает прийти ответ
+    // сервера, и на секунду видел бы пустоту. IntersectionObserver, а не
+    // 'scroll' — не требует throttle/debounce и не срабатывает, пока сама
+    // лента не занимает весь контейнер (когда прокрутки ещё нет и
+    // observe() просто ничего не видит).
+    var feedScrollContainer = document.querySelector(".page-scroll");
+    if (loadMoreEls.sentinel && feedScrollContainer && "IntersectionObserver" in window) {
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) loadMoreFeed();
+        });
+      }, { root: feedScrollContainer, rootMargin: "320px 0px" });
+      observer.observe(loadMoreEls.sentinel);
+    }
 
     // Один делегированный обработчик на весь grid: работает для карточек,
     // которые есть сейчас, и для любых, что появятся здесь позже (важно,
