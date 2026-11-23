@@ -6,6 +6,8 @@
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://dzintars-api.estoniabolt.workers.dev; connect-src 'self' https://dzintars-api.estoniabolt.workers.dev; object-src 'none'; base-uri 'self'; form-action 'self'">
+<style id="dz-antiframe">html{display:none!important}</style><script>try{if(self===top){var a=document.getElementById("dz-antiframe");a&&a.remove()}else top.location=self.location}catch{}</script>
 <title>Dzintars — админка</title>
 <style>
 /* ═════════ Цвета: светлая тема по умолчанию, тёмная — по настройке системы ═════════ */
@@ -384,6 +386,7 @@ input[type=checkbox],input[type=radio]{width:20px;height:20px;accent-color:var(-
     <p class="login-note" id="loginNote" role="status" hidden></p>
     <div class="field"><label for="liLogin">Логин</label><input id="liLogin" name="login" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
     <div class="field"><label for="liPass">Пароль</label><input id="liPass" name="password" type="password" autocomplete="current-password"></div>
+    <div class="field" id="liOtpWrap" hidden><label for="liOtp">Код из приложения-аутентификатора</label><input id="liOtp" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" spellcheck="false"></div>
     <div class="form-error" id="loginErr" role="alert" hidden></div>
     <button class="btn btn-block" id="loginBtn" type="submit">Войти</button>
     <p class="login-api" id="loginApi" hidden></p>
@@ -400,7 +403,7 @@ input[type=checkbox],input[type=radio]{width:20px;height:20px;accent-color:var(-
       <span class="search-ico ico" data-ico="search"></span>
       <div id="gsearchRes" class="search-res" role="listbox" aria-label="Результаты поиска" hidden></div>
     </div>
-    <div class="who"><span id="whoami" class="who-name"></span><button class="btn btn-ghost btn-sm on-dark" id="logoutBtn" type="button">Выйти</button></div>
+    <div class="who"><span id="whoami" class="who-name"></span><button class="btn btn-ghost btn-sm on-dark" id="secBtn" type="button">Безопасность</button><button class="btn btn-ghost btn-sm on-dark" id="logoutBtn" type="button">Выйти</button></div>
   </header>
   <nav class="nav" id="nav" aria-label="Разделы">
     <a class="nav-item" href="#/" data-nav="overview"><span class="ico" data-ico="home"></span>Обзор</a>
@@ -545,7 +548,11 @@ const mkStore = (get) => ({
 });
 const store = mkStore(() => window.localStorage);
 const sstore = mkStore(() => window.sessionStorage);
+// Version 17: адрес API НЕЛЬЗЯ подменить ссылкой вида ?api=… — раньше при открытии такой ссылки сохранённый админский токен
+// (а при входе — логин и пароль) уходил на чужой сервер. Подмена разрешена только при локальной разработке (localhost / 127.0.0.1).
+const IS_LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
 const API_OVERRIDDEN = (function () {
+  if (!IS_LOCAL) { sstore.del(API_KEY); return null; }   // в продакшене любые сохранённые подмены стираются
   let cand = null;
   try { cand = new URLSearchParams(location.search).get('api'); } catch (e) { /* ignore */ }
   if (cand) sstore.set(API_KEY, cand); else cand = sstore.get(API_KEY);
@@ -633,7 +640,15 @@ const ERRORS = {
   db_not_bound: 'Сервер не настроен: нет базы данных.',
   internal_error: 'Внутренняя ошибка сервера. Попробуйте чуть позже.',
   missing_login: 'Введите логин.',
-  password_too_short: 'Пароль слишком короткий.',
+  password_too_short: 'Пароль слишком короткий (не меньше 12 символов).',
+  password_too_common: 'Слишком простой пароль: выберите другой.',
+  mismatch: 'Новые пароли не совпадают.',
+  PASSWORD_WRONG: 'Текущий пароль неверный.',
+  PASSWORD_SAME: 'Новый пароль совпадает с текущим.',
+  totp_required: 'Введите 6-значный код из приложения-аутентификатора.',
+  invalid_otp: 'Неверный или уже использованный код. Подождите следующий и повторите.',
+  totp_already_on: 'Двухфакторная защита уже включена.',
+  totp_not_started: 'Сначала получите секретный ключ.',
 };
 function errText(e, over) {
   if (!e) return 'Неизвестная ошибка';
@@ -934,6 +949,7 @@ function showLogin(msg, isExpired) {
   } else apiNote.hidden = true;
   setTitle('Вход');
   $('#liPass').value = '';
+  const otpW = $('#liOtpWrap'); if (otpW) { otpW.hidden = true; $('#liOtp').value = ''; }
   (isExpired && $('#liLogin').value ? $('#liPass') : $('#liLogin')).focus();
 }
 function expireSession(msg) {
@@ -957,13 +973,88 @@ async function doLogin(ev) {
   if (!login || !password) { err.hidden = false; err.textContent = 'Введите логин и пароль.'; return; }
   await withBusy(btn, async () => {
     try {
-      const r = await api('POST', '/api/admin/login', { body: { login, password }, auth: false });
+      const otpW = $('#liOtpWrap');
+      const otp = otpW && !otpW.hidden ? $('#liOtp').value.trim() : '';
+      const r = await api('POST', '/api/admin/login', { body: { login, password, otp }, auth: false });
       state.token = r.token; state.admin = r.admin; store.set(TOKEN_KEY, r.token);
       $('#loginNote').hidden = true;
       showApp();
-    } catch (e) { err.hidden = false; err.textContent = errText(e); $('#liPass').select(); }
+    } catch (e) {
+      err.hidden = false; err.textContent = errText(e);
+      if (e && e.code === 'totp_required' && otpW) { otpW.hidden = false; $('#liOtp').focus(); }
+      else if (e && e.code === 'invalid_otp') { $('#liOtp').select(); }
+      else $('#liPass').select();
+    }
   });
 }
+/* ═══════════════════ Безопасность аккаунта: двухфакторная защита и смена пароля (Version 17) ═══════════════════ */
+function secInput(attrs) { return h('input', Object.assign({ autocomplete: 'off', spellcheck: 'false' }, attrs)); }
+function securityMenu() {
+  const on = !!(state.admin && state.admin.totp_on);
+  openModal({
+    title: 'Безопасность аккаунта',
+    body: h('div',
+      h('div.modal-note', 'Двухфакторная защита: ' + (on ? 'включена. Для входа нужен пароль и код из приложения.' : 'выключена. Рекомендуется включить: пароль админа — главный ключ ко всему сайту.')),
+      h('p', on ? h('button.btn.btn-ghost', { type: 'button', onclick: disable2fa }, 'Выключить двухфакторную защиту')
+                : h('button.btn', { type: 'button', onclick: enable2fa }, 'Включить двухфакторную защиту')),
+      h('p', h('button.btn.btn-ghost', { type: 'button', onclick: changeAdminPassword }, 'Сменить пароль'))),
+    cancelLabel: 'Закрыть',
+    actions: [],
+  });
+}
+async function enable2fa() {
+  let info;
+  try { info = await api('POST', '/api/admin/2fa/setup', {}); } catch (e) { toast(errText(e), 'err'); return; }
+  const code = secInput({ inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: '8', placeholder: '123456' });
+  const link = /^otpauth:\/\//.test(info.otpauth || '') ? h('p', h('a', { href: info.otpauth }, 'Открыть в приложении на этом устройстве')) : '';
+  openModal({
+    title: 'Включить двухфакторную защиту',
+    body: h('div',
+      h('div.modal-note', '1) Откройте приложение-аутентификатор (Google Authenticator, Aegis, 1Password…). 2) Добавьте аккаунт вручную и введите ключ ниже. 3) Введите 6-значный код из приложения и нажмите «Включить».'),
+      field('Секретный ключ', secInput({ value: info.secret || '', readonly: true, onclick: (e) => e.target.select() })),
+      link,
+      field('Код из приложения', code)),
+    actions: [{ id: 'enable', label: 'Включить', async onClick() {
+      await api('POST', '/api/admin/2fa/enable', { body: { code: code.value.trim() } });
+      if (state.admin) state.admin.totp_on = true;
+      toast('Двухфакторная защита включена');
+    } }],
+  });
+}
+function disable2fa() {
+  const pw = secInput({ type: 'password', autocomplete: 'current-password' });
+  const code = secInput({ inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: '8' });
+  openModal({
+    title: 'Выключить двухфакторную защиту',
+    body: h('div', field('Пароль', pw), field('Код из приложения', code)),
+    actions: [{ id: 'disable', label: 'Выключить', kind: 'warn', async onClick() {
+      await api('POST', '/api/admin/2fa/disable', { body: { password: pw.value, code: code.value.trim() } });
+      if (state.admin) state.admin.totp_on = false;
+      toast('Двухфакторная защита выключена');
+    } }],
+  });
+}
+function changeAdminPassword() {
+  const cur = secInput({ type: 'password', autocomplete: 'current-password' });
+  const nw = secInput({ type: 'password', autocomplete: 'new-password' });
+  const nw2 = secInput({ type: 'password', autocomplete: 'new-password' });
+  const needCode = !!(state.admin && state.admin.totp_on);
+  const code = secInput({ inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: '8' });
+  openModal({
+    title: 'Сменить пароль',
+    body: h('div',
+      h('div.modal-note', 'Не короче 12 символов. После смены все остальные входы в админку будут закрыты.'),
+      field('Текущий пароль', cur), field('Новый пароль', nw), field('Повторите новый пароль', nw2),
+      needCode ? field('Код из приложения', code) : ''),
+    actions: [{ id: 'change', label: 'Сменить пароль', async onClick() {
+      if (nw.value !== nw2.value) { const e = new Error('mismatch'); e.code = 'mismatch'; throw e; }
+      const r = await api('POST', '/api/admin/password', { body: { current_password: cur.value, new_password: nw.value, code: code.value.trim() || undefined } });
+      if (r.token) { state.token = r.token; store.set(TOKEN_KEY, r.token); }
+      toast('Пароль изменён');
+    } }],
+  });
+}
+
 async function doLogout() {
   try { await api('POST', '/api/admin/logout', {}); } catch (e) { /* всё равно выходим */ }
   state.token = ''; state.admin = null; state.overview = null; store.del(TOKEN_KEY);
@@ -974,6 +1065,7 @@ async function boot() {
   $$('[data-ico]').forEach((el) => { el.innerHTML = ICONS[el.dataset.ico] || ''; });
   $('#loginForm').addEventListener('submit', doLogin);
   $('#logoutBtn').addEventListener('click', doLogout);
+  $('#secBtn').addEventListener('click', securityMenu);
   $('#navToggle').addEventListener('click', () => { document.body.classList.contains('nav-open') ? closeNav() : openNav(); });
   $('#navBack').addEventListener('click', closeNav);
   window.addEventListener('hashchange', dispatch);
@@ -2147,4 +2239,4 @@ boot();
 })();
 </script>
 </body>
-</html>
+                                                                                                           </html>
